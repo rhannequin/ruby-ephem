@@ -31,9 +31,8 @@ module Ephem
       DESCRIPTION
     end
 
-    def [](key)
-      @pairs.fetch(key) do
-        center, target = key
+    def [](center, target)
+      @pairs.fetch([center, target]) do
         raise KeyError,
           "No segment found for center: #{center}, target: #{target}"
       end
