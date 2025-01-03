@@ -27,9 +27,14 @@ RSpec.describe Ephem::Tasks::ValidateAccuracy do
           "vy" => "-3.1941322440840057e+06",
           "vz" => "-1.7965355115999668e+06"
         ]
+        date = "1900"
+        kernel = "de405"
+        target = "1"
         allow(CSV).to receive(:foreach).and_return(csv_content.each)
 
-        expect(described_class.run).to be true
+        run = described_class.run(date: date, kernel: kernel, target: target)
+
+        expect(run).to be true
       end
     end
 
@@ -47,9 +52,14 @@ RSpec.describe Ephem::Tasks::ValidateAccuracy do
           "vy" => "0",
           "vz" => "0"
         ]
+        date = "1900"
+        kernel = "de405"
+        target = "1"
         allow(CSV).to receive(:foreach).and_return(csv_content.each)
 
-        expect(described_class.run).to be false
+        run = described_class.run(date: date, kernel: kernel, target: target)
+
+        expect(run).to be false
       end
     end
   end

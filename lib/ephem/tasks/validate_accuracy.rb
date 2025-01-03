@@ -9,17 +9,21 @@ module Ephem
       class ValidationError < StandardError; end
 
       KERNELS_DIR = "kernels/"
-      CSV_FILE = "data/jplephem.csv"
+      CSV_FILE = "data/jplephem"
 
       KERNELS = {
         "de405" => "de405_excerpt"
       }.freeze
 
-      def self.run
-        new.run
+      def self.run(date:, kernel:, target:)
+        new.run(date: date, kernel: kernel, target: target)
       end
 
-      def run
+      def run(date:, kernel:, target:)
+        @start_date = date
+        @kernel_name = kernel
+        @target = target
+
         perform_task
         puts "#{validations_count} validation passed."
         true
@@ -32,7 +36,6 @@ module Ephem
 
       def perform_task
         ::CSV.foreach(csv_file_path, headers: true).each do |row|
-          kernel_name = row["ephemeris"]
           jd = row["julian_date"].to_i
           target = row["target"].to_i
           center = row["center"].to_i
@@ -43,8 +46,8 @@ module Ephem
           vy = row["vy"].to_f
           vz = row["vz"].to_f
 
-          kernels[kernel_name] ||= Ephem::SPK.open(kernel_path(kernel_name))
-          kernel = kernels[kernel_name]
+          kernels[@kernel_name] ||= Ephem::SPK.open(kernel_path)
+          kernel = kernels[@kernel_name]
 
           segment = kernel[center, target]
 
@@ -61,7 +64,7 @@ module Ephem
 
           if [delta_x, delta_y, delta_z, delta_vx, delta_vy, delta_vz].any? { _1 > error_margin }
             raise ValidationError,
-              "Error for #{kernel_name} at #{jd} with target #{target}"
+              "Error for #{@kernel_name} at #{jd} with target #{target}"
           end
         end
       end
@@ -71,15 +74,20 @@ module Ephem
       end
 
       def csv_file_path
-        current_directory + "/" + CSV_FILE
+        current_directory +
+          "/" +
+          CSV_FILE +
+          "_#{@start_date}" \
+          "_#{@kernel_name}" \
+          "_#{@target}.csv"
       end
 
       def validations_count
         `wc -l "#{csv_file_path}"`.strip.split(" ")[0].to_i
       end
 
-      def kernel_path(kernel_name)
-        name = KERNELS.fetch(kernel_name)
+      def kernel_path
+        name = KERNELS.fetch(@kernel_name)
         current_directory + "/" + KERNELS_DIR + name + ".bsp"
       end
 

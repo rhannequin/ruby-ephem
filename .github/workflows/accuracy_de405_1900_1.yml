@@ -1,0 +1,28 @@
+name: Validate accuracy (de405/1900/1)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Ruby ${{ matrix.ruby }}
+    strategy:
+      matrix:
+        ruby:
+          - 3.3.5
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Validate accuracy with kernel de405 from 1900 for target 1
+        run: bundle exec rake validate_accuracy date=1900 kernel=de405 target=1
