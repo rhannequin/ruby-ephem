@@ -35,6 +35,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "numo-narray", "~> 0.9.2.1"
 
+  spec.add_development_dependency "csv", "~> 3.3"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.13"
   spec.add_development_dependency "standard", "~> 1.43"
