@@ -11,6 +11,10 @@ module Ephem
       KERNELS_DIR = "kernels/"
       CSV_FILE = "data/jplephem.csv"
 
+      KERNELS = {
+        "de405" => "de405_excerpt"
+      }.freeze
+
       def self.run
         new.run
       end
@@ -75,7 +79,8 @@ module Ephem
       end
 
       def kernel_path(kernel_name)
-        current_directory + "/" + KERNELS_DIR + kernel_name + ".bsp"
+        name = KERNELS.fetch(kernel_name)
+        current_directory + "/" + KERNELS_DIR + name + ".bsp"
       end
 
       def kernels
