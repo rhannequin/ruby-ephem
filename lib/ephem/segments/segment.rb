@@ -183,7 +183,7 @@ module Ephem
           time_in_interval?(tdb_seconds, i)
         end
 
-        interval or raise Computation::OutOfRangeError.new(
+        interval or raise OutOfRangeError.new(
           "Time #{tdb_seconds} is outside the coverage of this segment",
           tdb_seconds
         )
