@@ -16,18 +16,16 @@ RSpec.describe Ephem::Tasks::ValidateAccuracy do
     context "when the task succeeds" do
       it "returns true" do
         csv_content = [
-          "ephemeris" => "de405",
-          "julian_date" => "2415021.0000000000000000",
-          "target" => "1",
+          "julian_date" => "2451546",
           "center" => "0",
-          "x" => "-5.7066714820133306e+07",
-          "y" => "-2.4386501773079373e+07",
-          "z" => "-7.1431067080760906e+06",
-          "vx" => "8.7264193806159205e+05",
-          "vy" => "-3.1941322440840057e+06",
-          "vz" => "-1.7965355115999668e+06"
+          "x" => "-1.7305359679278996e+07",
+          "y" => "-6.0974293023407288e+07",
+          "z" => "-3.0812429629787814e+07",
+          "vx" => "3.2491819082937399e+06",
+          "vy" => "-5.6242306220424012e+05",
+          "vz" => "-6.3724054778491484e+05"
         ]
-        date = "1900"
+        date = "2000"
         kernel = "de405"
         target = "1"
         allow(CSV).to receive(:foreach).and_return(csv_content.each)
@@ -41,9 +39,7 @@ RSpec.describe Ephem::Tasks::ValidateAccuracy do
     context "when a validation doesn't pass" do
       it "returns false" do
         csv_content = [
-          "ephemeris" => "de405",
-          "julian_date" => "2415021.0000000000000000",
-          "target" => "1",
+          "julian_date" => "2451546",
           "center" => "0",
           "x" => "0",
           "y" => "0",
@@ -52,7 +48,7 @@ RSpec.describe Ephem::Tasks::ValidateAccuracy do
           "vy" => "0",
           "vz" => "0"
         ]
-        date = "1900"
+        date = "2000"
         kernel = "de405"
         target = "1"
         allow(CSV).to receive(:foreach).and_return(csv_content.each)

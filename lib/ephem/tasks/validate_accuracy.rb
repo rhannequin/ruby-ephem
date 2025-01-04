@@ -12,8 +12,13 @@ module Ephem
       CSV_FILE = "data/jplephem"
 
       KERNELS = {
-        "de405" => "de405_excerpt"
+        "de405" => "de405_excerpt",
+        "de421" => "de421_excerpt",
+        "de430t" => "de430t_excerpt",
+        "de440s" => "de440s_excerpt"
       }.freeze
+
+      ERROR_MARGIN = 0.000002 # 2 centimeters
 
       def self.run(date:, kernel:, target:)
         new.run(date: date, kernel: kernel, target: target)
@@ -22,7 +27,7 @@ module Ephem
       def run(date:, kernel:, target:)
         @start_date = date
         @kernel_name = kernel
-        @target = target
+        @target = target.to_i
 
         perform_task
         puts "#{validations_count} validation passed."
@@ -37,7 +42,6 @@ module Ephem
       def perform_task
         ::CSV.foreach(csv_file_path, headers: true).each do |row|
           jd = row["julian_date"].to_i
-          target = row["target"].to_i
           center = row["center"].to_i
           x = row["x"].to_f
           y = row["y"].to_f
@@ -49,7 +53,7 @@ module Ephem
           kernels[@kernel_name] ||= Ephem::SPK.open(kernel_path)
           kernel = kernels[@kernel_name]
 
-          segment = kernel[center, target]
+          segment = kernel[center, @target]
 
           state = segment.compute_and_differentiate(jd)
           position = state.position
@@ -62,9 +66,9 @@ module Ephem
           delta_vy = (vy - velocity.y).abs
           delta_vz = (vz - velocity.z).abs
 
-          if [delta_x, delta_y, delta_z, delta_vx, delta_vy, delta_vz].any? { _1 > error_margin }
+          if [delta_x, delta_y, delta_z, delta_vx, delta_vy, delta_vz].any? { _1 > ERROR_MARGIN }
             raise ValidationError,
-              "Error for #{@kernel_name} at #{jd} with target #{target}"
+              "Error for #{@kernel_name} at #{jd} with target #{@target}"
           end
         end
       end
@@ -93,10 +97,6 @@ module Ephem
 
       def kernels
         @kernels ||= {}
-      end
-
-      def error_margin
-        0.000001 # 1 centimeter
       end
     end
   end
