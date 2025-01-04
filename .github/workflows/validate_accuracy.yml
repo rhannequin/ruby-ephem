@@ -1,0 +1,29 @@
+name: Validate accuracy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Validate (${{ matrix.kernel }}/2000-2050/${{ matrix.target }})
+    strategy:
+      matrix:
+        ruby: [3.4.1]
+        kernel: [de405, de421, de430t, de440s]
+        target: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Validate accuracy with kernel ${{ matrix.kernel }} from 2000 to 2050 for target ${{ matrix.target }}
+        run: bundle exec rake validate_accuracy date=2000 kernel=${{ matrix.kernel }} target=${{ matrix.target }}
