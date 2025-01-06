@@ -9,6 +9,8 @@ module Ephem
 
   class EndiannessError < Error; end
 
+  class UnsupportedError < Error; end
+
   class OutOfRangeError < StandardError
     attr_reader :out_of_range_times
 
