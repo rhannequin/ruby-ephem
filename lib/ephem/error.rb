@@ -13,6 +13,8 @@ module Ephem
 
   class InvalidInputError < Error; end
 
+  class IndexError < Error; end
+
   class OutOfRangeError < StandardError
     attr_reader :out_of_range_times
 
