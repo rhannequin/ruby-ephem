@@ -86,6 +86,44 @@ puts "Velocity: #{state.velocity}"
 # The velocity is expressed in km/day
 ```
 
+## Accuracy
+
+Data from this library has been tested against the Python library [jplephem]
+by Brandon Rhodes.
+
+The following kernels have been used:
+* DE405
+* DE421
+* DE430t
+* DE440s
+
+The times tested are noon UTC for every day between 2000-01-01 and
+2050-01-01. Vectors tested are always with `center` 0 (Solar System Barycenter),
+and `target` from `1` (Mercury Barycenter) to `10` (Sun).
+
+Rake tasks ensure data from this library match with `jplephem` with a margin
+error of 2 centimeters.
+
+You can run them by following this pattern:
+
+```
+rake validate_accuracy date=2000 kernel=de440s target=1
+```
+
+_Note: Only date=2000 is supported at the moment. It covers 2000 to 2050._
+
+If you wish to test them all in parallel, you can run:
+
+```
+rake validate_accuracy:all
+```
+
+For every commit, one test is executed in CI to ensure quality and accuracy
+is always respected. At the moment, we don't run them all in CI to save
+usage time.
+
+[jplephem]: https://pypi.org/project/jplephem/
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run
@@ -97,16 +135,18 @@ interactive prompt that will allow you to experiment.
 Bug reports and pull requests are welcome on GitHub at
 https://github.com/rhannequin/ruby-ephem. This project is intended to be a
 safe, welcoming space for collaboration, and contributors are expected to adhere
-to
-the [code of conduct](https://github.com/rhannequin/ephem/blob/main/CODE_OF_CONDUCT.md).
+to the [code of conduct].
 
 ## License
 
-The gem is available as open source under the terms of
-the [MIT License](https://opensource.org/licenses/MIT).
+The gem is available as open source under the terms of the [MIT License].
+
+[MIT License]: (https://opensource.org/licenses/MIT)
 
 ## Code of Conduct
 
 Everyone interacting in the Ephem project's codebases, issue trackers, chat
 rooms and mailing lists is expected to follow
-the [code of conduct](https://github.com/rhannequin/ephem/blob/main/CODE_OF_CONDUCT.md).
+the [code of conduct].
+
+[code of conduct]: (https://github.com/rhannequin/ephem/blob/main/CODE_OF_CONDUCT.md)
