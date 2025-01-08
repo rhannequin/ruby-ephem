@@ -3,9 +3,9 @@
 RSpec.describe Ephem::Core::CalendarCalculations do
   describe ".julian_to_gregorian" do
     it "converts a Julian Date to Gregorian calendar for dates after 1582-10-15" do
-      result = described_class.julian_to_gregorian(2460000) # 2023-02-24
+      result = described_class.julian_to_gregorian(2460000.5) # 2023-02-25
 
-      expect(result).to eq([2023, 2, 24])
+      expect(result).to eq([2023, 2, 25])
     end
 
     it "converts a Julian Date to Gregorian calendar for dates before 1582-10-15" do
@@ -27,7 +27,7 @@ RSpec.describe Ephem::Core::CalendarCalculations do
     end
 
     it "handles fractional Julian Dates correctly" do
-      # 2023-02-24 at 06:00 UTC
+      # 2023-02-24 at 18:00 UTC
       result = described_class.julian_to_gregorian(2460000.25)
 
       expect(result).to eq([2023, 2, 24])

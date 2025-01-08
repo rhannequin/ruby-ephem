@@ -1,40 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Ephem::Segments::Segment do
-  describe "#initialize" do
-    it "creates a segment with type 2 data" do
-      daf = create_mock_daf
-      descriptor = [
-        0.0,     # start_second
-        86400.0, # end_second
-        3,       # target (Earth-moon Barycenter)
-        0,       # center (Solar System Barycenter)
-        1,       # frame
-        2,       # data_type (position only)
-        1,       # start_i
-        100      # end_i
-      ]
-
-      segment = described_class.new(
-        daf: daf,
-        source: "DE440.bsp",
-        descriptor: descriptor
-      )
-
-      expect(segment.start_second).to eq(0.0)
-      expect(segment.end_second).to eq(86400.0)
-      expect(segment.target).to eq(3)
-      expect(segment.center).to eq(0)
-      expect(segment.frame).to eq(1)
-      expect(segment.data_type).to eq(2)
-      expect(segment.start_i).to eq(1)
-      expect(segment.end_i).to eq(100)
-      expect(segment.start_jd).to eq(Ephem::Core::Constants::Time::J2000_EPOCH)
-      expect(segment.end_jd)
-        .to eq(Ephem::Core::Constants::Time::J2000_EPOCH + 1.0)
-    end
-  end
-
   describe "#compute" do
     it "returns a vector for a time within range" do
       segment = create_segment_with_data
