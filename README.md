@@ -130,6 +130,79 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run
 `bundle exec rspec` to run the tests. You can also run `bin/console` for an
 interactive prompt that will allow you to experiment.
 
+### Documentation on SPK files and NASA JPL's Ephemeris Data
+
+SPK files (Spacecraft and Planet Kernel files) from NASA JPL are part of the
+SPICE (Spacecraft Planet Instrument C-matrix Events) toolkit, used extensively
+in space science and planetary exploration.
+
+SPK files are highly organized binary files containing precise positional and
+velocity data (ephemeris data).
+
+#### Header
+
+The header contains metadata such as:
+
+* File version (e.g., SPK-0004)
+* Creation date
+* Producer information
+* Summary of contents (e.g., target objects, time intervals, reference frames)
+
+#### Segments
+
+Each file is divided into multiple segments, which store ephemeris data for
+specific objects over defined time intervals. A segment includes:
+
+* **Target object**: The celestial body or spacecraft described.
+* **Time interval**: Range of validity for the data.
+* **Reference frame**: Coordinate system (e.g., J2000, ICRF).
+* **Data type**: Format of ephemeris data (e.g., discrete states, Chebyshev
+polynomials).
+
+##### Example of SPK Structure
+
+```
+SPK File
+├── Header
+│   ├── File Version: SPK-0004
+│   ├── Producer: NASA JPL
+│   └── Creation Date: 2025-01-01
+└── Segments
+    ├── Segment 1 (Earth-Moon System)
+    │   ├── Time Interval: 2000-01-01 to 2050-01-01
+    │   ├── Reference Frame: J2000
+    │   └── Data: Chebyshev Polynomials
+    └── Segment 2 (Earth-Sun System)
+        ├── Time Interval: 2000-01-01 to 2050-01-01
+        ├── Reference Frame: J2000
+        └── Data: Chebyshev Polynomials
+```
+
+#### Data Blocks
+
+Segments are further divided into data blocks, which store:
+
+* **State vectors**: Position and velocity of the object at specific times.
+* **Time tags**: Times at which the state vectors are valid.
+
+#### Mathematical Representations in SPK Files
+
+SPK files store data in various formats to balance precision and storage
+efficiency. The most common representation is Chebyshev polynomials, which
+provide smooth interpolation of positions and velocities.
+
+Chebyshev polynomials approximate the position and velocity of an object over a
+time interval. They are computationally efficient and ensure minimal error
+across the interval.
+
+```
+Position(t) = Σ (Cᵢ * Tᵢ(t))
+```
+
+* `Cᵢ`: Coefficients that define the polynomial terms.
+* `Tᵢ(t)`: Chebyshev basis polynomials of the first kind.
+* `t`: Normalized time within the interval, scaled to the range [-1, 1].
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at
