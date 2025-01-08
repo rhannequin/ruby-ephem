@@ -74,6 +74,7 @@ PLATFORMS
 DEPENDENCIES
   csv (~> 3.3)
   ephem!
+  parallel (~> 1.26)
   rake (~> 13.0)
   rspec (~> 3.13)
   standard (~> 1.43)

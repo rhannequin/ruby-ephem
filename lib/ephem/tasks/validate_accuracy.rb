@@ -25,12 +25,16 @@ module Ephem
       end
 
       def run(date:, kernel:, target:)
+        @start_time = Time.now
         @start_date = date
         @kernel_name = kernel
         @target = target.to_i
 
         perform_task
-        puts "#{validations_count} validation passed."
+        @end_time = Time.now
+
+        puts output
+
         true
       rescue ValidationError => e
         puts "Error occurred: #{e.message}"
@@ -97,6 +101,12 @@ module Ephem
 
       def kernels
         @kernels ||= {}
+      end
+
+      def output
+        duration = (@end_time - @start_time).to_i
+        title = "#{@kernel_name}/2000-2050/#{@target}"
+        "#{validations_count} validation passed (#{title}) in #{duration} seconds."
       end
     end
   end
