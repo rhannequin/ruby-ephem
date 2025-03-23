@@ -32,7 +32,7 @@ gem install ephem
 
 ```rb
 # Download and store the SPICE binary kernel file
-Ephem::IO::Download.call(
+Ephem::Download.call(
   name: "de421.bsp",
   target: "tmp/de421.bsp"
 )
