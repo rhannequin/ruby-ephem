@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Ephem::IO::Download do
+RSpec.describe Ephem::Download do
   describe ".call" do
     context "when the kernel is not supported" do
       it "raises an UnsupportedError" do
