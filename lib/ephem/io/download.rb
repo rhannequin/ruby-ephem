@@ -66,16 +66,10 @@ module Ephem
 
       def call
         uri = URI("#{BASE_URL}#{@name}")
-        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
-          request = Net::HTTP::Get.new(uri)
-          http.request(request) do |response|
-            File.open(@local_path, "wb") do |file|
-              response.read_body do |chunk|
-                file.write(chunk)
-              end
-            end
-          end
-        end
+        content = Net::HTTP.get(uri)
+        File.write(@local_path, content)
+
+        true
       end
 
       private
