@@ -34,7 +34,7 @@ module Ephem
       end
 
       if args[0] == "excerpt"
-        handle_excerpt(args[1..-1])
+        handle_excerpt(args[1..])
         return
       end
 

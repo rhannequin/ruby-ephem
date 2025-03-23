@@ -204,7 +204,7 @@ module Ephem
       # Add the extracted array to the output file
       # Modify the name to indicate it's an excerpt (X prefix)
       writer.add_array(
-        "X#{name[1..-1]}".force_encoding("ASCII-8BIT"),
+        "X#{name[1..]}".force_encoding("ASCII-8BIT"),
         new_values,
         excerpt
       )
@@ -223,7 +223,7 @@ module Ephem
 
     # Clips a value between lower and upper bounds
     def clip(lower, upper, n)
-      [lower, [upper, n].min].max
+      n.clamp(lower, upper)
     end
 
     # Helper class for writing DAF files
