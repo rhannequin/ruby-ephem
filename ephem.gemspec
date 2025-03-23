@@ -29,8 +29,9 @@ Gem::Specification.new do |spec|
       )
     end
   end
-  spec.bindir = "exe"
-  spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
+  spec.files += Dir["bin/*"]
+  spec.bindir = "bin"
+  spec.executables = ["ruby-ephem"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "numo-narray", "~> 0.9.2.1"
