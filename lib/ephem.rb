@@ -18,6 +18,7 @@ require_relative "ephem/spk"
 require_relative "ephem/segments/base_segment"
 require_relative "ephem/segments/registry"
 require_relative "ephem/segments/segment"
+require_relative "ephem/excerpt"
 require_relative "ephem/version"
 
 module Ephem

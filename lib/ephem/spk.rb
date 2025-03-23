@@ -97,6 +97,18 @@ module Ephem
       @segments.each(&block)
     end
 
+    def excerpt(output_path:, start_jd:, end_jd:, target_ids: nil, debug: false)
+      Excerpt
+        .new(self)
+        .extract(
+          output_path: output_path,
+          start_jd: start_jd,
+          end_jd: end_jd,
+          target_ids: target_ids,
+          debug: debug
+        )
+    end
+
     private
 
     def load_segments
