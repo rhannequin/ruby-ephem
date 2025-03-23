@@ -16,6 +16,7 @@ module Ephem
   #
   class SPK
     DATA_TYPE_IDENTIFIER = 5
+    SEGMENT_CLASSES = {}
 
     attr_reader :segments, :pairs
 
@@ -115,7 +116,5 @@ module Ephem
       segment_class = SEGMENT_CLASSES.fetch(data_type, Segments::BaseSegment)
       segment_class.new(daf: @daf, source: source, descriptor: descriptor)
     end
-
-    SEGMENT_CLASSES = {}
   end
 end
