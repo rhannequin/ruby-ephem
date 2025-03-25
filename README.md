@@ -6,7 +6,7 @@ collection of numerical integrations of the equations of motion of the solar
 system, used to calculate the positions of the planets, the Moon, and other
 celestial bodies with high precision.
 
-Ephem currently only support planetary ephemerides like DE405, DE421, de430,
+Ephem currently only support planetary ephemerides like DE405, DE421, DE430,
 etc.
 
 The library in high development mode and does not have a stable version yet.
@@ -28,14 +28,19 @@ executing:
 gem install ephem
 ```
 
+## How to select the right kernel file
+
+JPL produces many different kernels over the years, with different accuracy and
+ranges of supported years. Here are some that we would recommend to begin with:
+
+* `de421.bsp`: from 1900 to 2050, 17 MB
+* `de440s.bsp`: from 1849 to 2150, 32 MB
+
 ## Usage
 
 ```rb
 # Download and store the SPICE binary kernel file
-Ephem::Download.call(
-  name: "de421.bsp",
-  target: "tmp/de421.bsp"
-)
+Ephem::Download.call(name: "de421.bsp", target: "tmp/de421.bsp")
 
 # Load the kernel
 spk = Ephem::SPK.open("tmp/de421.bsp")
@@ -85,6 +90,28 @@ puts "Velocity: #{state.velocity}"
 # => Velocity: Vector[-1117315.1437825128, 254177.26336095092, 136149.03901534996]
 # The velocity is expressed in km/day
 ```
+
+## CLI
+
+The gem also provides a CLI to generate an excerpt from an original kernel file.
+
+```bash
+ruby-ephem excerpt [options] START_DATE END_DATE INPUT_FILE OUTPUT_FILE
+```
+
+For example, generate an excerpt from DE440s for the year 2025 only supporting
+the Sun, the Earth, the Moon and the Earth-Moon Barycenter:
+
+```bash
+ruby-ephem excerpt --targets 3,10,301,399 2025-01-01 2026-01-01 /path/to/de440s.bsp 2025_excerpt.bsp
+```
+
+While DE440s originally supports 14 segments from 1849 to 2150 with a size of
+32 MB, the excerpt will only support 4 segments from 2025 to 2026 with a size of
+140 KB.
+
+Not only the excerpt is smaller, but most importantly it is way more
+efficient to parse and to use in your application.
 
 ## Accuracy
 
