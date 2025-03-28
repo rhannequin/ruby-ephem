@@ -7,6 +7,7 @@
 * Simplify download ([#12])
 * SPK excerpt generator ([#13])
 * Improve documentation on excerpts ([#16])
+* IMCCE INPOP support ([#20])
 
 ### Improvements
 
@@ -21,6 +22,12 @@
 * Bump standard from 1.45.0 to 1.47.0 by @dependabot ([#10])
 * Bump json from 2.10.1 to 2.10.2 by @dependabot ([#18])
 
+### New Contributors
+
+* @dependabot made their first contribution in [#7]
+
+**Full Changelog**: https://github.com/rhannequin/ruby-ephem/compare/v0.1.0...v0.2.0
+
 [#6]: https://github.com/rhannequin/ruby-ephem/pull/6
 [#7]: https://github.com/rhannequin/ruby-ephem/pull/7
 [#8]: https://github.com/rhannequin/ruby-ephem/pull/8
@@ -34,8 +41,7 @@
 [#16]: https://github.com/rhannequin/ruby-ephem/pull/16
 [#17]: https://github.com/rhannequin/ruby-ephem/pull/17
 [#18]: https://github.com/rhannequin/ruby-ephem/pull/18
-
-**Full Changelog**: https://github.com/rhannequin/ruby-ephem/compare/v0.1.0...v0.2.0
+[#20]: https://github.com/rhannequin/ruby-ephem/pull/20
 
 ## [0.1.0] - 2025-01-01
 
