@@ -15,6 +15,15 @@ module Ephem
   #   spk.close
   #
   class SPK
+    TYPES = [
+      INPOP = "IMCCE INPOP",
+      JPL_DE = "JPL DE"
+    ].freeze
+
+    INPOP_REGEXP = /^\s+\d{4}\.\d{5}0+$/
+    DE_REGEXP = /^[A-Z]E-(\d{4})LE-\1$/
+    DE_FILENAME = "NIO2SPK"
+
     DATA_TYPE_IDENTIFIER = 5
     SEGMENT_CLASSES = {}
 
@@ -75,6 +84,18 @@ module Ephem
       @pairs.fetch([center, target]) do
         raise KeyError,
           "No segment found for center: #{center}, target: #{target}"
+      end
+    end
+
+    # Type of SPK file to make the difference between JPL DE and IMCCE INPOP
+    #
+    # @return [String, nil] The type of the SPK file
+    def type
+      @type ||= if @daf.record_data.internal_filename.match?(INPOP_REGEXP)
+        INPOP
+      elsif @daf.record_data.internal_filename == DE_FILENAME ||
+          segments.first&.source&.match?(DE_REGEXP)
+        JPL_DE
       end
     end
 

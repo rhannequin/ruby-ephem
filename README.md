@@ -1,15 +1,21 @@
 # Ephem
 
-Ephem is a Ruby gem that provides a simple interface to the JPL Development
-Ephemeris (DE) series as SPICE binary kernel files. The DE series is a
-collection of numerical integrations of the equations of motion of the solar
-system, used to calculate the positions of the planets, the Moon, and other
-celestial bodies with high precision.
+Ephem is a Ruby gem that provides a simple interface to the SPICE binary kernel
+files such as:
+* _JPL [Development Ephemeris]_ (DE)
+* _IMCCE [Intégrateur numérique planétaire de l'Observatoire de Paris]_ (INPOP)
 
-Ephem currently only support planetary ephemerides like DE405, DE421, DE430,
-etc.
+[Development Ephemeris]: https://ssd.jpl.nasa.gov/planets/eph_export.html
+[Intégrateur numérique planétaire de l'Observatoire de Paris]: https://www.imcce.fr/inpop
 
-The library in high development mode and does not have a stable version yet.
+These files are a collection of numerical integrations of the equations of
+motion of the Solar System, used to calculate the positions of the planets,
+the Moon, and other celestial bodies with high precision.
+
+Ephem currently only support planetary ephemerides like DE421, DE430,
+INPOP19A, etc.
+
+The library is in high development mode and does not have a stable version yet.
 The API is subject to major changes at the moment, please keep that in mind if
 you consider adding this gem as a dependency.
 
@@ -30,11 +36,13 @@ gem install ephem
 
 ## How to select the right kernel file
 
-JPL produces many different kernels over the years, with different accuracy and
-ranges of supported years. Here are some that we would recommend to begin with:
+JPL and IMCCE produces many different kernels over the years, with different
+accuracy and ranges of supported years. Here are some that we would recommend to
+begin with:
 
 * `de421.bsp`: from 1900 to 2050, 17 MB
 * `de440s.bsp`: from 1849 to 2150, 32 MB
+* `inpop19a.bsp`: from 1900 to 2100, 22 MB
 
 ## Usage
 

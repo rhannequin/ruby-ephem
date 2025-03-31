@@ -36,6 +36,8 @@ module Ephem
       attr_reader :target
       # @return [Integer] the center body ID
       attr_reader :center
+      # @return [String] the source of the segment
+      attr_reader :source
 
       # Initialize a new segment
       #

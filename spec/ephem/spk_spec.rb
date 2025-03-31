@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe Ephem::SPK do
+  include TestSpkHelper
+
   describe ".open" do
     it "creates a new SPK instance with a DAF from the given path" do
       file_double = instance_double(File)
@@ -70,6 +72,43 @@ RSpec.describe Ephem::SPK do
       expect(segment2).to receive(:clear_data)
 
       spk.close
+    end
+  end
+
+  describe "#type" do
+    context "when record data has INPOP-like filename" do
+      it "returns the INPOP identifier" do
+        spk = described_class.open(inpop21a_2000_excerpt)
+
+        type = spk.type
+
+        expect(type).to eq described_class::INPOP
+      end
+    end
+
+    context "when record data has DE-like filename" do
+      it "returns the JPL DE identifier" do
+        spk = described_class.open(de421_2000_excerpt)
+
+        type = spk.type
+
+        expect(type).to eq described_class::JPL_DE
+      end
+    end
+
+    context "when the first segment has a DE-like source" do
+      it "returns the JPL DE identifier" do
+        spk = described_class.open(de405_2000_excerpt)
+
+        type = spk.type
+
+        expect(type).to eq described_class::JPL_DE
+      end
+    end
+
+    context "when there is no information available" do
+      it "returns nil" do
+      end
     end
   end
 
