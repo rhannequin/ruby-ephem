@@ -256,11 +256,29 @@ module Ephem
       end
 
       def find_interval(tdb_seconds)
-        interval = (0...@midpoints.size).find do |i|
-          time_in_interval?(tdb_seconds, i)
+        left = 0
+        right = @midpoints.size - 1
+
+        if @last_interval && time_in_interval?(tdb_seconds, @last_interval)
+          return @last_interval
         end
 
-        interval or raise OutOfRangeError.new(
+        while left <= right
+          mid = (left + right) / 2
+          min_time = @midpoints[mid] - @radii[mid]
+          max_time = @midpoints[mid] + @radii[mid]
+
+          if tdb_seconds < min_time
+            right = mid - 1
+          elsif tdb_seconds > max_time
+            left = mid + 1
+          else
+            @last_interval = mid
+            return mid
+          end
+        end
+
+        raise OutOfRangeError.new(
           "Time #{tdb_seconds} is outside the coverage of this segment",
           tdb_seconds
         )
