@@ -74,8 +74,8 @@ RSpec.describe Ephem::Excerpt do
       )
       original_segment = original_spk[center, target]
       excerpt_segment = excerpt_spk[center, target]
-      original_state = original_segment.compute_and_differentiate(test_time)
-      excerpt_state = excerpt_segment.compute_and_differentiate(test_time)
+      original_state = original_segment.state_at(test_time)
+      excerpt_state = excerpt_segment.state_at(test_time)
 
       expect(excerpt_state.position.to_a).to eq original_state.position.to_a
       expect(excerpt_state.velocity.to_a).to eq original_state.velocity.to_a
