@@ -87,7 +87,7 @@ puts segment.describe(verbose: true)
 # Get the position and velocity of the target body at a given time
 # The time is expressed in Julian Date
 time = 2460676.5
-state = segment.compute_and_differentiate(time)
+state = segment.state_at(time)
 
 # Display the position and velocity vectors
 puts "Position: #{state.position}"

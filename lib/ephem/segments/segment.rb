@@ -71,6 +71,7 @@ module Ephem
       def compute(tdb, tdb2 = 0.0)
         Core::Vector.new(*generate(tdb, tdb2).first)
       end
+      alias_method :position_at, :compute
 
       # Computes both position and velocity vectors at the specified time.
       #
@@ -109,6 +110,7 @@ module Ephem
           end
         end
       end
+      alias_method :state_at, :compute_and_differentiate
 
       # Clears cached coefficient data, forcing reload on next computation.
       #
