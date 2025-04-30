@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Rémy Hannequin"]
   spec.email = ["remy.hannequin@gmail.com"]
 
-  spec.summary = "Compute astronomical ephemerides from NASA JPL Development Ephemerides"
-  spec.description = "Ruby implementation of the parsing and computation of ephemerides from NASA JPL Development Ephemerides DE4xx"
+  spec.summary = "Compute astronomical ephemerides from NASA/JPL DE and IMCCE INPOP"
+  spec.description = "Ruby implementation of the parsing and computation of ephemerides from NASA/JPL Development Ephemerides DE4xx and IMCCE INPOP"
   spec.homepage = "https://github.com/rhannequin/ruby-ephem"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
