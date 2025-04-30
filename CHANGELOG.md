@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.3.0] - 2025-04-30
+
+## Features
+
+* Improve find_interval with binary search ([#24])
+* Use alias methods to get segment position or state ([#27])
+
+## Improvements
+
+* Bump irb from 1.15.1 to 1.15.2 by @dependabot ([#21])
+* Bump standard from 1.47.0 to 1.49.0 by @dependabot ([#23])
+* Bump csv from 3.3.3 to 3.3.4 by @dependabot ([#25])
+* Bump parallel from 1.26.3 to 1.27.0 by @dependabot ([#26])
+
+**Full Changelog**: https://github.com/rhannequin/ruby-ephem/compare/v0.2.0...v0.3.0
+
+[#21]: https://github.com/rhannequin/ruby-ephem/pull/21
+[#23]: https://github.com/rhannequin/ruby-ephem/pull/23
+[#24]: https://github.com/rhannequin/ruby-ephem/pull/24
+[#25]: https://github.com/rhannequin/ruby-ephem/pull/25
+[#26]: https://github.com/rhannequin/ruby-ephem/pull/26
+[#27]: https://github.com/rhannequin/ruby-ephem/pull/27
+
 ## [0.2.0] - 2025-03-28
 
 ### Features
