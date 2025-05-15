@@ -102,7 +102,7 @@ module Ephem
 
     def call
       content = jpl_kernel? ? download_from_jpl : download_from_imcce
-      File.write(@local_path, content)
+      File.binwrite(@local_path, content)
 
       true
     end

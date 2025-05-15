@@ -8,11 +8,11 @@ RSpec.describe Ephem::Download do
         target_path = "tmp/kernel.bsp"
         mock_content = "large-binary-data"
         allow(Net::HTTP).to receive(:get).and_return(mock_content)
-        allow(File).to receive(:write)
+        allow(File).to receive(:binwrite)
 
         described_class.call(name: name, target: target_path)
 
-        expect(File).to have_received(:write).with(target_path, mock_content)
+        expect(File).to have_received(:binwrite).with(target_path, mock_content)
       end
     end
 
@@ -23,11 +23,11 @@ RSpec.describe Ephem::Download do
         mock_content = "large-binary-data"
         tar_gz_file = create_temp_tar_gz_with(name => mock_content)
         allow(Net::HTTP).to receive(:get).and_return(tar_gz_file.read)
-        allow(File).to receive(:write)
+        allow(File).to receive(:binwrite)
 
         described_class.call(name: name, target: target_path)
 
-        expect(File).to have_received(:write).with(target_path, mock_content)
+        expect(File).to have_received(:binwrite).with(target_path, mock_content)
       end
     end
 
