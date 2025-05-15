@@ -158,8 +158,8 @@ module Ephem
       end
 
       # Calculate which portion of the data to extract based on the date range
-      i = clip(0, n, ((start_seconds - init) / intlen)).to_i
-      j = clip(0, n, ((end_seconds - init) / intlen + 1)).to_i
+      i = clip(0, n, (start_seconds - init) / intlen).to_i
+      j = clip(0, n, (end_seconds - init) / intlen + 1).to_i
 
       puts "  Date range: i=#{i}, j=#{j} out of n=#{n}" if debug
 
