@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.1] - 2025-05-16
+
+### Bug fixes
+
+* Write downloaded ephemeris in binary mode by @trevorturk ([#31])
+
+### Improvements
+
+* Bump standard from 1.49.0 to 1.50.0 by @dependabot ([#29])
+
+### New Contributors
+
+* @trevorturk made their first contribution in [#31]
+
+**Full Changelog**: https://github.com/rhannequin/ruby-ephem/compare/v0.3.0...v0.3.1
+
+[#29]: https://github.com/rhannequin/ruby-ephem/pull/29
+[#31]: https://github.com/rhannequin/ruby-ephem/pull/31
+
 ## [0.3.0] - 2025-04-30
 
 ## Features
