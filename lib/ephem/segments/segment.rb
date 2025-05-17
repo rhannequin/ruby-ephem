@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "numo/narray"
+
 module Ephem
   module Segments
     # Manages data segments within SPICE kernel (SPK) files, providing methods
@@ -133,7 +135,7 @@ module Ephem
         # Synchronize access to data loading using a mutex lock
         # to prevent race conditions in multithreaded environments
         @data_lock.synchronize do
-          return if @data_loaded # Return early if data is already loaded
+          return if @data_loaded
 
           component_count = determine_component_count
           coefficients_data = load_coefficient_data
@@ -180,27 +182,27 @@ module Ephem
         coefficients = Numo::DFloat.cast(coefficients_raw)
         coefficients = coefficients.reshape(segment_count, record_size)
 
-        # Extract midpoints and radii from coefficient data
-        # midpoints: array of times at middle of each record's interval
-        # radii: array of half the interval length for each record
-        @midpoints = coefficients[0...segment_count, 0]
-        @radii = coefficients[0...segment_count, 1]
+        @midpoints = coefficients[0...segment_count, 0].to_a
+        @radii = coefficients[0...segment_count, 1].to_a
+        n_terms = coefficient_count
+        n_components = component_count
 
-        # Extract Chebyshev polynomial coefficients and reshape to 3D array
-        # dimensions: (coefficient_index, component_index, segment_index)
-        coeffs = coefficients[0...segment_count, 2..-1]
-        @coefficients = coeffs.reshape(
-          segment_count,
-          component_count,
-          coefficient_count
-        )
-          .transpose(2, 1, 0)
+        @coefficients = Array.new(segment_count) do |i|
+          row = coefficients[i, 2..-1].to_a
+          Array.new(n_terms) do |k|
+            Array.new(n_components) do |j|
+              row[k + j * n_terms]
+            end
+          end
+        end
       end
 
       def convert_to_seconds(tdb, tdb2)
         case tdb
-        when Array, Numo::NArray
+        when Array
           tdb.map { |t| time_to_seconds(t, tdb2) }
+        when Numo::NArray
+          tdb.to_a.map { |t| time_to_seconds(t, tdb2) }
         else
           time_to_seconds(tdb, tdb2)
         end
@@ -228,20 +230,18 @@ module Ephem
       def generate_single(tdb_seconds)
         interval = find_interval(tdb_seconds)
         normalized_time = compute_normalized_time(tdb_seconds, interval)
-        coeffs = @coefficients[true, true, interval]
 
-        position = Computation::ChebyshevPolynomial.new(
-          coefficients: coeffs,
-          normalized_time: normalized_time
-        ).evaluate
-
-        velocity = Computation::ChebyshevPolynomial.new(
-          coefficients: coeffs,
-          normalized_time: normalized_time,
-          radius: @radii[interval]
-        ).evaluate_derivative
-
-        [position.to_a, velocity.to_a]
+        coeffs = @coefficients[interval] # already [n_terms][3]
+        position = Computation::ChebyshevPolynomial.evaluate(
+          coeffs,
+          normalized_time
+        )
+        velocity = Computation::ChebyshevPolynomial.evaluate_derivative(
+          coeffs,
+          normalized_time,
+          @radii[interval]
+        )
+        [position, velocity]
       end
 
       def generate_multiple(tdb_seconds)
