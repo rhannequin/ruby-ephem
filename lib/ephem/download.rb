@@ -2,8 +2,10 @@
 
 require "minitar"
 require "net/http"
+require "pathname"
 require "tempfile"
 require "zlib"
+require "fileutils"
 
 module Ephem
   class Download
@@ -94,16 +96,15 @@ module Ephem
       new(name, target).call
     end
 
-    def initialize(name, local_path)
+    def initialize(name, target_path)
       @name = name
-      @local_path = local_path
+      @target_path = Pathname.new(target_path)
       validate_requested_kernel!
     end
 
     def call
-      content = jpl_kernel? ? download_from_jpl : download_from_imcce
-      File.binwrite(@local_path, content)
-
+      FileUtils.mkdir_p(@target_path.dirname)
+      jpl_kernel? ? download_jpl : download_imcce
       true
     end
 
@@ -120,28 +121,45 @@ module Ephem
       JPL_KERNELS.include?(@name)
     end
 
-    def download_from_jpl
-      uri = URI("#{JPL_BASE_URL}#{@name}")
-      Net::HTTP.get(uri)
+    def download_jpl
+      uri = URI.join(JPL_BASE_URL, @name)
+      @target_path.open("wb") do |file|
+        stream_http_to_file(uri, file)
+      end
     end
 
-    def download_from_imcce
-      temp_file = Tempfile.new(%w[archive .tar.gz])
-      uri = URI("#{IMCCE_BASE_URL}#{IMCCE_KERNELS_MATCHING[@name]}")
-      content = Net::HTTP.get(uri)
-      temp_file.write(content)
-      temp_file.rewind
+    def download_imcce
+      tar_gz_uri = URI.join(IMCCE_BASE_URL, IMCCE_KERNELS_MATCHING[@name])
+      Tempfile.create(%w[archive .tar.gz]) do |temp_file|
+        stream_http_to_file(tar_gz_uri, temp_file)
+        temp_file.flush
+        temp_file.rewind
 
-      Zlib::GzipReader.open(temp_file.path) do |gz|
-        Minitar::Reader.open(gz) do |tar|
-          tar.each_entry do |entry|
-            return entry.read if entry.full_name == IMCCE_KERNELS[@name]
+        Zlib::GzipReader.open(temp_file.path) do |gz|
+          Minitar::Reader.open(gz) do |tar|
+            tar.each_entry do |entry|
+              next unless entry.full_name == IMCCE_KERNELS[@name]
+
+              @target_path.open("wb") { |file| file.write(entry.read) }
+
+              break
+            end
           end
         end
       end
-    ensure
-      temp_file.close
-      temp_file.unlink
+    end
+
+    def stream_http_to_file(uri, file)
+      Net::HTTP.start(
+        uri.host,
+        uri.port,
+        use_ssl: uri.scheme == "https"
+      ) do |http|
+        request = Net::HTTP::Get.new(uri)
+        http.request(request) do |response|
+          response.read_body { |chunk| file.write(chunk) }
+        end
+      end
     end
   end
 end
