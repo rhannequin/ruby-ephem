@@ -7,12 +7,20 @@ RSpec.describe Ephem::Download do
         name = "de440.bsp"
         target_path = "tmp/kernel.bsp"
         mock_content = "large-binary-data"
+        file_io = StringIO.new
+        pathname_double = instance_double(Pathname)
         allow(Net::HTTP).to receive(:get).and_return(mock_content)
-        allow(File).to receive(:binwrite)
+        allow(Pathname).to receive(:new)
+          .with(target_path)
+          .and_return(pathname_double)
+        allow(pathname_double).to receive(:open)
+          .with("wb")
+          .and_yield(file_io)
+          .once
 
         described_class.call(name: name, target: target_path)
 
-        expect(File).to have_received(:binwrite).with(target_path, mock_content)
+        expect(file_io.string).to eq(mock_content)
       end
     end
 
@@ -22,22 +30,30 @@ RSpec.describe Ephem::Download do
         target_path = "tmp/kernel.bsp"
         mock_content = "large-binary-data"
         tar_gz_file = create_temp_tar_gz_with(name => mock_content)
+        file_io = StringIO.new
+        pathname_double = instance_double(Pathname)
         allow(Net::HTTP).to receive(:get).and_return(tar_gz_file.read)
-        allow(File).to receive(:binwrite)
+        allow(Pathname).to receive(:new)
+          .with(target_path)
+          .and_return(pathname_double)
+        allow(pathname_double).to receive(:open)
+          .with("wb")
+          .and_yield(file_io)
+          .once
 
         described_class.call(name: name, target: target_path)
 
-        expect(File).to have_received(:binwrite).with(target_path, mock_content)
+        expect(file_io.string).to eq(mock_content)
       end
     end
 
     context "when the kernel is not supported" do
       it "raises an UnsupportedError" do
-        expect { described_class.call(name: "unsupported", target: "path") }.to(
-          raise_error(
-            Ephem::UnsupportedError,
-            "Kernel unsupported is not supported by the library at the moment."
-          )
+        expect {
+          described_class.call(name: "unsupported", target: "path")
+        }.to raise_error(
+          Ephem::UnsupportedError,
+          "Kernel unsupported is not supported by the library at the moment."
         )
       end
     end

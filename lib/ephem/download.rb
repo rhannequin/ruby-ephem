@@ -2,6 +2,7 @@
 
 require "minitar"
 require "net/http"
+require "pathname"
 require "tempfile"
 require "zlib"
 
@@ -94,15 +95,15 @@ module Ephem
       new(name, target).call
     end
 
-    def initialize(name, local_path)
+    def initialize(name, target_path)
       @name = name
-      @local_path = local_path
+      @target_path = Pathname.new(target_path)
       validate_requested_kernel!
     end
 
     def call
       content = jpl_kernel? ? download_from_jpl : download_from_imcce
-      File.binwrite(@local_path, content)
+      @target_path.open("wb") { |f| f.write(content) }
 
       true
     end
@@ -121,27 +122,27 @@ module Ephem
     end
 
     def download_from_jpl
-      uri = URI("#{JPL_BASE_URL}#{@name}")
+      uri = URI.join(JPL_BASE_URL, @name)
       Net::HTTP.get(uri)
     end
 
     def download_from_imcce
-      temp_file = Tempfile.new(%w[archive .tar.gz])
-      uri = URI("#{IMCCE_BASE_URL}#{IMCCE_KERNELS_MATCHING[@name]}")
-      content = Net::HTTP.get(uri)
-      temp_file.write(content)
-      temp_file.rewind
+      Tempfile.open(%w[ephem_kernel .tar.gz]) do |temp_file|
+        uri = URI.join(IMCCE_BASE_URL, IMCCE_KERNELS_MATCHING[@name])
+        content = Net::HTTP.get(uri)
+        temp_file.write(content)
+        temp_file.rewind
 
-      Zlib::GzipReader.open(temp_file.path) do |gz|
-        Minitar::Reader.open(gz) do |tar|
-          tar.each_entry do |entry|
-            return entry.read if entry.full_name == IMCCE_KERNELS[@name]
+        Zlib::GzipReader.open(temp_file.path) do |gz|
+          Minitar::Reader.open(gz) do |tar|
+            tar.each_entry do |entry|
+              return entry.read if entry.full_name == IMCCE_KERNELS[@name]
+            end
           end
         end
+        raise UnsupportedError,
+          "Kernel #{@name} is not supported by the library at the moment."
       end
-    ensure
-      temp_file.close
-      temp_file.unlink
     end
   end
 end
