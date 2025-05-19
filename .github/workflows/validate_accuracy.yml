@@ -12,18 +12,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Validate (${{ matrix.kernel }}/2000-2050/${{ matrix.target }})
-    strategy:
-      matrix:
-        ruby: [3.4.1]
-        kernel: [de440s]
-        target: [3]
-
     steps:
       - uses: actions/checkout@v4
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby }}
+          ruby-version: 3.4.2
           bundler-cache: true
-      - name: Validate accuracy with kernel ${{ matrix.kernel }} from 2000 to 2050 for target ${{ matrix.target }}
-        run: bundle exec rake validate_accuracy date=2000 kernel=${{ matrix.kernel }} target=${{ matrix.target }}
+      - name: Validate accuracy of Ephem against multiple kernels
+        run: bundle exec rake validate_accuracy:all
