@@ -5,6 +5,7 @@ require "net/http"
 require "pathname"
 require "tempfile"
 require "zlib"
+require "fileutils"
 
 module Ephem
   class Download
@@ -102,10 +103,8 @@ module Ephem
     end
 
     def call
-      content = jpl_kernel? ? download_from_jpl : download_from_imcce
       FileUtils.mkdir_p(@target_path.dirname)
-      @target_path.open("wb") { |f| f.write(content) }
-
+      jpl_kernel? ? download_jpl : download_imcce
       true
     end
 
@@ -122,27 +121,44 @@ module Ephem
       JPL_KERNELS.include?(@name)
     end
 
-    def download_from_jpl
+    def download_jpl
       uri = URI.join(JPL_BASE_URL, @name)
-      Net::HTTP.get(uri)
+      @target_path.open("wb") do |file|
+        stream_http_to_file(uri, file)
+      end
     end
 
-    def download_from_imcce
-      Tempfile.create(%w[ephem_kernel .tar.gz], unlink: true) do |temp_file|
-        uri = URI.join(IMCCE_BASE_URL, IMCCE_KERNELS_MATCHING[@name])
-        content = Net::HTTP.get(uri)
-        temp_file.write(content)
+    def download_imcce
+      tar_gz_uri = URI.join(IMCCE_BASE_URL, IMCCE_KERNELS_MATCHING[@name])
+      Tempfile.create(%w[archive .tar.gz]) do |temp_file|
+        stream_http_to_file(tar_gz_uri, temp_file)
+        temp_file.flush
         temp_file.rewind
 
         Zlib::GzipReader.open(temp_file.path) do |gz|
           Minitar::Reader.open(gz) do |tar|
             tar.each_entry do |entry|
-              return entry.read if entry.full_name == IMCCE_KERNELS[@name]
+              next unless entry.full_name == IMCCE_KERNELS[@name]
+
+              @target_path.open("wb") { |file| file.write(entry.read) }
+
+              break
             end
           end
         end
-        raise UnsupportedError,
-          "Kernel #{@name} is not supported by the library at the moment."
+      end
+    end
+
+    def stream_http_to_file(uri, file)
+      Net::HTTP.start(
+        uri.host,
+        uri.port,
+        use_ssl: uri.scheme == "https"
+      ) do |http|
+        request = Net::HTTP::Get.new(uri)
+        http.request(request) do |response|
+          response.read_body { |chunk| file.write(chunk) }
+        end
       end
     end
   end

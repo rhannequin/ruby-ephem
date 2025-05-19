@@ -9,7 +9,7 @@ RSpec.describe Ephem::Download do
         mock_content = "large-binary-data"
         file_io = StringIO.new
         pathname_double = instance_double(Pathname, dirname: "tmp")
-        allow(Net::HTTP).to receive(:get).and_return(mock_content)
+        http_response = instance_double(Net::HTTPResponse)
         allow(Pathname).to receive(:new)
           .with(target_path)
           .and_return(pathname_double)
@@ -17,6 +17,14 @@ RSpec.describe Ephem::Download do
           .with("wb")
           .and_yield(file_io)
           .once
+        allow(Net::HTTP).to receive(:start)
+          .with(anything, anything, use_ssl: true)
+          .and_yield(
+            double(request: nil).tap do |http|
+              allow(http).to receive(:request).and_yield(http_response)
+            end
+          )
+        allow(http_response).to receive(:read_body).and_yield(mock_content)
 
         described_class.call(name: name, target: target_path)
 
@@ -29,10 +37,12 @@ RSpec.describe Ephem::Download do
         name = "inpop19a.bsp"
         target_path = "tmp/kernel.bsp"
         mock_content = "large-binary-data"
-        tar_gz_file = create_temp_tar_gz_with(name => mock_content)
         file_io = StringIO.new
         pathname_double = instance_double(Pathname, dirname: "tmp")
-        allow(Net::HTTP).to receive(:get).and_return(tar_gz_file.read)
+        http_response = instance_double(Net::HTTPResponse)
+        tar_gz_file = create_temp_tar_gz_with(name => mock_content)
+        tar_gz_file.rewind
+        tar_gz_content = tar_gz_file.read
         allow(Pathname).to receive(:new)
           .with(target_path)
           .and_return(pathname_double)
@@ -40,6 +50,17 @@ RSpec.describe Ephem::Download do
           .with("wb")
           .and_yield(file_io)
           .once
+        allow(Tempfile).to receive(:create)
+          .with(%w[archive .tar.gz])
+          .and_yield(tar_gz_file)
+        allow(Net::HTTP).to receive(:start)
+          .with(anything, anything, use_ssl: true)
+          .and_yield(
+            double(request: nil).tap do |http|
+              allow(http).to receive(:request).and_yield(http_response)
+            end
+          )
+        allow(http_response).to receive(:read_body).and_yield(tar_gz_content)
 
         described_class.call(name: name, target: target_path)
 
