@@ -8,7 +8,7 @@ RSpec.describe Ephem::Download do
         target_path = "tmp/kernel.bsp"
         mock_content = "large-binary-data"
         file_io = StringIO.new
-        pathname_double = instance_double(Pathname)
+        pathname_double = instance_double(Pathname, dirname: "tmp")
         allow(Net::HTTP).to receive(:get).and_return(mock_content)
         allow(Pathname).to receive(:new)
           .with(target_path)
@@ -31,7 +31,7 @@ RSpec.describe Ephem::Download do
         mock_content = "large-binary-data"
         tar_gz_file = create_temp_tar_gz_with(name => mock_content)
         file_io = StringIO.new
-        pathname_double = instance_double(Pathname)
+        pathname_double = instance_double(Pathname, dirname: "tmp")
         allow(Net::HTTP).to receive(:get).and_return(tar_gz_file.read)
         allow(Pathname).to receive(:new)
           .with(target_path)

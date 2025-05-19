@@ -103,6 +103,7 @@ module Ephem
 
     def call
       content = jpl_kernel? ? download_from_jpl : download_from_imcce
+      FileUtils.mkdir_p(@target_path.dirname)
       @target_path.open("wb") { |f| f.write(content) }
 
       true
