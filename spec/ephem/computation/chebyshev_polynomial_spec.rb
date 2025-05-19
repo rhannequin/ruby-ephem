@@ -7,9 +7,9 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
         coeffs = [[1.0, 2.0, 3.0]]
         t = 0.123
 
-        polynomial = described_class.evaluate(coeffs, t)
+        result = described_class.evaluate(coeffs, t)
 
-        expect(polynomial).to eq([1.0, 2.0, 3.0])
+        expect(result).to eq([1.0, 2.0, 3.0])
       end
     end
 
@@ -26,9 +26,9 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
           -2.0 + 0.0 * 0.75
         ]
 
-        polynomial = described_class.evaluate(coeffs, t)
+        result = described_class.evaluate(coeffs, t)
 
-        expect_vector_close(polynomial, expected)
+        expect_vector_close(result, expected)
       end
     end
 
@@ -49,9 +49,9 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
           coeffs[0][2] * t0 + coeffs[1][2] * t1 + coeffs[2][2] * t2
         ]
 
-        polynomial = described_class.evaluate(coeffs, t)
+        result = described_class.evaluate(coeffs, t)
 
-        expect_vector_close(polynomial, expected)
+        expect_vector_close(result, expected)
       end
     end
 
@@ -65,9 +65,9 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
         ]
         t = 0.333
 
-        polynomial = described_class.evaluate(coeffs, t)
+        result = described_class.evaluate(coeffs, t)
 
-        expect(polynomial.size).to eq(3)
+        expect(result.size).to eq(3)
       end
     end
 
@@ -79,10 +79,10 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
       ]
       t = 0.62
 
-      out1 = described_class.evaluate(coeffs, t)
-      out2 = described_class.evaluate(coeffs, t)
+      result1 = described_class.evaluate(coeffs, t)
+      result2 = described_class.evaluate(coeffs, t)
 
-      expect(out1).to eq(out2)
+      expect(result1).to eq(result2)
     end
 
     it "returns different results for different normalized_time" do
@@ -91,10 +91,10 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
         [0.1, 0.05, -0.09]
       ]
 
-      out1 = described_class.evaluate(coeffs, 0.9)
-      out2 = described_class.evaluate(coeffs, -0.9)
+      result1 = described_class.evaluate(coeffs, 0.9)
+      result2 = described_class.evaluate(coeffs, -0.9)
 
-      expect(out1).not_to eq(out2)
+      expect(result1).not_to eq(result2)
     end
   end
 
@@ -105,9 +105,9 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
         t = -0.2
         radius = 1000.0
 
-        polynomial = described_class.evaluate_derivative(coeffs, t, radius)
+        result = described_class.evaluate_derivative(coeffs, t, radius)
 
-        expect(polynomial).to eq([0.0, 0.0, 0.0])
+        expect(result).to eq([0.0, 0.0, 0.0])
       end
     end
 
@@ -122,9 +122,9 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
         scale = Ephem::Core::Constants::Time::SECONDS_PER_DAY / (2.0 * radius)
         expected = [2 * 2.0 * scale, 2 * -1.5 * scale, 2 * 4.0 * scale]
 
-        polynomial = described_class.evaluate_derivative(coeffs, t, radius)
+        result = described_class.evaluate_derivative(coeffs, t, radius)
 
-        expect_vector_close(polynomial, expected)
+        expect_vector_close(result, expected)
       end
     end
 
@@ -138,9 +138,9 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
         t = 0.15
         radius = 2000.0
 
-        polynomial = described_class.evaluate_derivative(coeffs, t, radius)
+        result = described_class.evaluate_derivative(coeffs, t, radius)
 
-        expect(polynomial.size).to eq(3)
+        expect(result.size).to eq(3)
       end
     end
 
@@ -153,10 +153,10 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
       radius1 = 1000.0
       radius2 = 500.0
 
-      polynomial1 = described_class.evaluate_derivative(coeffs, t, radius1)
-      polynomial2 = described_class.evaluate_derivative(coeffs, t, radius2)
+      result1 = described_class.evaluate_derivative(coeffs, t, radius1)
+      result2 = described_class.evaluate_derivative(coeffs, t, radius2)
 
-      expect(polynomial1).not_to eq(polynomial2)
+      expect(result1).not_to eq(result2)
     end
 
     it "returns the same result for repeated calls" do
@@ -168,10 +168,10 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
       t = 0.58
       radius = 432.0
 
-      polynomial1 = described_class.evaluate_derivative(coeffs, t, radius)
-      polynomial2 = described_class.evaluate_derivative(coeffs, t, radius)
+      result1 = described_class.evaluate_derivative(coeffs, t, radius)
+      result2 = described_class.evaluate_derivative(coeffs, t, radius)
 
-      expect(polynomial1).to eq(polynomial2)
+      expect(result1).to eq(result2)
     end
 
     it "returns different results for different normalized_time" do
@@ -184,10 +184,10 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
       t2 = -0.3
       radius = 111.1
 
-      polynomial1 = described_class.evaluate_derivative(coeffs, t, radius)
-      polynomial2 = described_class.evaluate_derivative(coeffs, t2, radius)
+      result1 = described_class.evaluate_derivative(coeffs, t, radius)
+      result2 = described_class.evaluate_derivative(coeffs, t2, radius)
 
-      expect(polynomial1).not_to eq(polynomial2)
+      expect(result1).not_to eq(result2)
     end
   end
 
