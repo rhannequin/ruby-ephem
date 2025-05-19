@@ -128,7 +128,7 @@ module Ephem
     end
 
     def download_from_imcce
-      Tempfile.open(%w[ephem_kernel .tar.gz]) do |temp_file|
+      Tempfile.create(%w[ephem_kernel .tar.gz], unlink: true) do |temp_file|
         uri = URI.join(IMCCE_BASE_URL, IMCCE_KERNELS_MATCHING[@name])
         content = Net::HTTP.get(uri)
         temp_file.write(content)
