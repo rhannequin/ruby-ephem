@@ -1,225 +1,200 @@
 # frozen_string_literal: true
 
 RSpec.describe Ephem::Computation::ChebyshevPolynomial do
-  describe "#initialize" do
-    it "raises error for non-NArray coefficients" do
-      expect do
-        described_class.new(
-          coefficients: [[1, 1, 1]],
-          normalized_time: 0.5
-        )
-      end.to raise_error(
-        Ephem::InvalidInputError,
-        "Coefficients must be a 2D Numo::NArray"
-      )
-    end
+  describe ".evaluate" do
+    context "with degree 1 (constant only)" do
+      it "returns the constant vector" do
+        coeffs = [[1.0, 2.0, 3.0]]
+        t = 0.123
 
-    it "raises error for 1D coefficients" do
-      expect do
-        described_class.new(
-          coefficients: Numo::DFloat.cast([1, 1, 1]),
-          normalized_time: 0.5
-        )
-      end.to raise_error(
-        Ephem::InvalidInputError,
-        "Coefficients must be a 2D Numo::NArray"
-      )
-    end
+        result = described_class.evaluate(coeffs, t)
 
-    it "raises error for normalized_time below -1" do
-      coefficients = Numo::DFloat.cast([[1.0, 1.0, 1.0]])
-
-      expect do
-        described_class.new(
-          coefficients: coefficients,
-          normalized_time: -1.1
-        )
-      end.to raise_error(
-        Ephem::InvalidInputError,
-        "Normalized time must be in range [-1, 1]"
-      )
-    end
-
-    it "raises error for normalized_time above 1" do
-      coefficients = Numo::DFloat.cast([[1.0, 1.0, 1.0]])
-
-      expect do
-        described_class.new(
-          coefficients: coefficients,
-          normalized_time: 1.1
-        )
-      end.to raise_error(
-        Ephem::InvalidInputError,
-        "Normalized time must be in range [-1, 1]"
-      )
-    end
-  end
-
-  describe "#evaluate" do
-    context "with degree 1" do
-      it "returns correct evaluation for constant polynomial" do
-        coefficients = Numo::DFloat.cast([[1.0, 1.0, 1.0]])
-        polynomial = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5
-        )
-
-        result = polynomial.evaluate
-
-        expect(result).to be_a(Numo::DFloat)
-        expect(result.shape[0]).to eq(3)
-        expect(result).to eq(Numo::DFloat[1.0, 1.0, 1.0])
+        expect(result).to eq([1.0, 2.0, 3.0])
       end
     end
 
-    context "with degree 2" do
-      it "returns correct evaluation for linear polynomial" do
-        coefficients = Numo::DFloat.cast([
-          [1.0, 1.0, 1.0],
-          [2.0, 2.0, 2.0]
-        ])
-        polynomial = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5
-        )
+    context "with degree 2 (constant + linear)" do
+      it "returns componentwise a0 + t*a1" do
+        coeffs = [
+          [1.0, 5.0, -2.0],
+          [2.0, 1.5, 0.0]
+        ]
+        t = 0.75
+        expected = [
+          1.0 + 2.0 * 0.75,
+          5.0 + 1.5 * 0.75,
+          -2.0 + 0.0 * 0.75
+        ]
 
-        result = polynomial.evaluate
+        result = described_class.evaluate(coeffs, t)
 
-        expected = coefficients[0, true] + coefficients[1, true] * 0.5
-        expect(result).to be_within(1e-10).of(expected)
+        expect_vector_close(result, expected)
       end
     end
 
-    context "with higher degree polynomials" do
-      it "returns result with correct shape" do
-        coefficients = Numo::DFloat.cast([
-          [1.0, 1.0, 1.0],
-          [2.0, 2.0, 2.0],
-          [3.0, 3.0, 3.0]
-        ])
-        polynomial = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5
-        )
+    context "with degree 3 (quadratic)" do
+      it "matches explicit sum a0*T0 + a1*T1 + a2*T2" do
+        coeffs = [
+          [1.0, 2.0, 3.0],
+          [4.0, 0.5, 0.0],
+          [-1.0, 2.0, 1.5]
+        ]
+        t = -0.2
+        t0 = 1
+        t1 = t
+        t2 = 2 * t * t - 1
+        expected = [
+          coeffs[0][0] * t0 + coeffs[1][0] * t1 + coeffs[2][0] * t2,
+          coeffs[0][1] * t0 + coeffs[1][1] * t1 + coeffs[2][1] * t2,
+          coeffs[0][2] * t0 + coeffs[1][2] * t1 + coeffs[2][2] * t2
+        ]
 
-        result = polynomial.evaluate
+        result = described_class.evaluate(coeffs, t)
 
-        expect(result).to be_a(Numo::DFloat)
-        expect(result.shape[0]).to eq(3)
+        expect_vector_close(result, expected)
       end
+    end
 
-      it "returns consistent results on multiple evaluations" do
-        coefficients = Numo::DFloat.cast([
-          [1.0, 1.0, 1.0],
-          [2.0, 2.0, 2.0],
-          [3.0, 3.0, 3.0]
-        ])
-        polynomial = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5
-        )
+    context "with longer coefficients array" do
+      it "returns array of size 3" do
+        coeffs = [
+          [1.0, 2.0, 3.0],
+          [4.0, 5.0, 6.0],
+          [7.0, 8.0, 9.0],
+          [2.0, 1.0, 0.0]
+        ]
+        t = 0.333
 
-        first_result = polynomial.evaluate
-        second_result = polynomial.evaluate
+        result = described_class.evaluate(coeffs, t)
 
-        expect(first_result).to eq(second_result)
+        expect(result.size).to eq(3)
       end
+    end
 
-      it "returns different results for different normalized times" do
-        coefficients = Numo::DFloat.cast([
-          [1.0, 1.0, 1.0],
-          [2.0, 2.0, 2.0],
-          [3.0, 3.0, 3.0]
-        ])
+    it "returns the same result for repeated calls" do
+      coeffs = [
+        [0.2, 1.5, 3.7],
+        [0.3, -0.1, 0.4],
+        [1.0, -0.5, -0.75]
+      ]
+      t = 0.62
 
-        result1 = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5
-        ).evaluate
-        result2 = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.6
-        ).evaluate
+      result1 = described_class.evaluate(coeffs, t)
+      result2 = described_class.evaluate(coeffs, t)
 
-        expect(result1).not_to eq(result2)
-      end
+      expect(result1).to eq(result2)
+    end
+
+    it "returns different results for different normalized_time" do
+      coeffs = [
+        [2.0, 1.0, -1.0],
+        [0.1, 0.05, -0.09]
+      ]
+
+      result1 = described_class.evaluate(coeffs, 0.9)
+      result2 = described_class.evaluate(coeffs, -0.9)
+
+      expect(result1).not_to eq(result2)
     end
   end
 
-  describe "#evaluate_derivative" do
-    context "with degree < 2" do
-      it "returns zero array" do
-        coefficients = Numo::DFloat.cast([[1.0, 1.0, 1.0]])
-        polynomial = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5,
-          radius: 1000.0
-        )
+  describe ".evaluate_derivative" do
+    context "with degree 1 (constant only)" do
+      it "returns zero vector" do
+        coeffs = [[1.0, 2.0, 3.0]]
+        t = -0.2
+        radius = 1000.0
 
-        result = polynomial.evaluate_derivative
+        result = described_class.evaluate_derivative(coeffs, t, radius)
 
-        expect(result).to eq(Numo::DFloat.zeros(3))
+        expect(result).to eq([0.0, 0.0, 0.0])
       end
     end
 
-    context "with degree >= 2" do
-      it "returns result with correct shape" do
-        coefficients = Numo::DFloat.cast([
-          [1.0, 1.0, 1.0],
-          [2.0, 2.0, 2.0],
-          [3.0, 3.0, 3.0]
-        ])
-        polynomial = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5,
-          radius: 1000.0
-        )
+    context "with degree 2 (constant + linear)" do
+      it "returns 2*a1 * scale" do
+        coeffs = [
+          [0.0, 0.0, 0.0],
+          [2.0, -1.5, 4.0]
+        ]
+        t = 0.0
+        radius = 123.0
+        scale = Ephem::Core::Constants::Time::SECONDS_PER_DAY / (2.0 * radius)
+        expected = [2 * 2.0 * scale, 2 * -1.5 * scale, 2 * 4.0 * scale]
 
-        result = polynomial.evaluate_derivative
+        result = described_class.evaluate_derivative(coeffs, t, radius)
 
-        expect(result).to be_a(Numo::DFloat)
-        expect(result.shape[0]).to eq(3)
+        expect_vector_close(result, expected)
       end
+    end
 
-      it "returns consistent derivative results when evaluating multiple times" do
-        coefficients = Numo::DFloat.cast([
-          [1.0, 1.0, 1.0],
-          [2.0, 2.0, 2.0],
-          [3.0, 3.0, 3.0]
-        ])
-        polynomial = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5,
-          radius: 1000.0
-        )
+    context "with degree 3 (quadratic)" do
+      it "computes correct Chebyshev derivative" do
+        coeffs = [
+          [1.0, 2.0, 3.0],
+          [0.5, 0.2, -1.5],
+          [-0.25, 1.0, 2.0]
+        ]
+        t = 0.15
+        radius = 2000.0
 
-        polynomial.evaluate
-        first_derivative = polynomial.evaluate_derivative
-        second_derivative = polynomial.evaluate_derivative
+        result = described_class.evaluate_derivative(coeffs, t, radius)
 
-        expect(first_derivative).to eq(second_derivative)
+        expect(result.size).to eq(3)
       end
+    end
 
-      it "scales derivative with radius" do
-        coefficients = Numo::DFloat.cast([
-          [1.0, 1.0, 1.0],
-          [2.0, 2.0, 2.0],
-          [3.0, 3.0, 3.0]
-        ])
+    it "scales velocity according to radius" do
+      coeffs = [
+        [0.0, 0.0, 0.0],
+        [2.0, -2.0, 4.0]
+      ]
+      t = 0.25
+      radius1 = 1000.0
+      radius2 = 500.0
 
-        result_with_radius = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5,
-          radius: 1000.0
-        ).evaluate_derivative
-        result_without_radius = described_class.new(
-          coefficients: coefficients,
-          normalized_time: 0.5,
-          radius: nil
-        ).evaluate_derivative
+      result1 = described_class.evaluate_derivative(coeffs, t, radius1)
+      result2 = described_class.evaluate_derivative(coeffs, t, radius2)
 
-        expect(result_with_radius).not_to eq(result_without_radius)
-      end
+      expect(result1).not_to eq(result2)
+    end
+
+    it "returns the same result for repeated calls" do
+      coeffs = [
+        [1.1, -0.1, 0.5],
+        [0.0, 2.0, -2.0],
+        [0.5, -1.0, 3.0]
+      ]
+      t = 0.58
+      radius = 432.0
+
+      result1 = described_class.evaluate_derivative(coeffs, t, radius)
+      result2 = described_class.evaluate_derivative(coeffs, t, radius)
+
+      expect(result1).to eq(result2)
+    end
+
+    it "returns different results for different normalized_time" do
+      coeffs = [
+        [2.0, 1.0, -1.0],
+        [0.1, 0.05, -0.09],
+        [0.2, -0.7, 0.5]
+      ]
+      t = 0.3
+      t2 = -0.3
+      radius = 111.1
+
+      result1 = described_class.evaluate_derivative(coeffs, t, radius)
+      result2 = described_class.evaluate_derivative(coeffs, t2, radius)
+
+      expect(result1).not_to eq(result2)
+    end
+  end
+
+  def expect_vector_close(result, expected, tol = 1e-10)
+    expect(result.size).to eq(expected.size)
+    result.zip(expected).each do |a, b|
+      expect(a).to be_within(tol).of(b)
     end
   end
 end
