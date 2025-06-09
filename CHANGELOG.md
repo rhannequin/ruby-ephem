@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.4.0] - 2025-06-09
+
+### Improvements
+
+* Improve Chebyshev polynomial performance ([#33])
+* Improve download file management ([#34])
+* Validate against all kernels and date ranges ([#36])
+* Add supported Ruby versions ([#35])
+* Bump rspec from 3.13.0 to 3.13.1 by @dependabot ([#38])
+* Bump rake from 13.2.1 to 13.3.0 by @dependabot ([#39])
+* Bump csv from 3.3.4 to 3.3.5 by @dependabot ([#40])
+
+[#33]: https://github.com/rhannequin/ruby-ephem/pull/33
+[#34]: https://github.com/rhannequin/ruby-ephem/pull/34
+[#35]: https://github.com/rhannequin/ruby-ephem/pull/35
+[#36]: https://github.com/rhannequin/ruby-ephem/pull/36
+[#38]: https://github.com/rhannequin/ruby-ephem/pull/38
+[#39]: https://github.com/rhannequin/ruby-ephem/pull/39
+[#40]: https://github.com/rhannequin/ruby-ephem/pull/40
+
+**Full Changelog**: https://github.com/rhannequin/ruby-ephem/compare/v0.3.1...v0.4.0
+
 ## [0.3.1] - 2025-05-16
 
 ### Bug fixes
