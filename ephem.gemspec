@@ -25,7 +25,14 @@ Gem::Specification.new do |spec|
   spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
     ls.readlines("\x0", chomp: true).reject do |f|
       (f == gemspec) || f.start_with?(
-        *%w[bin/ test/ spec/ features/ .git .github appveyor Gemfile]
+        *%w[
+          bin/
+          spec/
+          lib/ephem/tasks/
+          .git
+          .github
+          Gemfile
+        ]
       )
     end
   end
