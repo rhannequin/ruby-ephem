@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1] - 2025-08-03
+
+### Improvements
+
+* Exclude BSP files from release ([#42])
+
+[#42]: https://github.com/rhannequin/ruby-ephem/pull/42
+
+**Full Changelog**: https://github.com/rhannequin/ruby-ephem/compare/v0.4.0...v0.4.1
+
 ## [0.4.0] - 2025-06-09
 
 ### Improvements
