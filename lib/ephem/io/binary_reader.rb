@@ -81,12 +81,14 @@ module Ephem
       def read_and_pad_record
         data = @file.read(RECORD_SIZE)
         raise IOError, "Failed to read record" unless data
+
         data.ljust(RECORD_SIZE, "\0")
       end
 
       def read_array_data(length, endianness)
         data = @file.read(8 * length)
         raise IOError, "Failed to read array" unless data
+
         data.unpack("#{endianness_format(endianness)}#{length}")
       end
 
