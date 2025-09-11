@@ -169,11 +169,13 @@ module Ephem
 
       def extract_values(data)
         return [] if data.nil? || data.empty?
+
         data.unpack(@summary_format)
       end
 
       def extract_name(data)
         return "" if data.nil? || data.empty?
+
         data.strip
       end
 
