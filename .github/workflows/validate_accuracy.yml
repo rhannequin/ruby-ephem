@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Validate (${{ matrix.kernel }}/2000-2050/${{ matrix.target }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
