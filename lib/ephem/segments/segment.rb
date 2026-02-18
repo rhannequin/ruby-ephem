@@ -184,16 +184,10 @@ module Ephem
 
         @midpoints = coefficients[0...segment_count, 0].to_a
         @radii = coefficients[0...segment_count, 1].to_a
-        n_terms = coefficient_count
-        n_components = component_count
+        @n_terms = coefficient_count
 
         @coefficients = Array.new(segment_count) do |i|
-          row = coefficients[i, 2..-1].to_a
-          Array.new(n_terms) do |k|
-            Array.new(n_components) do |j|
-              row[k + j * n_terms]
-            end
-          end
+          coefficients[i, 2..-1].to_a
         end
       end
 
@@ -231,13 +225,15 @@ module Ephem
         interval = find_interval(tdb_seconds)
         normalized_time = compute_normalized_time(tdb_seconds, interval)
 
-        coeffs = @coefficients[interval] # already [n_terms][3]
+        coeffs = @coefficients[interval]
         position = Computation::ChebyshevPolynomial.evaluate(
           coeffs,
+          @n_terms,
           normalized_time
         )
         velocity = Computation::ChebyshevPolynomial.evaluate_derivative(
           coeffs,
+          @n_terms,
           normalized_time,
           @radii[interval]
         )
