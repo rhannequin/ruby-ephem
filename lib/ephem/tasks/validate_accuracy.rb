@@ -18,7 +18,8 @@ module Ephem
         "de440s" => "de440s_excerpt"
       }.freeze
 
-      ERROR_MARGIN = 0.000002 # 2 centimeters
+      POSITION_ERROR_MARGIN = 0.0 # exact match
+      VELOCITY_ERROR_MARGIN = 0.000000002 # 0.002 mm/s
 
       def self.run(date:, kernel:, target:)
         new.run(date: date, kernel: kernel, target: target)
@@ -29,6 +30,7 @@ module Ephem
         @start_date = date
         @kernel_name = kernel
         @target = target.to_i
+        @max_errors = {dx: 0, dy: 0, dz: 0, dvx: 0, dvy: 0, dvz: 0}
 
         perform_task
         @end_time = Time.now
@@ -38,6 +40,7 @@ module Ephem
         true
       rescue ValidationError => e
         puts "Error occurred: #{e.message}"
+        puts max_errors_output
         false
       end
 
@@ -70,9 +73,21 @@ module Ephem
           delta_vy = (vy - velocity.y).abs
           delta_vz = (vz - velocity.z).abs
 
-          if [delta_x, delta_y, delta_z, delta_vx, delta_vy, delta_vz].any? { _1 > ERROR_MARGIN }
+          @max_errors[:dx] = [delta_x, @max_errors[:dx]].max
+          @max_errors[:dy] = [delta_y, @max_errors[:dy]].max
+          @max_errors[:dz] = [delta_z, @max_errors[:dz]].max
+          @max_errors[:dvx] = [delta_vx, @max_errors[:dvx]].max
+          @max_errors[:dvy] = [delta_vy, @max_errors[:dvy]].max
+          @max_errors[:dvz] = [delta_vz, @max_errors[:dvz]].max
+
+          if [delta_x, delta_y, delta_z].any? { _1 > POSITION_ERROR_MARGIN }
             raise ValidationError,
-              "Error for #{@kernel_name} at #{jd} with target #{@target}"
+              "Position error for #{@kernel_name} at #{jd} with target #{@target}"
+          end
+
+          if [delta_vx, delta_vy, delta_vz].any? { _1 > VELOCITY_ERROR_MARGIN }
+            raise ValidationError,
+              "Velocity error for #{@kernel_name} at #{jd} with target #{@target}"
           end
         end
       end
@@ -106,7 +121,14 @@ module Ephem
       def output
         duration = (@end_time - @start_time).to_i
         title = "#{@kernel_name}/2000-2050/#{@target}"
-        "#{validations_count} validation passed (#{title}) in #{duration} seconds."
+        "#{validations_count} validation passed (#{title}) in #{duration} seconds.\n#{max_errors_output}"
+      end
+
+      def max_errors_output
+        pos = @max_errors.slice(:dx, :dy, :dz)
+        vel = @max_errors.slice(:dvx, :dvy, :dvz)
+        "Max position errors (km): #{pos.map { |k, v| "#{k}=#{v}" }.join(", ")}\n" \
+          "Max velocity errors (km/s): #{vel.map { |k, v| "#{k}=#{v}" }.join(", ")}"
       end
     end
   end
