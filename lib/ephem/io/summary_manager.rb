@@ -57,6 +57,7 @@ module Ephem
         @record_data = record_data
         @binary_reader = binary_reader
         @endianness = endianness
+        @record_parser = RecordParser.new(endianness: @endianness)
         setup_summary_format
       end
 
@@ -148,10 +149,9 @@ module Ephem
       end
 
       def parse_control_data(data)
-        control_data = data[0, RecordParser::SUMMARY_CONTROL_SIZE]
-        RecordParser
-          .new(endianness: @endianness)
-          .parse_summary_control(control_data)
+        @record_parser.parse_summary_control(
+          data[0, RecordParser::SUMMARY_CONTROL_SIZE]
+        )
       end
 
       def extract_summary_data(data)
