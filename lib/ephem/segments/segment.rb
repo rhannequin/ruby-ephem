@@ -209,10 +209,7 @@ module Ephem
       end
 
       def time_to_seconds(time, offset)
-        (time - Time::J2000_EPOCH) *
-          Time::SECONDS_PER_DAY +
-          offset *
-            Time::SECONDS_PER_DAY
+        (time - Time::J2000_EPOCH + offset) * Time::SECONDS_PER_DAY
       end
 
       def generate(tdb, tdb2)
