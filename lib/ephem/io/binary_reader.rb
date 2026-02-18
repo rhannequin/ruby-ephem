@@ -4,6 +4,8 @@ module Ephem
   module IO
     class BinaryReader
       RECORD_SIZE = 1024
+      ENDIANNESS_DOUBLE_FORMATS = {little: "E", big: "G"}.freeze
+      ENDIANNESS_UINT32_FORMATS = {little: "V", big: "N"}.freeze
 
       def initialize(file_object)
         validate_file_object(file_object)
@@ -93,10 +95,8 @@ module Ephem
       end
 
       def endianness_format(endianness)
-        case endianness
-        when :little then "E"
-        when :big then "G"
-        else raise ArgumentError, "Invalid endianness: #{endianness}"
+        ENDIANNESS_DOUBLE_FORMATS.fetch(endianness) do
+          raise ArgumentError, "Invalid endianness: #{endianness}"
         end
       end
     end
