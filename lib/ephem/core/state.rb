@@ -51,6 +51,11 @@ module Ephem
         )
       end
 
+      def inspect
+        "State[position: #{position}, velocity: #{velocity}]"
+      end
+      alias_method :to_s, :inspect
+
       # Converts the state vectors to arrays.
       #
       # @return [Array<Array<Numeric>>] Array containing position and velocity
