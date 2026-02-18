@@ -3,7 +3,7 @@
 module Ephem
   module IO
     class DAF
-      attr_reader :record_data, :endianness
+      attr_reader :binary_reader, :record_data, :endianness
 
       def initialize(file_object)
         @binary_reader = BinaryReader.new(file_object)

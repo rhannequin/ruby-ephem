@@ -27,7 +27,7 @@ module Ephem
     DATA_TYPE_IDENTIFIER = 5
     SEGMENT_CLASSES = {}
 
-    attr_reader :segments, :pairs
+    attr_reader :daf, :segments, :pairs
 
     # Creates a new SPK instance with the given DAF.
     #
