@@ -22,13 +22,13 @@ module Ephem
         b1x = b1y = b1z = 0.0
         b2x = b2y = b2z = 0.0
 
+        t2 = 2.0 * t
         k = n - 1
         while k > 0
           c = coeffs[k]
           c0 = c[0]
           c1 = c[1]
           c2 = c[2]
-          t2 = 2.0 * t
           tx = t2 * b1x - b2x + c0
           ty = t2 * b1y - b2y + c1
           tz = t2 * b1z - b2z + c2
@@ -62,13 +62,13 @@ module Ephem
         d1x = d1y = d1z = 0.0
         d2x = d2y = d2z = 0.0
 
+        t2 = 2.0 * t
         k = n - 1
         while k > 0
           c = coeffs[k]
           c0 = c[0]
           c1 = c[1]
           c2 = c[2]
-          t2 = 2.0 * t
           k2 = 2 * k
           tx = t2 * d1x - d2x + k2 * c0
           ty = t2 * d1y - d2y + k2 * c1
