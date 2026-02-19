@@ -43,11 +43,11 @@ module Ephem
       end
 
       def endian_uint32
-        (@endianness == :little) ? "V" : "N"
+        BinaryReader::ENDIANNESS_UINT32_FORMATS[@endianness]
       end
 
       def endian_double
-        (@endianness == :little) ? "E" : "G"
+        BinaryReader::ENDIANNESS_DOUBLE_FORMATS[@endianness]
       end
     end
   end
