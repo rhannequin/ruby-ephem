@@ -71,7 +71,19 @@ module Ephem
       # @example Computing Earth's position relative to Solar System Barycenter
       #   position = segment.compute(2451545.0)  # J2000 epoch
       def compute(tdb, tdb2 = 0.0)
-        Core::Vector.new(*generate(tdb, tdb2).first)
+        load_data
+        tdb_seconds = convert_to_seconds(tdb, tdb2)
+
+        case tdb_seconds
+        when Numeric
+          position = generate_position(tdb_seconds)
+          Core::Vector.new(position[0], position[1], position[2])
+        else
+          tdb_seconds.map do |t|
+            position = generate_position(t)
+            Core::Vector.new(position[0], position[1], position[2])
+          end
+        end
       end
       alias_method :position_at, :compute
 
@@ -225,6 +237,13 @@ module Ephem
         else
           generate_multiple(tdb_seconds)
         end
+      end
+
+      def generate_position(tdb_seconds)
+        interval = find_interval(tdb_seconds)
+        normalized_time = compute_normalized_time(tdb_seconds, interval)
+        coeffs = @coefficients[interval]
+        Computation::ChebyshevPolynomial.evaluate(coeffs, normalized_time)
       end
 
       def generate_single(tdb_seconds)
