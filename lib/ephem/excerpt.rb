@@ -22,8 +22,8 @@ module Ephem
     # @param spk [Ephem::SPK] The SPK object to create an excerpt from
     def initialize(spk)
       @spk = spk
-      @daf = spk.instance_variable_get(:@daf)
-      @binary_reader = @daf.instance_variable_get(:@binary_reader)
+      @daf = spk.daf
+      @binary_reader = @daf.binary_reader
     end
 
     # Creates an excerpt of the SPK file
