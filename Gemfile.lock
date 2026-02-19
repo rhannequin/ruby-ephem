@@ -10,6 +10,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     ast (2.4.3)
+    benchmark-ips (2.14.0)
     csv (3.3.5)
     date (3.4.1)
     diff-lcs (1.6.2)
@@ -97,6 +98,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  benchmark-ips (~> 2.14)
   csv (~> 3.3)
   ephem!
   irb (~> 1.15)

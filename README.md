@@ -159,6 +159,14 @@ usage time.
 
 [jplephem]: https://pypi.org/project/jplephem/
 
+## Benchmarks
+
+Run the benchmark suite to measure performance across the computation pipeline:
+
+```bash
+bundle exec ruby benchmarks/run.rb
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run
