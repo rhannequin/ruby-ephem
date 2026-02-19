@@ -125,10 +125,10 @@ module Ephem
 
       def iterate_summary_chain(record_number)
         while record_number != 0
-          process_summary_record(record_number) do |name, values|
-            yield name, values
-          end
-          record_number = get_next_record(record_number)
+          record_number =
+            process_summary_record(record_number) do |name, values|
+              yield name, values
+            end
         end
       end
 
@@ -145,6 +145,8 @@ module Ephem
         ) do |name, values|
           yield name, values
         end
+
+        control[:next_record]
       end
 
       def parse_control_data(data)
@@ -177,11 +179,6 @@ module Ephem
         return "" if data.nil? || data.empty?
 
         data.strip
-      end
-
-      def get_next_record(record_number)
-        data = @binary_reader.read_record(record_number)
-        parse_control_data(data)[:next_record]
       end
 
       def endian_double
