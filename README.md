@@ -136,8 +136,8 @@ The times tested are noon UTC for every day between 2000-01-01 and
 2050-01-01. Vectors tested are always with `center` 0 (Solar System Barycenter),
 and `target` from `1` (Mercury Barycenter) to `10` (Sun).
 
-Rake tasks ensure data from this library match with `jplephem` with a margin
-error of 2 centimeters.
+Rake tasks ensure data from this library match with `jplephem`. Positions match
+exactly and velocities are within 0.002 mm/s.
 
 You can run them by following this pattern:
 
