@@ -42,7 +42,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "minitar", "~> 0.12"
-  spec.add_dependency "numo-narray", "~> 0.9.2.1"
   spec.add_dependency "zlib", "~> 3.2"
 
   spec.add_development_dependency "csv", "~> 3.3"

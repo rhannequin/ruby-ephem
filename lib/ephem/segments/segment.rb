@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "numo/narray"
-
 module Ephem
   module Segments
     # Manages data segments within SPICE kernel (SPK) files, providing methods
@@ -186,21 +184,15 @@ module Ephem
       def process_coefficient_data(data, component_count)
         coefficients_raw, record_size, segment_count, coefficient_count = data
 
-        # Convert raw coefficient data to Numo::DFloat and reshape to 2D array.
-        # Numo::NArray allows efficient numerical computations on arrays.
-        # It provides ndarray data structures and supports various arithmetic
-        # operations. Using Numo::DFloat ensures the array elements are 64-bit
-        # floating point numbers.
-        coefficients = Numo::DFloat.cast(coefficients_raw)
-        coefficients = coefficients.reshape(segment_count, record_size)
+        coefficients = coefficients_raw.each_slice(record_size).to_a
 
-        @midpoints = coefficients[0...segment_count, 0].to_a
-        @radii = coefficients[0...segment_count, 1].to_a
+        @midpoints = coefficients.map { |row| row[0] }
+        @radii = coefficients.map { |row| row[1] }
         n_terms = coefficient_count
         n_components = component_count
 
         @coefficients = Array.new(segment_count) do |i|
-          row = coefficients[i, 2..-1].to_a
+          row = coefficients[i][2..]
           Array.new(n_terms) do |k|
             Array.new(n_components) do |j|
               row[k + j * n_terms]
@@ -213,8 +205,6 @@ module Ephem
         case tdb
         when Array
           tdb.map { |t| time_to_seconds(t, tdb2) }
-        when Numo::NArray
-          tdb.to_a.map { |t| time_to_seconds(t, tdb2) }
         else
           time_to_seconds(tdb, tdb2)
         end
