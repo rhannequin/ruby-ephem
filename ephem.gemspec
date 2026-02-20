@@ -40,6 +40,7 @@ Gem::Specification.new do |spec|
   spec.bindir = "bin"
   spec.executables = ["ruby-ephem"]
   spec.require_paths = ["lib"]
+  spec.extensions = ["ext/ephem/chebyshev/extconf.rb"]
 
   spec.add_dependency "minitar", "~> 0.12"
   spec.add_dependency "numo-narray", "~> 0.9.2.1"
@@ -51,5 +52,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.13"
   spec.add_development_dependency "benchmark-ips", "~> 2.14"
+  spec.add_development_dependency "rake-compiler", "~> 1.2"
   spec.add_development_dependency "standard", "~> 1.43"
 end

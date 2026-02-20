@@ -9,3 +9,13 @@
 
 # rspec failure tracking
 .rspec_status
+
+# C extension build artifacts
+/lib/ephem/*.so
+/lib/ephem/*.bundle
+/lib/ephem/*.dll
+/ext/ephem/chebyshev/Makefile
+/ext/ephem/chebyshev/*.o
+/ext/ephem/chebyshev/*.bundle
+/ext/ephem/chebyshev/*.so
+/ext/ephem/chebyshev/*.dSYM
