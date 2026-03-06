@@ -88,3 +88,12 @@ module Ephem
     end
   end
 end
+
+# Attempt to load the C extension, which redefines the methods above.
+# If compilation is not available (e.g., JRuby, TruffleRuby, or missing
+# compiler), the pure-Ruby implementation remains in place.
+begin
+  require "ephem/chebyshev"
+rescue LoadError
+  # C extension not available; pure-Ruby fallback is already loaded above.
+end
