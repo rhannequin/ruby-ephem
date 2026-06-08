@@ -99,6 +99,60 @@ puts "Velocity: #{state.velocity}"
 # The velocity is expressed in km/day
 ```
 
+## Orientation kernels (binary PCK)
+
+Binary PCK (`DAF/PCK`) kernels store the orientation of a body frame over time
+as Euler angles, rather than position. The most common use is the Moon's
+physical libration via a lunar orientation kernel such as
+`moon_pa_de440_200625.bpc`.
+
+```rb
+# Download and load a binary PCK orientation kernel
+Ephem::Download.call(
+  name: "moon_pa_de440_200625.bpc",
+  target: "tmp/moon_pa_de440_200625.bpc"
+)
+pck = Ephem::PCK.open("tmp/moon_pa_de440_200625.bpc")
+
+puts pck
+# => PCK file with 2 segments:
+# 1549-12-21..2426-02-16 Type 2 orientation of frame 31008 relative to frame 1
+# 2426-02-16..2650-01-25 Type 2 orientation of frame 31008 relative to frame 1
+
+# Query a body frame by its NAIF frame ID (31008 = MOON_PA_DE440).
+# The time is expressed in Julian Date (TDB).
+frame = pck[31008]
+orientation = frame.orientation_at(2451545.0)
+
+# The three classical 3-1-3 (Z-X-Z) Euler angles, in radians
+puts "phi:   #{orientation.phi}"
+puts "theta: #{orientation.theta}"
+puts "psi:   #{orientation.psi}"
+
+# Rates are in radians/day (ephem's per-day convention, like SPK velocities)
+puts "rates: #{orientation.rates.inspect}"
+
+# Use #angles_at when you do not need the rates (it skips the derivative)
+angles = frame.angles_at(2451545.0)
+
+pck.close
+```
+
+`Ephem::Core::Rotation` provides kernel-agnostic helpers to turn Euler angles
+into a 3x3 rotation matrix and apply it to a vector, so you can build a
+body-fixed frame from the angles:
+
+```rb
+phi, theta, psi = angles.to_a
+# Compose the inertial -> body-fixed rotation (3-1-3 sequence)
+matrix = Ephem::Core::Rotation.multiply(
+  Ephem::Core::Rotation.about_z(psi),
+  Ephem::Core::Rotation.about_x(theta),
+  Ephem::Core::Rotation.about_z(phi)
+)
+body_fixed = Ephem::Core::Rotation.apply(matrix, some_vector)
+```
+
 ## CLI
 
 The gem also provides a CLI to generate an excerpt from an original kernel file.

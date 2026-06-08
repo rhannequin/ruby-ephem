@@ -16,4 +16,8 @@ module TestSpkHelper
   def inpop21a_2000_excerpt
     File.path("#{__dir__}/data/inpop21a_2000_excerpt.bsp")
   end
+
+  def moon_pa_de440_excerpt
+    File.path("#{__dir__}/data/moon_pa_de440_excerpt.bpc")
+  end
 end

@@ -25,7 +25,6 @@ module Ephem
     DE_FILENAME = "NIO2SPK"
 
     DATA_TYPE_IDENTIFIER = 5
-    SEGMENT_CLASSES = {}
 
     attr_reader :daf, :segments, :pairs
 
@@ -49,6 +48,11 @@ module Ephem
     # @raise [ArgumentError] If the file cannot be accessed due to permissions
     def self.open(path)
       daf = IO::DAF.new(File.open(path, "rb"))
+      if daf.file_type == :pck
+        daf.close
+        raise ArgumentError, "#{path} is a binary PCK file, use Ephem::PCK.open"
+      end
+
       new(daf: daf)
     rescue Errno::EACCES => e
       raise ArgumentError, "File permission denied: #{path} (#{e.message})"
@@ -77,8 +81,8 @@ module Ephem
     #
     # @param center [Integer] NAIF ID of the center body
     # @param target [Integer] NAIF ID of the target body
-    # @return [Segments::BaseSegment] The segment containing data for the
-    #   specified bodies
+    # @return [Segments::PositionGroup] The position segment(s) for the
+    # specified bodies, routing each query to the segment covering the requested time
     # @raise [KeyError] If no segment is found for the given center-target pair
     def [](center, target)
       @pairs.fetch([center, target]) do
@@ -139,14 +143,20 @@ module Ephem
     end
 
     def build_pairs
-      @segments.to_h do |segment|
-        [[segment.center, segment.target], segment]
-      end
+      @segments
+        .group_by { |segment| [segment.center, segment.target] }
+        .transform_values do |segments|
+          segments.one? ? segments.first : Segments::PositionGroup.new(segments)
+        end
     end
 
     def build_segment(source:, descriptor:)
       data_type = descriptor[DATA_TYPE_IDENTIFIER]
-      segment_class = SEGMENT_CLASSES.fetch(data_type, Segments::BaseSegment)
+      segment_class = Segments::Registry.lookup(
+        :spk,
+        data_type,
+        Segments::BaseSegment
+      )
       segment_class.new(daf: @daf, source: source, descriptor: descriptor)
     end
   end

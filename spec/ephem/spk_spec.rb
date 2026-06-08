@@ -18,10 +18,18 @@ RSpec.describe Ephem::SPK do
 
       allow(daf_double).to receive(:summaries)
         .and_return([])
+      allow(daf_double).to receive(:file_type)
+        .and_return(:spk)
 
       spk = described_class.open("spk_file.bsp")
 
       expect(spk).to be_an_instance_of(described_class)
+    end
+
+    it "rejects a binary PCK file" do
+      expect { described_class.open(moon_pa_de440_excerpt) }.to raise_error(
+        ArgumentError, /binary PCK file, use Ephem::PCK/
+      )
     end
   end
 

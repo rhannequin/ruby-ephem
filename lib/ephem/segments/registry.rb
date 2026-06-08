@@ -2,9 +2,15 @@
 
 module Ephem
   module Segments
-    class Registry
-      def self.register(type, klass)
-        SPK::SEGMENT_CLASSES[type] = klass
+    module Registry
+      TABLES = {spk: {}, pck: {}}.freeze
+
+      def self.register(kind, type, klass)
+        TABLES.fetch(kind)[type] = klass
+      end
+
+      def self.lookup(kind, type, default = nil)
+        TABLES.fetch(kind).fetch(type, default)
       end
     end
   end
