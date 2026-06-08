@@ -128,7 +128,7 @@ module Ephem
         pos = @max_errors.slice(:dx, :dy, :dz)
         vel = @max_errors.slice(:dvx, :dvy, :dvz)
         "Max position errors (km): #{pos.map { |k, v| "#{k}=#{v}" }.join(", ")}\n" \
-          "Max velocity errors (km/s): #{vel.map { |k, v| "#{k}=#{v}" }.join(", ")}"
+          "Max velocity errors (km/day): #{vel.map { |k, v| "#{k}=#{v}" }.join(", ")}"
       end
     end
   end

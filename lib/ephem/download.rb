@@ -11,6 +11,8 @@ module Ephem
   class Download
     JPL_BASE_URL = "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/"
     IMCCE_BASE_URL = "https://ftp.imcce.fr/pub/ephem/planets/"
+    NAIF_PCK_BASE_URL =
+      "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/"
 
     JPL_KERNELS = %w[
       de102.bsp
@@ -59,6 +61,11 @@ module Ephem
       de441.bsp
     ].freeze
 
+    NAIF_PCK_KERNELS = %w[
+      moon_pa_de421_1900-2050.bpc
+      moon_pa_de440_200625.bpc
+    ].freeze
+
     IMCCE_KERNELS = {
       "inpop10b.bsp" => "inpop10b_TDB_m100_p100_spice.bsp",
       "inpop10b_large.bsp" => "inpop10b_TDB_m1000_p1000_spice.bsp",
@@ -90,7 +97,8 @@ module Ephem
       "inpop21a_large.bsp" => "inpop21a/inpop21a_TDB_m1000_p1000_spice.tar.gz"
     }.freeze
 
-    SUPPORTED_KERNELS = (JPL_KERNELS + IMCCE_KERNELS.keys).freeze
+    SUPPORTED_KERNELS =
+      (JPL_KERNELS + NAIF_PCK_KERNELS + IMCCE_KERNELS.keys).freeze
 
     def self.call(name:, target:)
       new(name, target).call
@@ -104,11 +112,21 @@ module Ephem
 
     def call
       FileUtils.mkdir_p(@target_path.dirname)
-      jpl_kernel? ? download_jpl : download_imcce
+      download_kernel
       true
     end
 
     private
+
+    def download_kernel
+      if jpl_kernel?
+        download_jpl
+      elsif pck_kernel?
+        download_naif_pck
+      else
+        download_imcce
+      end
+    end
 
     def validate_requested_kernel!
       unless SUPPORTED_KERNELS.include?(@name)
@@ -121,8 +139,20 @@ module Ephem
       JPL_KERNELS.include?(@name)
     end
 
+    def pck_kernel?
+      NAIF_PCK_KERNELS.include?(@name)
+    end
+
     def download_jpl
-      uri = URI.join(JPL_BASE_URL, @name)
+      download_direct(JPL_BASE_URL)
+    end
+
+    def download_naif_pck
+      download_direct(NAIF_PCK_BASE_URL)
+    end
+
+    def download_direct(base_url)
+      uri = URI.join(base_url, @name)
       @target_path.open("wb") do |file|
         stream_http_to_file(uri, file)
       end
