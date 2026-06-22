@@ -52,9 +52,9 @@ module Ephem
       # @param coeffs [Array<Array<Float>>] Array of coefficients; shape is
       #   [n_terms][3].
       # @param t [Float] The normalized independent variable (in [-1, 1]).
-      # @param radius [Float] The half-length of the time interval (days).
+      # @param radius [Float] The half-length of the time interval (seconds).
       # @return [Array<Float>] The 3-vector derivative (velocity), in units per
-      #   second.
+      #   day.
       def self.evaluate_derivative(coeffs, t, radius)
         n = coeffs.size
         return [0.0, 0.0, 0.0] if n < 2
