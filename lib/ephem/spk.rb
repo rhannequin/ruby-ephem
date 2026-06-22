@@ -69,7 +69,7 @@ module Ephem
     def to_s
       <<~DESCRIPTION
         SPK file with #{@segments.size} segments:
-        #{@segments.map(&:to_s).join("\n")}
+        #{@segments.join("\n")}
       DESCRIPTION
     end
 
