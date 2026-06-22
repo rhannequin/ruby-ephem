@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ephem (0.4.1)
+    ephem (0.5.0)
       minitar (~> 0.12)
       zlib (~> 3.2)
 
