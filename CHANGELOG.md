@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.5.0] - 2026-06-22
+
+### Features
+
+* Read binary PCK (`DAF/PCK`) orientation kernels via `Ephem::PCK`, exposing a
+  body's Euler angles and rates over time (`angles_at`, `orientation_at`), the
+  foundation for DE440-grade lunar libration ([#76])
+* Add `Ephem::Core::Orientation` (Euler angles + optional rates) and
+  `Ephem::Core::Rotation` (kernel-agnostic rotation-matrix helpers), plus
+  `Orientation#to_matrix` / `OrientationSegment#matrix_at` for the built-in
+  3-1-3 (Z-X-Z) reference→body convention
+* Excerpt and the `excerpt` CLI now support binary PCK kernels, detecting the
+  kernel kind automatically
+* Download binary PCK lunar orientation kernels from NAIF via `Ephem::Download`
+
+### Improvements
+
+* Route queries to the covering segment when a body/pair spans multiple
+  time-split segments (SPK and PCK), with no overhead for single-segment keys
+* Share the type-2 Chebyshev machinery between SPK and PCK segments
+* Evaluate position and velocity in a single Chebyshev pass
+  (`ChebyshevPolynomial.evaluate_with_derivative`), speeding up every state /
+  orientation query (`compute_and_differentiate`, `state_at`, `orientation_at`)
+  with bit-for-bit identical results
+* Fix `compute_and_differentiate` returning mismatched velocities for an array
+  of times
+* Correct the documented velocity unit to km/day (the actual, validated value)
+
+[#76]: https://github.com/rhannequin/ruby-ephem/issues/76
+
+**Full Changelog**: https://github.com/rhannequin/ruby-ephem/compare/v0.4.1...v0.5.0
+
 ## [0.4.1] - 2025-08-03
 
 ### Improvements

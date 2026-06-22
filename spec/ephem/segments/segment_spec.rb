@@ -78,6 +78,20 @@ RSpec.describe Ephem::Segments::Segment do
         expect(result.velocity).to be_a(Ephem::Core::Vector)
       end
     end
+
+    it "pairs each time with its own position and velocity" do
+      first_time = Ephem::Core::Constants::Time::J2000_EPOCH
+      second_time = first_time + (15.0 / 86400.0)
+      segment = create_segment_with_data
+
+      array_results =
+        segment.compute_and_differentiate([first_time, second_time])
+      first_scalar = segment.compute_and_differentiate(first_time)
+      second_scalar = segment.compute_and_differentiate(second_time)
+
+      expect(array_results[0].to_arrays).to eq(first_scalar.to_arrays)
+      expect(array_results[1].to_arrays).to eq(second_scalar.to_arrays)
+    end
   end
 
   describe "#describe" do

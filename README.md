@@ -12,8 +12,9 @@ These files are a collection of numerical integrations of the equations of
 motion of the Solar System, used to calculate the positions of the planets,
 the Moon, and other celestial bodies with high precision.
 
-Ephem currently only support planetary ephemerides like DE421, DE430,
-INPOP19A, etc.
+Ephem supports planetary ephemerides like DE421, DE430, INPOP19A, etc. (SPK),
+as well as binary PCK orientation kernels such as the lunar orientation kernel
+`moon_pa_de440_200625.bpc`.
 
 The library is in high development mode and does not have a stable version yet.
 The API is subject to major changes at the moment, please keep that in mind if
@@ -99,6 +100,67 @@ puts "Velocity: #{state.velocity}"
 # The velocity is expressed in km/day
 ```
 
+## Orientation kernels (binary PCK)
+
+Binary PCK (`DAF/PCK`) kernels store the orientation of a body frame over time
+as Euler angles, rather than position. The most common use is the Moon's
+physical libration via a lunar orientation kernel such as
+`moon_pa_de440_200625.bpc`.
+
+```rb
+# Download and load a binary PCK orientation kernel
+Ephem::Download.call(
+  name: "moon_pa_de440_200625.bpc",
+  target: "tmp/moon_pa_de440_200625.bpc"
+)
+pck = Ephem::PCK.open("tmp/moon_pa_de440_200625.bpc")
+
+puts pck
+# => PCK file with 2 segments:
+# 1549-12-21..2426-02-16 Type 2 orientation of frame 31008 relative to frame 1
+# 2426-02-16..2650-01-25 Type 2 orientation of frame 31008 relative to frame 1
+
+# Query a body frame by its NAIF frame ID (31008 = MOON_PA_DE440).
+# The time is expressed in Julian Date (TDB).
+frame = pck[31008]
+orientation = frame.orientation_at(2451545.0)
+
+# The three classical 3-1-3 (Z-X-Z) Euler angles, in radians
+puts "phi:   #{orientation.phi}"
+puts "theta: #{orientation.theta}"
+puts "psi:   #{orientation.psi}"
+
+# Rates are in radians/day (ephem's per-day convention, like SPK velocities)
+puts "rates: #{orientation.rates.inspect}"
+
+# Use #angles_at when you do not need the rates (it skips the derivative)
+angles = frame.angles_at(2451545.0)
+
+pck.close
+```
+
+### Building the body-fixed frame
+
+The orientation maps the reference frame into the body-fixed frame through the
+3-1-3 (Z-X-Z) Euler sequence `M = Rz(psi) * Rx(theta) * Rz(phi)`. That
+convention is built in, so you can get the rotation matrix directly:
+
+```rb
+# Straight from a frame, at a given time
+matrix = frame.matrix_at(2451545.0)
+
+# ...or from an Orientation you already have
+matrix = orientation.to_matrix
+
+# Project a geocentric Earth->Moon vector into the body-fixed frame
+body_fixed = Ephem::Core::Rotation.apply(matrix, earth_to_moon)
+```
+
+`Ephem::Core::Rotation` also exposes the lower-level, kernel-agnostic building
+blocks (`about_x`, `about_y`, `about_z`, `multiply`, `apply`) if you need a
+different axis order or an additional fixed rotation (such as the PA -> ME
+offset, whose constants the consumer supplies).
+
 ## CLI
 
 The gem also provides a CLI to generate an excerpt from an original kernel file.
@@ -120,6 +182,13 @@ While DE440s originally supports 14 segments from 1849 to 2150 with a size of
 
 Not only the excerpt is smaller, but most importantly it is way more
 efficient to parse and to use in your application.
+
+The input kernel kind (SPK or binary PCK) is detected automatically, so the
+same command excerpts orientation kernels too:
+
+```bash
+ruby-ephem excerpt --targets 31008 2000-01-01 2030-01-01 /path/to/moon_pa_de440.bpc moon_excerpt.bpc
+```
 
 ## Accuracy
 

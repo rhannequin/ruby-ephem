@@ -47,22 +47,22 @@ module Ephem
         Ruby Ephem - A tool for working with JPL Ephemerides
 
         Commands:
-          excerpt - Create an excerpt of an SPK file
+          excerpt - Create an excerpt of an SPK or binary PCK kernel
           help    - Show this help message
 
         Excerpt command:
           ruby-ephem excerpt [options] START_DATE END_DATE INPUT_FILE OUTPUT_FILE
 
         Options:
-          --targets TARGET_IDS  - Comma-separated list of target IDs to include
-                                  (default: all targets)
+          --targets TARGET_IDS  - Comma-separated list of target/body IDs to
+                                  include (default: all)
 
-        Example:
+        Examples:
           ruby-ephem excerpt --targets 3,10,399 2000-01-01 2030-01-01 de440s.bsp excerpt.bsp
+          ruby-ephem excerpt --targets 31008 2000-01-01 2030-01-01 moon_pa_de440.bpc moon_excerpt.bpc
 
-        This will create an excerpt of de440s.bsp containing only the specified
-        targets (Earth-Moon barycenter, Sun, Earth) for the period from
-        2000-01-01 to 2030-01-01.
+        The input kernel kind (SPK or binary PCK) is detected automatically and
+        the excerpt is written in the same format.
       HELP
     end
 
@@ -125,9 +125,9 @@ module Ephem
           puts "Including all targets"
         end
 
-        spk = Ephem::SPK.open(input_file)
+        kernel = open_kernel(input_file)
 
-        excerpt_spk = spk.excerpt(
+        excerpt_kernel = kernel.excerpt(
           output_path: output_file,
           start_jd: start_jd,
           end_jd: end_jd,
@@ -136,8 +136,8 @@ module Ephem
         )
 
         puts "Excerpt created successfully!"
-        puts "Original segments: #{spk.segments.size}"
-        puts "Excerpt segments: #{excerpt_spk.segments.size}"
+        puts "Original segments: #{kernel.segments.size}"
+        puts "Excerpt segments: #{excerpt_kernel.segments.size}"
 
         original_size = File.size(input_file)
         excerpt_size = File.size(output_file)
@@ -148,12 +148,25 @@ module Ephem
         puts "Original: #{original_size} bytes"
         puts "Excerpt: #{excerpt_size} bytes"
 
-        spk.close
-        excerpt_spk.close
+        kernel.close
+        excerpt_kernel.close
       rescue => e
         puts "Error creating excerpt: #{e.message}"
         puts e.backtrace if options[:debug]
       end
+    end
+
+    def self.open_kernel(path)
+      daf = Ephem::IO::DAF.new(File.open(path, "rb"))
+
+      if daf.file_type == :pck
+        Ephem::PCK.new(daf: daf)
+      else
+        Ephem::SPK.new(daf: daf)
+      end
+    rescue
+      daf&.close
+      raise
     end
   end
 end

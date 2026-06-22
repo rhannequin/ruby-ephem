@@ -32,6 +32,37 @@ RSpec.describe Ephem::Download do
       end
     end
 
+    context "when downloading a NAIF binary PCK kernel" do
+      it "downloads and writes the PCK kernel file from NAIF" do
+        name = "moon_pa_de440_200625.bpc"
+        target_path = "tmp/kernel.bpc"
+        mock_content = "binary-pck-data"
+        file_io = StringIO.new
+        pathname_double = instance_double(Pathname, dirname: "tmp")
+        http_response = instance_double(Net::HTTPResponse)
+        allow(Pathname).to receive(:new)
+          .with(target_path)
+          .and_return(pathname_double)
+        allow(pathname_double).to receive(:open)
+          .with("wb")
+          .and_yield(file_io)
+          .once
+        naif_uri = URI.join(described_class::NAIF_PCK_BASE_URL, name)
+        allow(Net::HTTP).to receive(:start)
+          .with(naif_uri.host, naif_uri.port, use_ssl: true)
+          .and_yield(
+            double(request: nil).tap do |http|
+              allow(http).to receive(:request).and_yield(http_response)
+            end
+          )
+        allow(http_response).to receive(:read_body).and_yield(mock_content)
+
+        described_class.call(name: name, target: target_path)
+
+        expect(file_io.string).to eq(mock_content)
+      end
+    end
+
     context "when downloading an IMCCE kernel" do
       it "downloads, extracts, and writes the IMCCE kernel file" do
         name = "inpop19a.bsp"

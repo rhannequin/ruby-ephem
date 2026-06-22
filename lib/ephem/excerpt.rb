@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Ephem
-  # The Excerpt class creates SPK file excerpts with reduced time spans and
-  # target bodies. This is useful for creating smaller files that focus only on
-  # the data needed for specific applications.
+  # The Excerpt class creates DAF excerpts (SPK or binary PCK) with reduced time
+  # spans and bodies. This is useful for creating smaller files that focus only
+  # on the data needed for specific applications.
   #
   # @example Create an excerpt with specific time range and bodies
   #   spk = Ephem::SPK.open("de421.bsp")
@@ -19,10 +19,10 @@ module Ephem
     J2000_EPOCH = Core::Constants::Time::J2000_EPOCH
     RECORD_SIZE = 1024
 
-    # @param spk [Ephem::SPK] The SPK object to create an excerpt from
-    def initialize(spk)
-      @spk = spk
-      @daf = spk.daf
+    # @param kernel [Ephem::SPK, Ephem::PCK] The kernel to excerpt from
+    def initialize(kernel)
+      @kernel = kernel
+      @daf = kernel.daf
       @binary_reader = @daf.binary_reader
     end
 
@@ -31,11 +31,12 @@ module Ephem
     # @param output_path [String] Path where the excerpt will be written
     # @param start_jd [Float] Start time as Julian Date
     # @param end_jd [Float] End time as Julian Date
-    # @param target_ids [Array<Integer>, nil] Optional list of target IDs to
-    #   include
+    # @param target_ids [Array<Integer>, nil] Optional list of target/body IDs
+    #   to include
     # @param debug [Boolean] Whether to print debug information
     #
-    # @return [Ephem::SPK] A new SPK instance for the excerpt file
+    # @return [Ephem::SPK, Ephem::PCK] A new instance for the excerpt file,
+    #   matching the source kernel kind
     def extract(output_path:, start_jd:, end_jd:, target_ids: nil, debug: false)
       start_seconds = seconds_since_j2000(start_jd)
       end_seconds = seconds_since_j2000(end_jd)
@@ -46,10 +47,14 @@ module Ephem
       process_segments(writer, start_seconds, end_seconds, target_ids, debug)
       output_file.close
 
-      SPK.open(output_path)
+      reopen(output_path)
     end
 
     private
+
+    def reopen(path)
+      (@daf.file_type == :pck) ? PCK.open(path) : SPK.open(path)
+    end
 
     def seconds_since_j2000(jd)
       (jd - J2000_EPOCH) * S_PER_DAY

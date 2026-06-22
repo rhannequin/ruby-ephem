@@ -15,6 +15,11 @@ module Ephem
         @comments ||= load_comments
       end
 
+      # @return [Symbol, nil]
+      def file_type
+        @file_type ||= detect_file_type
+      end
+
       def summaries(&block)
         return enum_for(:summaries) unless block_given?
 
@@ -35,6 +40,18 @@ module Ephem
       end
 
       private
+
+      def detect_file_type
+        case @record_data.locator_identifier
+        when "DAF/SPK" then :spk
+        when "DAF/PCK" then :pck
+        else
+          case @record_data.integer_count
+          when 6 then :spk
+          when 5 then :pck
+          end
+        end
+      end
 
       def setup_file_format
         file_record = @binary_reader.read_record(1)

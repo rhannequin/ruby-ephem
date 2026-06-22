@@ -43,7 +43,7 @@ RSpec.describe Ephem::CLI do
       expect(output).to include("Ruby Ephem")
       expect(output).to include("excerpt")
       expect(output).to include("--targets")
-      expect(output).to include("Example:")
+      expect(output).to include("Examples:")
     end
   end
 
@@ -185,6 +185,63 @@ RSpec.describe Ephem::CLI do
           FileUtils.remove_entry(temp_dir) if Dir.exist?(temp_dir)
         end
       end
+
+      it "excerpts a binary PCK kernel, detecting the format" do
+        temp_dir = Dir.mktmpdir("ephem_test_")
+        input_file = File.join(temp_dir, "input.bpc")
+        output_file = File.join(temp_dir, "output.bpc")
+
+        begin
+          FileUtils.cp(moon_pa_de440_excerpt, input_file)
+
+          args = [
+            "--targets",
+            "31008",
+            "2001-01-01",
+            "2002-01-01",
+            input_file,
+            output_file
+          ]
+          output = capture_stdout { Ephem::CLI.handle_excerpt(args) }
+
+          expect(output).to include("Excerpt created successfully")
+
+          excerpt = Ephem::PCK.open(output_file)
+          expect(excerpt[31008].body).to eq(31008)
+          excerpt.close
+        ensure
+          FileUtils.remove_entry(temp_dir) if Dir.exist?(temp_dir)
+        end
+      end
+    end
+  end
+
+  describe ".open_kernel" do
+    it "opens a binary PCK file as Ephem::PCK" do
+      kernel = Ephem::CLI.open_kernel(moon_pa_de440_excerpt)
+
+      expect(kernel).to be_a(Ephem::PCK)
+
+      kernel.close
+    end
+
+    it "opens an SPK file as Ephem::SPK" do
+      kernel = Ephem::CLI.open_kernel(test_spk)
+
+      expect(kernel).to be_a(Ephem::SPK)
+
+      kernel.close
+    end
+
+    it "closes the DAF when the kernel cannot be built" do
+      daf = instance_double(Ephem::IO::DAF, file_type: :pck)
+      allow(File).to receive(:open).and_return(instance_double(File))
+      allow(Ephem::IO::DAF).to receive(:new).and_return(daf)
+      allow(Ephem::PCK).to receive(:new).and_raise(Ephem::UnsupportedError)
+
+      expect(daf).to receive(:close)
+      expect { Ephem::CLI.open_kernel("kernel.bpc") }
+        .to raise_error(Ephem::UnsupportedError)
     end
   end
 

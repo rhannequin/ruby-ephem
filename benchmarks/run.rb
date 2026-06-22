@@ -12,6 +12,8 @@ ROOT = File.expand_path("..", __dir__)
 SPK_FULL = File.join(ROOT, "spec", "support", "data", "de432s.bsp")
 SPK_EXCERPT = File
   .join(ROOT, "spec", "support", "data", "de421_2000_excerpt.bsp")
+PCK_EXCERPT = File
+  .join(ROOT, "spec", "support", "data", "moon_pa_de440_excerpt.bpc")
 
 JD_J2000 = Ephem::Core::Constants::Time::J2000_EPOCH # 2451545.0
 JD_TEST = 2459000.0 # 2020-09-30, well within de432s range
@@ -293,6 +295,12 @@ Benchmark.ips do |x|
     )
   end
 
+  x.report("evaluate_with_derivative (pos+vel, 1 pass)") do
+    Ephem::Computation::ChebyshevPolynomial.evaluate_with_derivative(
+      test_coeffs, test_t, test_radius
+    )
+  end
+
   x.compare!
 end
 
@@ -387,6 +395,32 @@ if coeffs
   puts "  Terms per record:                #{coeffs.first&.size}"
   puts "  Components per term:             #{coeffs.first&.first&.size}"
 end
+
+# =========================================================================
+# 13. PCK ORIENTATION (BINARY PCK)
+# =========================================================================
+
+separator "13. PCK Orientation (Binary PCK)"
+
+puts "angles_at (Euler angles) vs orientation_at (angles + rates)"
+puts
+
+pck = Ephem::PCK.open(PCK_EXCERPT)
+moon = pck[31008] # MOON_PA_DE440 frame
+moon.angles_at(JD_J2000) # warm up
+
+orientation_times = Array.new(SEQUENTIAL_STEPS) { |index| JD_J2000 + index }
+
+GC.start
+Benchmark.ips do |x|
+  x.report("angles_at (scalar)") { moon.angles_at(JD_J2000) }
+  x.report("orientation_at (scalar)") { moon.orientation_at(JD_J2000) }
+  x.report("angles_at (batch 1000)") { moon.angles_at(orientation_times) }
+
+  x.compare!
+end
+
+pck.close
 
 # =========================================================================
 # Cleanup

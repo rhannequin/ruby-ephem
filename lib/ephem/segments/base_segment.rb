@@ -38,6 +38,10 @@ module Ephem
       attr_reader :center
       # @return [String] the source of the segment
       attr_reader :source
+      # @return [Float] start of coverage as a Julian Date
+      attr_reader :start_jd
+      # @return [Float] end of coverage as a Julian Date
+      attr_reader :end_jd
 
       # Initialize a new segment
       #
@@ -55,14 +59,7 @@ module Ephem
       def initialize(daf:, source:, descriptor:)
         @daf = daf
         @source = source
-        @start_second,
-          @end_second,
-          @target,
-          @center,
-          @frame,
-          @data_type,
-          @start_i,
-          @end_i = descriptor
+        parse_descriptor(descriptor)
         @start_jd = compute_julian_date(@start_second)
         @end_jd = compute_julian_date(@end_second)
       end
@@ -97,6 +94,15 @@ module Ephem
         DESCRIPTION
       end
 
+      # Whether the given time falls within this segment's coverage.
+      #
+      # @param tdb [Numeric] time in TDB Julian Date
+      # @param tdb2 [Numeric] optional fractional part of the TDB date
+      # @return [Boolean]
+      def covers?(tdb, tdb2 = 0.0)
+        (tdb + tdb2).between?(@start_jd, @end_jd)
+      end
+
       def compute(_tdb, _tdb2 = 0.0)
         raise NotImplementedError,
           "#{self.class} has not implemented compute() for data type #{@data_type}"
@@ -112,6 +118,17 @@ module Ephem
       end
 
       private
+
+      def parse_descriptor(descriptor)
+        @start_second,
+          @end_second,
+          @target,
+          @center,
+          @frame,
+          @data_type,
+          @start_i,
+          @end_i = descriptor
+      end
 
       def compute_julian_date(seconds)
         Time::J2000_EPOCH + seconds / Time::SECONDS_PER_DAY
