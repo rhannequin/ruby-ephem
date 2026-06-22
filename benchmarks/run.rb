@@ -295,6 +295,12 @@ Benchmark.ips do |x|
     )
   end
 
+  x.report("evaluate_with_derivative (pos+vel, 1 pass)") do
+    Ephem::Computation::ChebyshevPolynomial.evaluate_with_derivative(
+      test_coeffs, test_t, test_radius
+    )
+  end
+
   x.compare!
 end
 

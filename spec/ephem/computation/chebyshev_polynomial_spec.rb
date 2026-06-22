@@ -191,6 +191,35 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
     end
   end
 
+  describe ".evaluate_with_derivative" do
+    it "matches #evaluate and #evaluate_derivative exactly" do
+      coeffs = [
+        [1.0, 2.0, 3.0],
+        [0.5, 0.2, -1.5],
+        [-0.25, 1.0, 2.0],
+        [0.1, -0.4, 0.7]
+      ]
+      radius = 2000.0
+
+      [-1.0, -0.3, 0.0, 0.42, 1.0].each do |t|
+        position, velocity =
+          described_class.evaluate_with_derivative(coeffs, t, radius)
+
+        expect(position).to eq(described_class.evaluate(coeffs, t))
+        expect(velocity)
+          .to eq(described_class.evaluate_derivative(coeffs, t, radius))
+      end
+    end
+
+    it "returns a zero velocity for a constant polynomial" do
+      position, velocity =
+        described_class.evaluate_with_derivative([[1.0, 2.0, 3.0]], 0.3, 100.0)
+
+      expect(position).to eq([1.0, 2.0, 3.0])
+      expect(velocity).to eq([0.0, 0.0, 0.0])
+    end
+  end
+
   def expect_vector_close(result, expected, tol = 1e-10)
     expect(result.size).to eq(expected.size)
     result.zip(expected).each do |a, b|

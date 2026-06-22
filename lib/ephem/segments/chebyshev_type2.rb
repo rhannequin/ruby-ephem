@@ -88,16 +88,11 @@ module Ephem
         normalized_time = compute_normalized_time(tdb_seconds, interval)
 
         coeffs = @coefficients[interval] # already [n_terms][3]
-        position = Computation::ChebyshevPolynomial.evaluate(
-          coeffs,
-          normalized_time
-        )
-        velocity = Computation::ChebyshevPolynomial.evaluate_derivative(
+        Computation::ChebyshevPolynomial.evaluate_with_derivative(
           coeffs,
           normalized_time,
           @radii[interval]
         )
-        [position, velocity]
       end
 
       def generate_multiple(tdb_seconds)

@@ -20,6 +20,10 @@
 * Route queries to the covering segment when a body/pair spans multiple
   time-split segments (SPK and PCK), with no overhead for single-segment keys
 * Share the type-2 Chebyshev machinery between SPK and PCK segments
+* Evaluate position and velocity in a single Chebyshev pass
+  (`ChebyshevPolynomial.evaluate_with_derivative`), speeding up every state /
+  orientation query (`compute_and_differentiate`, `state_at`, `orientation_at`)
+  with bit-for-bit identical results
 * Fix `compute_and_differentiate` returning mismatched velocities for an array
   of times
 * Correct the documented velocity unit to km/day (the actual, validated value)
