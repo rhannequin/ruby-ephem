@@ -52,6 +52,26 @@ RSpec.describe Ephem::Segments::OrientationSegment do
     end
   end
 
+  describe "#matrix_at" do
+    it "returns the rotation matrix from the angles" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+
+      expect(segment.matrix_at(time))
+        .to eq(segment.angles_at(time).to_matrix)
+    end
+
+    it "returns one matrix per time for an array input" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+
+      matrices = segment.matrix_at([time, time + (15.0 / 86400.0)])
+
+      expect(matrices.length).to eq(2)
+      expect(matrices).to all(be_an(Array))
+    end
+  end
+
   describe "#body and #reference_frame" do
     it "expose the oriented frame and the reference frame" do
       segment = create_segment_with_data

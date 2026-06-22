@@ -3,10 +3,11 @@
 module Ephem
   module Segments
     # Binary PCK orientation segment (data type 2): the orientation of a body
-    # frame relative to an inertial reference frame, stored as three Euler angles
-    # in Chebyshev coefficients.
+    # frame relative to an inertial reference frame, stored as three Euler
+    # angles in Chebyshev coefficients.
     class OrientationSegment < BaseSegment
       include ChebyshevType2
+      include OrientationSource
 
       COMPONENT_COUNT = 3 # phi, theta, psi
 
@@ -35,7 +36,9 @@ module Ephem
         when Numeric
           to_orientation(generate_position(tdb_seconds))
         else
-          tdb_seconds.map { |t| to_orientation(generate_position(t)) }
+          tdb_seconds.map do |seconds|
+            to_orientation(generate_position(seconds))
+          end
         end
       end
 
@@ -60,14 +63,17 @@ module Ephem
         end
       end
 
-      def compute(*)
-        raise NotImplementedError,
-          "Use #angles_at or #orientation_at for orientation segments"
-      end
-
-      def compute_and_differentiate(*)
-        raise NotImplementedError,
-          "Use #orientation_at for orientation segments"
+      # The reference-frame to body-fixed rotation matrix at the given time,
+      # built from the 3-1-3 Euler angles. See {Core::Orientation#to_matrix}.
+      #
+      # @param tdb [Numeric, Array<Numeric>] Time(s) in TDB Julian Date
+      # @param tdb2 [Numeric] Optional fractional part of TDB date
+      # @return [Array<Array<Float>>, Array<Array<Array<Float>>>] a 3x3 matrix,
+      #   or one per time for an array input
+      # @raise [Ephem::OutOfRangeError] if time is outside segment coverage
+      def matrix_at(tdb, tdb2 = 0.0)
+        angles = angles_at(tdb, tdb2)
+        angles.is_a?(Array) ? angles.map(&:to_matrix) : angles.to_matrix
       end
 
       def describe(verbose: false)

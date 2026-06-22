@@ -14,6 +14,16 @@ module Ephem
     # Subclasses ({PositionGroup}, {OrientationGroup}) add the query methods
     # appropriate to the segments they hold.
     class SegmentGroup
+      # Wraps segments that share a key. A single segment is returned as-is, so
+      # the common case carries no routing overhead; only a key spanning several
+      # time intervals becomes a group.
+      #
+      # @param segments [Array<BaseSegment>] segments sharing the same key
+      # @return [BaseSegment, SegmentGroup]
+      def self.wrap(segments)
+        segments.one? ? segments.first : new(segments)
+      end
+
       # @return [Array<BaseSegment>] the underlying segments
       attr_reader :segments
 

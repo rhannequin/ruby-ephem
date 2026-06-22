@@ -19,10 +19,10 @@ module Ephem
     J2000_EPOCH = Core::Constants::Time::J2000_EPOCH
     RECORD_SIZE = 1024
 
-    # @param spk [Ephem::SPK] The SPK object to create an excerpt from
-    def initialize(spk)
-      @spk = spk
-      @daf = spk.daf
+    # @param kernel [Ephem::SPK, Ephem::PCK] The kernel to excerpt from
+    def initialize(kernel)
+      @kernel = kernel
+      @daf = kernel.daf
       @binary_reader = @daf.binary_reader
     end
 

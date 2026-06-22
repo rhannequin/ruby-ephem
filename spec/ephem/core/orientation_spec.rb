@@ -57,6 +57,41 @@ RSpec.describe Ephem::Core::Orientation do
     end
   end
 
+  describe "#to_matrix" do
+    it "returns the identity for zero angles" do
+      matrix = described_class.new(0.0, 0.0, 0.0).to_matrix
+
+      expect(matrix).to eq(
+        [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+      )
+    end
+
+    it "composes the 3-1-3 sequence Rz(psi) * Rx(theta) * Rz(phi)" do
+      phi = 0.3
+      theta = 0.7
+      psi = 1.1
+      expected = Ephem::Core::Rotation.multiply(
+        Ephem::Core::Rotation.about_z(psi),
+        Ephem::Core::Rotation.about_x(theta),
+        Ephem::Core::Rotation.about_z(phi)
+      )
+
+      expect(described_class.new(phi, theta, psi).to_matrix).to eq(expected)
+    end
+
+    it "is orthonormal" do
+      matrix = described_class.new(1.2, 0.4, 5.9).to_matrix
+      product = Ephem::Core::Rotation.multiply(matrix, matrix.transpose)
+
+      product.each_with_index do |row, row_index|
+        row.each_with_index do |value, column_index|
+          expected = (row_index == column_index) ? 1.0 : 0.0
+          expect(value).to be_within(1e-12).of(expected)
+        end
+      end
+    end
+  end
+
   describe "#==" do
     it "compares angles and rates" do
       with_rates = described_class.new(1.0, 2.0, 3.0, rates: [0.1, 0.2, 0.3])

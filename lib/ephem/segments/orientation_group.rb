@@ -7,6 +7,8 @@ module Ephem
     #
     # @see Ephem::Segments::OrientationSegment
     class OrientationGroup < SegmentGroup
+      include OrientationSource
+
       # @return [Integer] NAIF frame ID of the oriented body frame
       def body
         @segments.first.body
@@ -38,6 +40,18 @@ module Ephem
       def orientation_at(tdb, tdb2 = 0.0)
         query(tdb, tdb2) do |segment, time, fraction|
           segment.orientation_at(time, fraction)
+        end
+      end
+
+      # The reference-frame to body-fixed rotation matrix at the given time.
+      # See {OrientationSegment#matrix_at}.
+      #
+      # @param tdb [Numeric, Array<Numeric>] Time(s) in TDB Julian Date
+      # @param tdb2 [Numeric] Optional fractional part of TDB date
+      # @return [Array<Array<Float>>, Array<Array<Array<Float>>>]
+      def matrix_at(tdb, tdb2 = 0.0)
+        query(tdb, tdb2) do |segment, time, fraction|
+          segment.matrix_at(time, fraction)
         end
       end
     end

@@ -20,4 +20,8 @@ module TestSpkHelper
   def moon_pa_de440_excerpt
     File.path("#{__dir__}/data/moon_pa_de440_excerpt.bpc")
   end
+
+  def moon_pa_de440_boundary_excerpt
+    File.path("#{__dir__}/data/moon_pa_de440_boundary_excerpt.bpc")
+  end
 end

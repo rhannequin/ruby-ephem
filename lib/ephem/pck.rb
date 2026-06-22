@@ -43,10 +43,12 @@ module Ephem
       @segments&.each(&:clear_data)
     end
 
-    # Retrieves the orientation segment for a body frame.
+    # Retrieves the orientation source for a body frame.
     #
     # @param body [Integer] NAIF frame ID of the oriented body
-    # @return [Segments::OrientationSegment]
+    # @return [Segments::OrientationSegment, Segments::OrientationGroup] a
+    #   single segment, or a group routing each query to the covering segment
+    #   when the body spans several time intervals
     # @raise [KeyError] if no segment is found for the given body
     def [](body)
       @bodies.fetch(body) do
@@ -75,6 +77,18 @@ module Ephem
       DESCRIPTION
     end
 
+    def excerpt(output_path:, start_jd:, end_jd:, target_ids: nil, debug: false)
+      Excerpt
+        .new(self)
+        .extract(
+          output_path: output_path,
+          start_jd: start_jd,
+          end_jd: end_jd,
+          target_ids: target_ids,
+          debug: debug
+        )
+    end
+
     private
 
     def load_segments
@@ -85,7 +99,7 @@ module Ephem
 
     def build_bodies
       @segments.group_by(&:body).transform_values do |segments|
-        segments.one? ? segments.first : Segments::OrientationGroup.new(segments)
+        Segments::OrientationGroup.wrap(segments)
       end
     end
 

@@ -81,8 +81,9 @@ module Ephem
     #
     # @param center [Integer] NAIF ID of the center body
     # @param target [Integer] NAIF ID of the target body
-    # @return [Segments::PositionGroup] The position segment(s) for the
-    # specified bodies, routing each query to the segment covering the requested time
+    # @return [Segments::Segment, Segments::PositionGroup] the position source
+    #   for the pair: a single segment, or a group routing each query to the
+    #   covering segment when the pair spans several time intervals
     # @raise [KeyError] If no segment is found for the given center-target pair
     def [](center, target)
       @pairs.fetch([center, target]) do
@@ -145,9 +146,7 @@ module Ephem
     def build_pairs
       @segments
         .group_by { |segment| [segment.center, segment.target] }
-        .transform_values do |segments|
-          segments.one? ? segments.first : Segments::PositionGroup.new(segments)
-        end
+        .transform_values { |segments| Segments::PositionGroup.wrap(segments) }
     end
 
     def build_segment(source:, descriptor:)

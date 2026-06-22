@@ -61,6 +61,19 @@ module Ephem
         [phi, theta, psi]
       end
 
+      # The rotation matrix that maps the reference frame into the body-fixed
+      # frame, built from the 3-1-3 (Z-X-Z) Euler angles:
+      # +M = Rz(psi) * Rx(theta) * Rz(phi)+. Rates are ignored.
+      #
+      # @return [Array<Array<Float>>] a 3x3 rotation matrix
+      def to_matrix
+        Rotation.multiply(
+          Rotation.about_z(psi),
+          Rotation.about_x(theta),
+          Rotation.about_z(phi)
+        )
+      end
+
       # @param index [Integer] 0 for phi, 1 for theta, 2 for psi
       # @return [Numeric] the angle at the given index
       # @raise [Ephem::IndexError] if index is not 0, 1, or 2
@@ -74,8 +87,9 @@ module Ephem
       end
 
       def inspect
-        base = "phi: #{phi}, theta: #{theta}, psi: #{psi}"
-        rates? ? "Orientation[#{base}, rates: #{rates}]" : "Orientation[#{base}]"
+        body = "phi: #{phi}, theta: #{theta}, psi: #{psi}"
+        body += ", rates: #{rates}" if rates?
+        "Orientation[#{body}]"
       end
       alias_method :to_s, :inspect
 

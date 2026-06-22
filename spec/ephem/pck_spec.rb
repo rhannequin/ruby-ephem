@@ -65,6 +65,62 @@ RSpec.describe Ephem::PCK do
     end
   end
 
+  describe "a body split across multiple segments" do
+    it "is served by an OrientationGroup" do
+      pck = described_class.open(moon_pa_de440_boundary_excerpt)
+
+      group = pck[31008]
+      expect(group).to be_a(Ephem::Segments::OrientationGroup)
+      expect(group.segments.size).to eq(2)
+
+      pck.close
+    end
+
+    it "routes each time to the segment that covers it" do
+      pck = described_class.open(moon_pa_de440_boundary_excerpt)
+      group = pck[31008]
+      early_segment, late_segment = group.segments
+      early_time = early_segment.start_jd + 10
+      late_time = late_segment.start_jd + 10
+
+      expect(group.angles_at(early_time).to_a)
+        .to eq(early_segment.angles_at(early_time).to_a)
+      expect(group.angles_at(late_time).to_a)
+        .to eq(late_segment.angles_at(late_time).to_a)
+
+      pck.close
+    end
+
+    it "preserves input order for an array spanning both segments" do
+      pck = described_class.open(moon_pa_de440_boundary_excerpt)
+      group = pck[31008]
+      early_segment, late_segment = group.segments
+      early_time = early_segment.start_jd + 10
+      late_time = late_segment.start_jd + 10
+
+      results = group.angles_at([late_time, early_time])
+
+      expect(results[0].to_a).to eq(late_segment.angles_at(late_time).to_a)
+      expect(results[1].to_a).to eq(early_segment.angles_at(early_time).to_a)
+
+      pck.close
+    end
+
+    it "rejects position queries with a helpful error" do
+      pck = described_class.open(moon_pa_de440_boundary_excerpt)
+      group = pck[31008]
+
+      expect { group.compute(2452000.0) }.to raise_error(
+        NotImplementedError, /angles_at or #orientation_at/
+      )
+      expect { group.compute_and_differentiate(2452000.0) }.to raise_error(
+        NotImplementedError, /orientation_at/
+      )
+
+      pck.close
+    end
+  end
+
   describe "accuracy against jplephem (MOON_PA_DE440)" do
     it "matches reference Euler angles and rates" do
       pck = described_class.open(moon_pa_de440_excerpt)
@@ -90,19 +146,19 @@ RSpec.describe Ephem::PCK do
   def reference_orientations
     [
       {
-        jd: 2451045.0,
-        angles: [-0.0310089214024731, 0.432874655509576, 2449.25118158446],
-        rates: [-5.27075482126779e-05, 7.60544162825503e-06, 0.230015478199546]
+        jd: 2452000.0,
+        angles: [-0.0645389064927909, 0.415637068726414, 2668.90512416828],
+        rates: [0.000371042029495874, -0.00014568869379002, 0.229623457019946]
       },
       {
-        jd: 2451545.0,
-        angles: [-0.0541470580870196, 0.424855460999069, 2564.25827272151],
-        rates: [-0.000117018175276388, 4.51324219231248e-05, 0.230100034112187]
+        jd: 2456000.0,
+        angles: [0.0609875385648408, 0.419110500824661, 3588.67325163054],
+        rates: [-0.000208821705039922, 9.83855110550238e-05, 0.230149931169316]
       },
       {
-        jd: 2452045.0,
-        angles: [-0.0683791305700164, 0.413710101076473, 2679.25713036353],
-        rates: [-0.000132116376724321, 0.000171517329456927, 0.230098834913826]
+        jd: 2460000.0,
+        angles: [-0.0423518935446004, 0.387741447813132, 4508.65143781339],
+        rates: [4.41729372107692e-05, -7.15944475461727e-05, 0.229930175592345]
       }
     ]
   end

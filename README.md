@@ -12,8 +12,9 @@ These files are a collection of numerical integrations of the equations of
 motion of the Solar System, used to calculate the positions of the planets,
 the Moon, and other celestial bodies with high precision.
 
-Ephem currently only support planetary ephemerides like DE421, DE430,
-INPOP19A, etc.
+Ephem supports planetary ephemerides like DE421, DE430, INPOP19A, etc. (SPK),
+as well as binary PCK orientation kernels such as the lunar orientation kernel
+`moon_pa_de440_200625.bpc`.
 
 The library is in high development mode and does not have a stable version yet.
 The API is subject to major changes at the moment, please keep that in mind if
@@ -138,20 +139,27 @@ angles = frame.angles_at(2451545.0)
 pck.close
 ```
 
-`Ephem::Core::Rotation` provides kernel-agnostic helpers to turn Euler angles
-into a 3x3 rotation matrix and apply it to a vector, so you can build a
-body-fixed frame from the angles:
+### Building the body-fixed frame
+
+The orientation maps the reference frame into the body-fixed frame through the
+3-1-3 (Z-X-Z) Euler sequence `M = Rz(psi) * Rx(theta) * Rz(phi)`. That
+convention is built in, so you can get the rotation matrix directly:
 
 ```rb
-phi, theta, psi = angles.to_a
-# Compose the inertial -> body-fixed rotation (3-1-3 sequence)
-matrix = Ephem::Core::Rotation.multiply(
-  Ephem::Core::Rotation.about_z(psi),
-  Ephem::Core::Rotation.about_x(theta),
-  Ephem::Core::Rotation.about_z(phi)
-)
-body_fixed = Ephem::Core::Rotation.apply(matrix, some_vector)
+# Straight from a frame, at a given time
+matrix = frame.matrix_at(2451545.0)
+
+# ...or from an Orientation you already have
+matrix = orientation.to_matrix
+
+# Project a geocentric Earth->Moon vector into the body-fixed frame
+body_fixed = Ephem::Core::Rotation.apply(matrix, earth_to_moon)
 ```
+
+`Ephem::Core::Rotation` also exposes the lower-level, kernel-agnostic building
+blocks (`about_x`, `about_y`, `about_z`, `multiply`, `apply`) if you need a
+different axis order or an additional fixed rotation (such as the PA -> ME
+offset, whose constants the consumer supplies).
 
 ## CLI
 
@@ -174,6 +182,13 @@ While DE440s originally supports 14 segments from 1849 to 2150 with a size of
 
 Not only the excerpt is smaller, but most importantly it is way more
 efficient to parse and to use in your application.
+
+The input kernel kind (SPK or binary PCK) is detected automatically, so the
+same command excerpts orientation kernels too:
+
+```bash
+ruby-ephem excerpt --targets 31008 2000-01-01 2030-01-01 /path/to/moon_pa_de440.bpc moon_excerpt.bpc
+```
 
 ## Accuracy
 
