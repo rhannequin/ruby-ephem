@@ -28,13 +28,15 @@ module Ephem
     def self.open(path)
       daf = IO::DAF.new(File.open(path, "rb"))
       unless daf.file_type == :pck
-        daf.close
         raise ArgumentError, "#{path} is not a binary PCK (DAF/PCK) file"
       end
 
       new(daf: daf)
     rescue Errno::EACCES => e
       raise ArgumentError, "File permission denied: #{path} (#{e.message})"
+    rescue
+      daf&.close
+      raise
     end
 
     # @return [void]

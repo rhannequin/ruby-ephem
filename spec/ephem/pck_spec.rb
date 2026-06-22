@@ -18,6 +18,18 @@ RSpec.describe Ephem::PCK do
         ArgumentError, /not a binary PCK/
       )
     end
+
+    it "closes the DAF when the kernel cannot be built" do
+      daf = instance_double(Ephem::IO::DAF, file_type: :pck)
+      allow(File).to receive(:open).and_return(instance_double(File))
+      allow(Ephem::IO::DAF).to receive(:new).and_return(daf)
+      allow(described_class).to receive(:new)
+        .and_raise(Ephem::UnsupportedError)
+
+      expect(daf).to receive(:close)
+      expect { described_class.open("kernel.bpc") }
+        .to raise_error(Ephem::UnsupportedError)
+    end
   end
 
   describe "#[]" do

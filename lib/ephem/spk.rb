@@ -49,13 +49,15 @@ module Ephem
     def self.open(path)
       daf = IO::DAF.new(File.open(path, "rb"))
       if daf.file_type == :pck
-        daf.close
         raise ArgumentError, "#{path} is a binary PCK file, use Ephem::PCK.open"
       end
 
       new(daf: daf)
     rescue Errno::EACCES => e
       raise ArgumentError, "File permission denied: #{path} (#{e.message})"
+    rescue
+      daf&.close
+      raise
     end
 
     # Closes the SPK file and cleans up resources.

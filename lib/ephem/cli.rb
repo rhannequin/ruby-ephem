@@ -164,6 +164,9 @@ module Ephem
       else
         Ephem::SPK.new(daf: daf)
       end
+    rescue
+      daf&.close
+      raise
     end
   end
 end
