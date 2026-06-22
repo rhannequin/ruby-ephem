@@ -40,7 +40,7 @@ module Ephem
       end
 
       def to_s
-        @segments.map(&:to_s).join("\n")
+        @segments.join("\n")
       end
 
       private
