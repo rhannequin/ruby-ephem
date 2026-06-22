@@ -74,7 +74,7 @@ module Ephem
       end
 
       def segment_for(tdb, tdb2)
-        @segments.find { |segment| segment.covers?(tdb, tdb2) } ||
+        @segments.reverse_each.find { |segment| segment.covers?(tdb, tdb2) } ||
           raise(OutOfRangeError.new(
             "Time #{tdb} is outside the coverage of this group", tdb
           ))
