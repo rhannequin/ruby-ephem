@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Validate (${{ matrix.kernel }}/2000-2050/${{ matrix.target }})
     steps:
       - uses: actions/checkout@v7
