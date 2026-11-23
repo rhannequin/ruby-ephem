@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     ephem (0.5.0)
-      minitar (~> 0.12)
+      minitar (>= 0.12, < 2)
       zlib (~> 3.2)
 
 GEM
