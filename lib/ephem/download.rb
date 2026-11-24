@@ -121,10 +121,10 @@ module Ephem
     def write_atomically
       partial_file = Tempfile.create(
         [".#{@target_path.basename}", ".part"],
-        @target_path.dirname.to_s
+        @target_path.dirname.to_s,
+        binmode: true
       )
       begin
-        partial_file.binmode
         yield partial_file
         partial_file.close
         File.chmod(0o666 & ~File.umask, partial_file.path)
@@ -168,7 +168,7 @@ module Ephem
       require "rubygems/package"
 
       tar_gz_uri = URI.join(IMCCE_BASE_URL, IMCCE_KERNELS_MATCHING[@name])
-      Tempfile.create(%w[archive .tar.gz]) do |temp_file|
+      Tempfile.create(%w[archive .tar.gz], binmode: true) do |temp_file|
         stream_http_to_file(tar_gz_uri, temp_file)
         temp_file.flush
         temp_file.rewind

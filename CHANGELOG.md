@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.2] - 2026-11-24
+
+### Bug fixes
+
+- `Ephem::Download` no longer fails on IMCCE kernels when
+  `Encoding.default_internal` is set, as it is in Rails apps ([#91], [#92])
+
+[#91]: https://github.com/rhannequin/ruby-ephem/issues/91
+[#92]: https://github.com/rhannequin/ruby-ephem/pull/92
+
+**Full Changelog**: https://github.com/rhannequin/ruby-ephem/compare/v0.5.1...v0.5.2
+
 ## [0.5.1] - 2026-11-24
 
 ### Improvements

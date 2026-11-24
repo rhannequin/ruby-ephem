@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ephem (0.5.1)
+    ephem (0.5.2)
       zlib (~> 3.2)
 
 GEM
