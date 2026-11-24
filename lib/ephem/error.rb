@@ -15,6 +15,8 @@ module Ephem
 
   class IndexError < Error; end
 
+  class DownloadError < Error; end
+
   class OutOfRangeError < StandardError
     attr_reader :out_of_range_times
 

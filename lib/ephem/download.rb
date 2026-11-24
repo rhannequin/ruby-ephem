@@ -12,6 +12,7 @@ module Ephem
     IMCCE_BASE_URL = "https://ftp.imcce.fr/pub/ephem/planets/"
     NAIF_PCK_BASE_URL =
       "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/"
+    ARCHIVE_READ_CHUNK_SIZE = 1024 * 1024
 
     JPL_KERNELS = %w[
       de102.bsp
@@ -113,6 +114,9 @@ module Ephem
       FileUtils.mkdir_p(@target_path.dirname)
       download_kernel
       true
+    rescue
+      @target_path.delete if @target_path.exist?
+      raise
     end
 
     private
@@ -166,17 +170,33 @@ module Ephem
         temp_file.flush
         temp_file.rewind
 
-        Zlib::GzipReader.open(temp_file.path) do |gz|
-          Gem::Package::TarReader.new(gz) do |tar|
-            tar.each_entry do |entry|
-              next unless entry.full_name == IMCCE_KERNELS[@name]
+        extract_imcce_kernel(temp_file.path)
+      end
+    end
 
-              @target_path.open("wb") { |file| file.write(entry.read) }
+    def extract_imcce_kernel(archive_path)
+      kernel_path = IMCCE_KERNELS[@name]
+      kernel_found = false
+      Zlib::GzipReader.open(archive_path) do |gz|
+        Gem::Package::TarReader.new(gz) do |tar|
+          tar.each_entry do |entry|
+            next unless entry.full_name == kernel_path
 
-              break
-            end
+            @target_path.open("wb") { |file| copy_entry(entry, file) }
+            kernel_found = true
+            break
           end
         end
+      end
+      return if kernel_found
+
+      raise DownloadError,
+        "#{IMCCE_KERNELS_MATCHING[@name]} does not contain #{kernel_path}"
+    end
+
+    def copy_entry(entry, file)
+      while (chunk = entry.read(ARCHIVE_READ_CHUNK_SIZE))
+        file.write(chunk)
       end
     end
 
@@ -188,6 +208,12 @@ module Ephem
       ) do |http|
         request = Net::HTTP::Get.new(uri)
         http.request(request) do |response|
+          unless response.is_a?(Net::HTTPSuccess)
+            raise DownloadError,
+              "Failed to download #{uri}: " \
+              "#{response.code} #{response.message}"
+          end
+
           response.read_body { |chunk| file.write(chunk) }
         end
       end
