@@ -12,6 +12,7 @@ module Ephem
     IMCCE_BASE_URL = "https://ftp.imcce.fr/pub/ephem/planets/"
     NAIF_PCK_BASE_URL =
       "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/"
+    ARCHIVE_READ_CHUNK_SIZE = 1024 * 1024
 
     JPL_KERNELS = %w[
       de102.bsp
@@ -111,19 +112,36 @@ module Ephem
 
     def call
       FileUtils.mkdir_p(@target_path.dirname)
-      download_kernel
+      write_atomically { |file| download_kernel(file) }
       true
     end
 
     private
 
-    def download_kernel
+    def write_atomically
+      partial_file = Tempfile.create(
+        [".#{@target_path.basename}", ".part"],
+        @target_path.dirname.to_s
+      )
+      begin
+        partial_file.binmode
+        yield partial_file
+        partial_file.close
+        File.chmod(0o666 & ~File.umask, partial_file.path)
+        File.rename(partial_file.path, @target_path)
+      ensure
+        partial_file.close unless partial_file.closed?
+        FileUtils.rm_f(partial_file.path)
+      end
+    end
+
+    def download_kernel(file)
       if jpl_kernel?
-        download_jpl
+        download_direct(JPL_BASE_URL, file)
       elsif pck_kernel?
-        download_naif_pck
+        download_direct(NAIF_PCK_BASE_URL, file)
       else
-        download_imcce
+        download_imcce(file)
       end
     end
 
@@ -142,22 +160,11 @@ module Ephem
       NAIF_PCK_KERNELS.include?(@name)
     end
 
-    def download_jpl
-      download_direct(JPL_BASE_URL)
+    def download_direct(base_url, file)
+      stream_http_to_file(URI.join(base_url, @name), file)
     end
 
-    def download_naif_pck
-      download_direct(NAIF_PCK_BASE_URL)
-    end
-
-    def download_direct(base_url)
-      uri = URI.join(base_url, @name)
-      @target_path.open("wb") do |file|
-        stream_http_to_file(uri, file)
-      end
-    end
-
-    def download_imcce
+    def download_imcce(file)
       require "rubygems/package"
 
       tar_gz_uri = URI.join(IMCCE_BASE_URL, IMCCE_KERNELS_MATCHING[@name])
@@ -166,17 +173,33 @@ module Ephem
         temp_file.flush
         temp_file.rewind
 
-        Zlib::GzipReader.open(temp_file.path) do |gz|
-          Gem::Package::TarReader.new(gz) do |tar|
-            tar.each_entry do |entry|
-              next unless entry.full_name == IMCCE_KERNELS[@name]
+        extract_imcce_kernel(temp_file.path, file)
+      end
+    end
 
-              @target_path.open("wb") { |file| file.write(entry.read) }
+    def extract_imcce_kernel(archive_path, file)
+      kernel_path = IMCCE_KERNELS[@name]
+      kernel_found = false
+      Zlib::GzipReader.open(archive_path) do |gz|
+        Gem::Package::TarReader.new(gz) do |tar|
+          tar.each_entry do |entry|
+            next unless entry.full_name == kernel_path
 
-              break
-            end
+            copy_entry(entry, file)
+            kernel_found = true
+            break
           end
         end
+      end
+      return if kernel_found
+
+      raise DownloadError,
+        "#{IMCCE_KERNELS_MATCHING[@name]} does not contain #{kernel_path}"
+    end
+
+    def copy_entry(entry, file)
+      while (chunk = entry.read(ARCHIVE_READ_CHUNK_SIZE))
+        file.write(chunk)
       end
     end
 
@@ -188,6 +211,12 @@ module Ephem
       ) do |http|
         request = Net::HTTP::Get.new(uri)
         http.request(request) do |response|
+          unless response.is_a?(Net::HTTPSuccess)
+            raise DownloadError,
+              "Failed to download #{uri}: " \
+              "#{response.code} #{response.message}"
+          end
+
           response.read_body { |chunk| file.write(chunk) }
         end
       end
