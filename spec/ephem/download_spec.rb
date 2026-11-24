@@ -6,112 +6,75 @@ RSpec.describe Ephem::Download do
   describe ".call" do
     context "when downloading a JPL kernel" do
       it "downloads and writes the JPL kernel file" do
-        name = "de440.bsp"
-        target_path = "tmp/kernel.bsp"
-        mock_content = "large-binary-data"
-        file_io = StringIO.new
-        pathname_double = instance_double(Pathname, dirname: "tmp")
-        http_response = Net::HTTPOK.new("1.1", "200", "OK")
-        allow(Pathname).to receive(:new)
-          .with(target_path)
-          .and_return(pathname_double)
-        allow(pathname_double).to receive(:open)
-          .with("wb")
-          .and_yield(file_io)
-          .once
-        allow(Net::HTTP).to receive(:start)
-          .with(anything, anything, use_ssl: true)
-          .and_yield(
-            double(request: nil).tap do |http|
-              allow(http).to receive(:request).and_yield(http_response)
-            end
-          )
-        allow(http_response).to receive(:read_body).and_yield(mock_content)
+        stub_http_response(successful_response("jpl-kernel-data"))
 
-        described_class.call(name: name, target: target_path)
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "de440.bsp")
 
-        expect(file_io.string).to eq(mock_content)
+          described_class.call(name: "de440.bsp", target: target_path)
+
+          expect(File.binread(target_path)).to eq("jpl-kernel-data")
+          expect(Dir.children(directory)).to eq(["de440.bsp"])
+        end
+      end
+
+      it "creates the kernel file with the default permissions" do
+        stub_http_response(successful_response("jpl-kernel-data"))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "de440.bsp")
+
+          described_class.call(name: "de440.bsp", target: target_path)
+
+          file_mode = File.stat(target_path).mode & 0o777
+          expect(file_mode).to eq(0o666 & ~File.umask)
+        end
       end
     end
 
     context "when downloading a NAIF binary PCK kernel" do
       it "downloads and writes the PCK kernel file from NAIF" do
         name = "moon_pa_de440_200625.bpc"
-        target_path = "tmp/kernel.bpc"
-        mock_content = "binary-pck-data"
-        file_io = StringIO.new
-        pathname_double = instance_double(Pathname, dirname: "tmp")
-        http_response = Net::HTTPOK.new("1.1", "200", "OK")
-        allow(Pathname).to receive(:new)
-          .with(target_path)
-          .and_return(pathname_double)
-        allow(pathname_double).to receive(:open)
-          .with("wb")
-          .and_yield(file_io)
-          .once
         naif_uri = URI.join(described_class::NAIF_PCK_BASE_URL, name)
-        allow(Net::HTTP).to receive(:start)
-          .with(naif_uri.host, naif_uri.port, use_ssl: true)
-          .and_yield(
-            double(request: nil).tap do |http|
-              allow(http).to receive(:request).and_yield(http_response)
-            end
-          )
-        allow(http_response).to receive(:read_body).and_yield(mock_content)
+        stub_http_response(successful_response("binary-pck-data"))
 
-        described_class.call(name: name, target: target_path)
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, name)
 
-        expect(file_io.string).to eq(mock_content)
+          described_class.call(name: name, target: target_path)
+
+          expect(File.binread(target_path)).to eq("binary-pck-data")
+          expect(Net::HTTP).to have_received(:start)
+            .with(naif_uri.host, naif_uri.port, use_ssl: true)
+        end
       end
     end
 
     context "when downloading an IMCCE kernel" do
       it "downloads, extracts, and writes the IMCCE kernel file" do
         name = "inpop19a.bsp"
-        target_path = "tmp/kernel.bsp"
-        mock_content = "large-binary-data"
-        file_io = StringIO.new
-        pathname_double = instance_double(Pathname, dirname: "tmp")
-        http_response = Net::HTTPOK.new("1.1", "200", "OK")
         tar_block_size = 512
         decoy_content = "x" * (tar_block_size + 1)
-        tar_gz_file = create_temp_tar_gz_with(
+        archive = tar_gz_with(
           "README.txt" => decoy_content,
-          described_class::IMCCE_KERNELS[name] => mock_content
+          imcce_path(name) => "imcce-kernel-data"
         )
-        tar_gz_file.rewind
-        tar_gz_content = tar_gz_file.read
-        allow(Pathname).to receive(:new)
-          .with(target_path)
-          .and_return(pathname_double)
-        allow(pathname_double).to receive(:open)
-          .with("wb")
-          .and_yield(file_io)
-          .once
-        allow(Tempfile).to receive(:create)
-          .with(%w[archive .tar.gz])
-          .and_yield(tar_gz_file)
-        allow(Net::HTTP).to receive(:start)
-          .with(anything, anything, use_ssl: true)
-          .and_yield(
-            double(request: nil).tap do |http|
-              allow(http).to receive(:request).and_yield(http_response)
-            end
-          )
-        allow(http_response).to receive(:read_body).and_yield(tar_gz_content)
+        stub_http_response(successful_response(archive))
 
-        described_class.call(name: name, target: target_path)
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, name)
 
-        expect(file_io.string).to eq(mock_content)
+          described_class.call(name: name, target: target_path)
+
+          expect(File.binread(target_path)).to eq("imcce-kernel-data")
+        end
       end
 
       it "writes kernels larger than one archive read chunk" do
         name = "inpop19a.bsp"
         kernel_content = "x" * (described_class::ARCHIVE_READ_CHUNK_SIZE + 1)
-        archive = create_temp_tar_gz_with(
-          described_class::IMCCE_KERNELS[name] => kernel_content
-        )
-        stub_http_response(successful_response(archive.read))
+        archive = tar_gz_with(imcce_path(name) => kernel_content)
+        stub_http_response(successful_response(archive))
 
         Dir.mktmpdir do |directory|
           target_path = File.join(directory, name)
@@ -123,10 +86,8 @@ RSpec.describe Ephem::Download do
       end
 
       it "raises a DownloadError when the archive lacks the kernel" do
-        archive = create_temp_tar_gz_with(
-          described_class::IMCCE_KERNELS["inpop10b.bsp"] => "other kernel"
-        )
-        stub_http_response(successful_response(archive.read))
+        archive = tar_gz_with(imcce_path("inpop10b.bsp") => "other kernel")
+        stub_http_response(successful_response(archive))
 
         Dir.mktmpdir do |directory|
           target_path = File.join(directory, "inpop19a.bsp")
@@ -138,15 +99,30 @@ RSpec.describe Ephem::Download do
             "inpop19a/inpop19a_TDB_m100_p100_spice.tar.gz does not contain " \
             "inpop19a_TDB_m100_p100_spice.bsp"
           )
-          expect(File).not_to exist(target_path)
+          expect(Dir.children(directory)).to be_empty
+        end
+      end
+
+      it "keeps the existing kernel when the archive lacks the kernel" do
+        archive = tar_gz_with(imcce_path("inpop10b.bsp") => "other kernel")
+        stub_http_response(successful_response(archive))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "inpop19a.bsp")
+          File.binwrite(target_path, "existing kernel")
+
+          expect {
+            described_class.call(name: "inpop19a.bsp", target: target_path)
+          }.to raise_error(Ephem::DownloadError)
+          expect(File.binread(target_path)).to eq("existing kernel")
+          expect(Dir.children(directory)).to eq(["inpop19a.bsp"])
         end
       end
     end
 
     context "when the server responds with an error" do
       it "raises a DownloadError and leaves no file behind" do
-        not_found = Net::HTTPNotFound.new("1.1", "404", "Not Found")
-        stub_http_response(not_found)
+        stub_http_response(not_found_response)
 
         Dir.mktmpdir do |directory|
           target_path = File.join(directory, "de440.bsp")
@@ -159,7 +135,43 @@ RSpec.describe Ephem::Download do
             "https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440.bsp: " \
             "404 Not Found"
           )
-          expect(File).not_to exist(target_path)
+          expect(Dir.children(directory)).to be_empty
+        end
+      end
+
+      it "keeps the existing kernel" do
+        stub_http_response(not_found_response)
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "inpop19a.bsp")
+          File.binwrite(target_path, "existing kernel")
+
+          expect {
+            described_class.call(name: "inpop19a.bsp", target: target_path)
+          }.to raise_error(Ephem::DownloadError)
+          expect(File.binread(target_path)).to eq("existing kernel")
+          expect(Dir.children(directory)).to eq(["inpop19a.bsp"])
+        end
+      end
+    end
+
+    context "when the download is interrupted" do
+      it "keeps the existing kernel and removes the partial file" do
+        interrupted_response = Net::HTTPOK.new("1.1", "200", "OK")
+        allow(interrupted_response).to receive(:read_body)
+          .and_yield("partial data")
+          .and_raise(Interrupt)
+        stub_http_response(interrupted_response)
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "de440.bsp")
+          File.binwrite(target_path, "existing kernel")
+
+          expect {
+            described_class.call(name: "de440.bsp", target: target_path)
+          }.to raise_error(Interrupt)
+          expect(File.binread(target_path)).to eq("existing kernel")
+          expect(Dir.children(directory)).to eq(["de440.bsp"])
         end
       end
     end
@@ -182,24 +194,31 @@ RSpec.describe Ephem::Download do
     end
   end
 
+  def not_found_response
+    Net::HTTPNotFound.new("1.1", "404", "Not Found")
+  end
+
   def stub_http_response(response)
     http = double(request: nil)
     allow(http).to receive(:request).and_yield(response)
     allow(Net::HTTP).to receive(:start).and_yield(http)
   end
 
-  def create_temp_tar_gz_with(entries)
-    Tempfile.new.tap do |tempfile|
-      Zlib::GzipWriter.open(tempfile) do |gz|
-        Gem::Package::TarWriter.new(gz) do |tar|
-          entries.each do |archive_path, content|
-            tar.add_file_simple(archive_path, 0o644, content.bytesize) do |out|
-              out.write(content)
-            end
+  def imcce_path(name)
+    described_class::IMCCE_KERNELS.fetch(name)
+  end
+
+  def tar_gz_with(entries)
+    archive = StringIO.new
+    Zlib::GzipWriter.wrap(archive) do |gz|
+      Gem::Package::TarWriter.new(gz) do |tar|
+        entries.each do |archive_path, content|
+          tar.add_file_simple(archive_path, 0o644, content.bytesize) do |out|
+            out.write(content)
           end
         end
       end
-      tempfile.rewind
     end
+    archive.string
   end
 end
