@@ -32,6 +32,39 @@ RSpec.describe Ephem::Download do
       end
     end
 
+    context "when Encoding.default_internal is set" do
+      it "writes a directly downloaded kernel" do
+        stub_http_response(successful_response("\x8Bjpl-kernel-data"))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "de440.bsp")
+
+          with_default_internal(Encoding::UTF_8) do
+            described_class.call(name: "de440.bsp", target: target_path)
+          end
+
+          expect(File.binread(target_path)).to eq("\x8Bjpl-kernel-data".b)
+        end
+      end
+
+      it "writes an extracted IMCCE kernel" do
+        name = "inpop19a.bsp"
+        kernel_content = "\x8Bimcce-kernel-data".b
+        archive = tar_gz_with(imcce_path(name) => kernel_content)
+        stub_http_response(successful_response(archive))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, name)
+
+          with_default_internal(Encoding::UTF_8) do
+            described_class.call(name: name, target: target_path)
+          end
+
+          expect(File.binread(target_path)).to eq(kernel_content)
+        end
+      end
+    end
+
     context "when downloading a NAIF binary PCK kernel" do
       it "downloads and writes the PCK kernel file from NAIF" do
         name = "moon_pa_de440_200625.bpc"
@@ -159,7 +192,7 @@ RSpec.describe Ephem::Download do
       it "keeps the existing kernel and removes the partial file" do
         interrupted_response = Net::HTTPOK.new("1.1", "200", "OK")
         allow(interrupted_response).to receive(:read_body)
-          .and_yield("partial data")
+          .and_yield("partial data".b)
           .and_raise(Interrupt)
         stub_http_response(interrupted_response)
 
@@ -190,7 +223,7 @@ RSpec.describe Ephem::Download do
 
   def successful_response(body)
     Net::HTTPOK.new("1.1", "200", "OK").tap do |response|
-      allow(response).to receive(:read_body).and_yield(body)
+      allow(response).to receive(:read_body).and_yield(body.b)
     end
   end
 
@@ -206,6 +239,22 @@ RSpec.describe Ephem::Download do
 
   def imcce_path(name)
     described_class::IMCCE_KERNELS.fetch(name)
+  end
+
+  def with_default_internal(encoding)
+    original_encoding = Encoding.default_internal
+    set_default_internal(encoding)
+    yield
+  ensure
+    set_default_internal(original_encoding)
+  end
+
+  def set_default_internal(encoding)
+    original_verbose = $VERBOSE
+    $VERBOSE = nil
+    Encoding.default_internal = encoding
+  ensure
+    $VERBOSE = original_verbose
   end
 
   def tar_gz_with(entries)
