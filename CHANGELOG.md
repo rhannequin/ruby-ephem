@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.5.1] - 2026-11-24
+
+### Improvements
+
+- Replace the `minitar` dependency with RubyGems' built-in tar reader, which
+  clears the GHSA-r6vf-943r-2wvw advisory reported by `bundle audit` while
+  keeping Ruby 3.0 support ([#88])
+- Copy IMCCE kernels out of their archive in chunks instead of reading them
+  into memory whole ([#89])
+- Pin CI runners to Ubuntu 24.04 ([#86])
+
+### Bug fixes
+
+- `Ephem::Download` raises `Ephem::DownloadError` on HTTP errors instead of
+  saving the error page as the kernel ([#87], [#89])
+- `Ephem::Download` raises `Ephem::DownloadError` when an IMCCE archive does
+  not contain the requested kernel, instead of returning without writing a
+  file ([#87], [#89])
+- A failed or interrupted download no longer leaves a partial file behind or
+  removes an existing kernel at the target path ([#89])
+
+[#86]: https://github.com/rhannequin/ruby-ephem/pull/86
+[#87]: https://github.com/rhannequin/ruby-ephem/issues/87
+[#88]: https://github.com/rhannequin/ruby-ephem/pull/88
+[#89]: https://github.com/rhannequin/ruby-ephem/pull/89
+
+**Full Changelog**: https://github.com/rhannequin/ruby-ephem/compare/v0.5.0...v0.5.1
+
 ## [0.5.0] - 2026-06-23
 
 ### Features
