@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rubygems/package"
+
 RSpec.describe Ephem::Download do
   describe ".call" do
     context "when downloading a JPL kernel" do
@@ -71,7 +73,12 @@ RSpec.describe Ephem::Download do
         file_io = StringIO.new
         pathname_double = instance_double(Pathname, dirname: "tmp")
         http_response = instance_double(Net::HTTPResponse)
-        tar_gz_file = create_temp_tar_gz_with(name => mock_content)
+        tar_block_size = 512
+        decoy_content = "x" * (tar_block_size + 1)
+        tar_gz_file = create_temp_tar_gz_with(
+          "README.txt" => decoy_content,
+          described_class::IMCCE_KERNELS[name] => mock_content
+        )
         tar_gz_file.rewind
         tar_gz_content = tar_gz_file.read
         allow(Pathname).to receive(:new)
@@ -111,19 +118,13 @@ RSpec.describe Ephem::Download do
     end
   end
 
-  def create_temp_tar_gz_with(files)
+  def create_temp_tar_gz_with(entries)
     Tempfile.new.tap do |tempfile|
       Zlib::GzipWriter.open(tempfile) do |gz|
-        Minitar::Writer.open(gz) do |tar|
-          files.each do |filename, content|
-            io = StringIO.new(content)
-            tar.add_file_simple(
-              described_class::IMCCE_KERNELS[filename],
-              size: content.bytesize,
-              mode: 0o644,
-              mtime: Time.now.to_i
-            ) do |out|
-              IO.copy_stream(io, out)
+        Gem::Package::TarWriter.new(gz) do |tar|
+          entries.each do |archive_path, content|
+            tar.add_file_simple(archive_path, 0o644, content.bytesize) do |out|
+              out.write(content)
             end
           end
         end

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "minitar"
 require "net/http"
 require "pathname"
 require "tempfile"
@@ -159,6 +158,8 @@ module Ephem
     end
 
     def download_imcce
+      require "rubygems/package"
+
       tar_gz_uri = URI.join(IMCCE_BASE_URL, IMCCE_KERNELS_MATCHING[@name])
       Tempfile.create(%w[archive .tar.gz]) do |temp_file|
         stream_http_to_file(tar_gz_uri, temp_file)
@@ -166,7 +167,7 @@ module Ephem
         temp_file.rewind
 
         Zlib::GzipReader.open(temp_file.path) do |gz|
-          Minitar::Reader.open(gz) do |tar|
+          Gem::Package::TarReader.new(gz) do |tar|
             tar.each_entry do |entry|
               next unless entry.full_name == IMCCE_KERNELS[@name]
 

@@ -41,7 +41,6 @@ Gem::Specification.new do |spec|
   spec.executables = ["ruby-ephem"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "minitar", "~> 0.12"
   spec.add_dependency "zlib", "~> 3.2"
 
   spec.add_development_dependency "csv", "~> 3.3"

@@ -2,7 +2,6 @@ PATH
   remote: .
   specs:
     ephem (0.5.0)
-      minitar (~> 0.12)
       zlib (~> 3.2)
 
 GEM
@@ -21,7 +20,6 @@ GEM
     json (2.19.9)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
-    minitar (0.12.1)
     parallel (1.28.0)
     parser (3.3.11.1)
       ast (~> 2.4.1)
