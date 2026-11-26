@@ -2,7 +2,7 @@
 
 require "parallel"
 
-require_relative "../ephem/tasks/validate_accuracy"
+require_relative "../lib/ephem/tasks/validate_accuracy"
 
 desc "
 Validate accuracy of library by comparing with python-jplephem.

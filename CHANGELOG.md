@@ -16,6 +16,8 @@
   and accuracy wording ([#106], [#115])
 - Document how to enable YJIT, which makes computations about 2 to 2.5 times
   faster ([#104], [#110])
+- Ship only runtime files in the gem and require MFA to publish it. The
+  `validate_accuracy` rake task moves to `rakelib/` ([#109], [#124])
 
 ### Bug fixes
 
@@ -25,8 +27,10 @@
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
 [#104]: https://github.com/rhannequin/ruby-ephem/issues/104
 [#106]: https://github.com/rhannequin/ruby-ephem/issues/106
+[#109]: https://github.com/rhannequin/ruby-ephem/issues/109
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
+[#124]: https://github.com/rhannequin/ruby-ephem/pull/124
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 
 ## [0.5.2] - 2026-11-24
