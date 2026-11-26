@@ -278,6 +278,66 @@ RSpec.describe Ephem::IO::SummaryManager do
       ])
     end
 
+    it "raises FileFormatError when a summary record points to itself" do
+      file = build_daf_file(5 => 5)
+      summary_manager = build_summary_manager(file, forward_record: 5)
+
+      expect { summary_manager.each_summary.to_a }.to raise_error(
+        Ephem::FileFormatError,
+        "Summary record chain loops back to record 5"
+      )
+    end
+
+    it "raises FileFormatError when the chain loops to an earlier record" do
+      file = build_daf_file(3 => 5, 5 => 7, 7 => 3)
+      summary_manager = build_summary_manager(file, forward_record: 3)
+
+      expect { summary_manager.each_summary.to_a }.to raise_error(
+        Ephem::FileFormatError,
+        "Summary record chain loops back to record 3"
+      )
+    end
+
+    it "follows a chain that points backwards without repeating" do
+      file = build_daf_file(3 => 0, 7 => 3)
+      summary_manager = build_summary_manager(file, forward_record: 7)
+
+      names = summary_manager.each_summary.map { |name, _values| name }
+
+      expect(names).to eq(["summary_7", "summary_3"])
+    end
+
+    it "yields summaries read before detecting a loop" do
+      file = build_daf_file(3 => 5, 5 => 3)
+      summary_manager = build_summary_manager(file, forward_record: 3)
+      names = []
+
+      expect {
+        summary_manager.each_summary { |name, _values| names << name }
+      }.to raise_error(Ephem::FileFormatError)
+      expect(names).to eq(["summary_3", "summary_5"])
+    end
+
+    it "raises FileFormatError when a record points to a negative record" do
+      file = build_daf_file(3 => -2)
+      summary_manager = build_summary_manager(file, forward_record: 3)
+
+      expect { summary_manager.each_summary.to_a }.to raise_error(
+        Ephem::FileFormatError,
+        "Invalid summary record number: -2"
+      )
+    end
+
+    it "raises FileFormatError when the forward record is negative" do
+      file = build_daf_file(3 => 0)
+      summary_manager = build_summary_manager(file, forward_record: -1)
+
+      expect { summary_manager.each_summary.to_a }.to raise_error(
+        Ephem::FileFormatError,
+        "Invalid summary record number: -1"
+      )
+    end
+
     it "unpacks summary integers as signed for little endian" do
       expect(single_summary_values(endianness: :little, integer: -82))
         .to eq [1.0, 2.0, -82]
@@ -287,6 +347,48 @@ RSpec.describe Ephem::IO::SummaryManager do
       expect(single_summary_values(endianness: :big, integer: -82))
         .to eq [1.0, 2.0, -82]
     end
+  end
+
+  def build_daf_file(next_records)
+    last_record = next_records.keys.max + 1
+    records = Array.new(last_record) { "\0" * 1024 }
+
+    next_records.each do |record_number, next_record|
+      records[record_number - 1] = build_summary_record(next_record)
+      records[record_number] = "summary_#{record_number}".ljust(1024, "\0")
+    end
+
+    StringIO.new(records.join).binmode
+  end
+
+  def build_summary_record(next_record)
+    control = [next_record.to_f, 0.0, 1.0].pack("E3")
+    summary = [1.0, 2.0].pack("E2") + [3].pack("V")
+    (control + summary).ljust(1024, "\0")
+  end
+
+  def build_summary_manager(file, forward_record:)
+    record_data = instance_double(
+      Ephem::IO::RecordData,
+      double_count: 2,
+      integer_count: 1,
+      forward_record: forward_record
+    )
+
+    Ephem::IO::SummaryManager.new(
+      record_data: record_data,
+      binary_reader: build_binary_reader(file),
+      endianness: :little
+    )
+  end
+
+  def build_binary_reader(file)
+    binary_reader = instance_double(Ephem::IO::BinaryReader)
+    allow(binary_reader).to receive(:read_record) do |record_number|
+      file.seek((record_number - 1) * 1024)
+      file.read(1024)
+    end
+    binary_reader
   end
 
   def single_summary_values(endianness:, integer:)

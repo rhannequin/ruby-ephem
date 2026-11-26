@@ -125,11 +125,27 @@ module Ephem
       end
 
       def iterate_summary_chain(record_number)
+        visited_records = {}
+
         while record_number != 0
+          validate_summary_record_number!(record_number, visited_records)
+          visited_records[record_number] = true
           record_number =
             process_summary_record(record_number) do |name, values|
               yield name, values
             end
+        end
+      end
+
+      def validate_summary_record_number!(record_number, visited_records)
+        unless record_number.positive?
+          raise FileFormatError,
+            "Invalid summary record number: #{record_number}"
+        end
+
+        if visited_records.key?(record_number)
+          raise FileFormatError,
+            "Summary record chain loops back to record #{record_number}"
         end
       end
 
