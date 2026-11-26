@@ -117,12 +117,41 @@ RSpec.describe Ephem::Core::Vector do
       expect(result.to_a).to eq([1.0, 2.0, 3.0])
     end
 
-    it "follows Ruby integer division for integer operands" do
-      vector = described_class.new(3, 4, 5)
+    it "returns Float components for Integer components" do
+      vector = described_class.new(1, 2, 3)
 
       result = vector / 2
 
-      expect(result.to_a).to eq([1, 2, 2])
+      expect(result.to_a).to eq([0.5, 1.0, 1.5])
+      expect(result.to_a).to all(be_a(Float))
+    end
+
+    it "returns Float components for Float components and Integer divisor" do
+      vector = described_class.new(1.0, 2.0, 3.0)
+
+      result = vector / 4
+
+      expect(result.to_a).to eq([0.25, 0.5, 0.75])
+    end
+
+    it "returns infinite and NaN components when dividing Integers by zero" do
+      vector = described_class.new(1, -2, 0)
+
+      result = vector / 0
+
+      expect(result.x).to eq(Float::INFINITY)
+      expect(result.y).to eq(-Float::INFINITY)
+      expect(result.z).to be_nan
+    end
+
+    it "returns infinite and NaN components when dividing Floats by zero" do
+      vector = described_class.new(1.0, -2.0, 0.0)
+
+      result = vector / 0.0
+
+      expect(result.x).to eq(Float::INFINITY)
+      expect(result.y).to eq(-Float::INFINITY)
+      expect(result.z).to be_nan
     end
 
     it "raises InvalidInputError for a non-numeric scalar" do

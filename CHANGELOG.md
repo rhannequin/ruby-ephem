@@ -84,6 +84,10 @@
 - `ruby-ephem` writes errors to stderr and exits with status 1 when a command
   fails, rejects invalid `--targets` values instead of reading them as `0`, and
   converts dates to the Julian Date at midnight instead of noon ([#95], [#114])
+- `Vector#/` always returns Float components, so `Vector[1, 2, 3] / 2` is
+  `Vector[0.5, 1.0, 1.5]` instead of `Vector[0, 1, 1]`. Dividing by `0` gives
+  Infinity or NaN components instead of raising `ZeroDivisionError` ([#130],
+  [#136])
 - Raise `Ephem::FileFormatError` naming the missing record when a kernel is
   empty or ends inside one of its file, comment, summary or name records,
   instead of an `IOError` or a record silently padded with null bytes.
@@ -126,10 +130,12 @@
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
+[#130]: https://github.com/rhannequin/ruby-ephem/issues/130
 [#131]: https://github.com/rhannequin/ruby-ephem/issues/131
 [#133]: https://github.com/rhannequin/ruby-ephem/issues/133
 [#134]: https://github.com/rhannequin/ruby-ephem/pull/134
 [#135]: https://github.com/rhannequin/ruby-ephem/pull/135
+[#136]: https://github.com/rhannequin/ruby-ephem/pull/136
 [#137]: https://github.com/rhannequin/ruby-ephem/pull/137
 
 ## [0.5.2] - 2026-11-24

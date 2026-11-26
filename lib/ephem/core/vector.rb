@@ -102,27 +102,29 @@ module Ephem
 
       # Divides the vector by a scalar.
       #
-      # Division follows Ruby's semantics for the component and divisor types:
-      # dividing a vector of Integer components by an Integer truncates, so
-      # use a Float divisor when a fractional result is expected.
+      # Components are always divided as Floats, so
+      # +Vector[1, 2, 3] / 2+ is +Vector[0.5, 1.0, 1.5]+ whatever the
+      # component and divisor types.
+      #
+      # Dividing by zero never raises: like Float division, it yields
+      # Infinity, -Infinity or NaN components, for Integer and Float
+      # components alike.
       #
       # @param other [Numeric] The divisor applied to each component
       #
-      # @return [Ephem::Core::Vector] A new vector divided by the given scalar
+      # @return [Ephem::Core::Vector] A new vector with Float components
       #
       # @raise [Ephem::InvalidInputError] if other is not numeric
-      # @raise [ZeroDivisionError] if the divisor is zero and the component
-      #   types raise on division by zero (Integer, Rational); with Float
-      #   operands, a zero divisor yields Infinity or NaN components instead
       #
       # @example Convert a velocity from km/day to km/s
-      #   velocity_per_second = velocity_per_day / 86_400.0
+      #   velocity_per_second = velocity_per_day / 86_400
       def /(other)
         unless other.is_a?(Numeric)
           raise InvalidInputError, "Can only divide a Vector by a Numeric"
         end
 
-        self.class.new(x / other, y / other, z / other)
+        divisor = other.to_f
+        self.class.new(x / divisor, y / divisor, z / divisor)
       end
 
       # Negates the vector.
