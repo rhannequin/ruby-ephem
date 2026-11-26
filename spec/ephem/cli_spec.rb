@@ -349,6 +349,18 @@ RSpec.describe Ephem::CLI do
       expect { Ephem::CLI.open_kernel("kernel.bpc") }
         .to raise_error(Ephem::UnsupportedError)
     end
+
+    it "closes the file when the kernel is truncated" do
+      within_temp_dir do |temp_dir|
+        truncated_path =
+          truncated_copy(de421_2000_excerpt, 1000, directory: temp_dir)
+        opened_files = track_opened_files
+
+        expect { Ephem::CLI.open_kernel(truncated_path) }
+          .to raise_error(Ephem::FileFormatError)
+        expect(opened_files).to contain_exactly(be_closed)
+      end
+    end
   end
 
   def excerpt_args(input_file, output_file, *options)
@@ -359,6 +371,14 @@ RSpec.describe Ephem::CLI do
     expect(result[:status]).to eq(1)
     expect(result[:stdout]).to be_empty
     expect(result[:stderr]).to include(message)
+  end
+
+  def track_opened_files
+    opened_files = []
+    allow(File).to receive(:open).and_wrap_original do |original, *arguments|
+      original.call(*arguments).tap { |file| opened_files << file }
+    end
+    opened_files
   end
 
   def within_temp_dir

@@ -24,7 +24,7 @@ module Ephem
 
         @lock.synchronize do
           seek_to_record(record_number)
-          read_and_pad_record
+          read_full_record(record_number)
         end
       end
 
@@ -81,11 +81,16 @@ module Ephem
         @file.seek(8 * (word - 1), ::IO::SEEK_SET)
       end
 
-      def read_and_pad_record
+      def read_full_record(record_number)
         data = @file.read(RECORD_SIZE)
-        raise IOError, "Failed to read record" unless data
+        read_bytes = data ? data.bytesize : 0
+        if read_bytes < RECORD_SIZE
+          raise FileFormatError,
+            "Truncated file: expected #{RECORD_SIZE} bytes of record " \
+            "#{record_number}, got #{read_bytes}"
+        end
 
-        data.ljust(RECORD_SIZE, "\0")
+        data
       end
 
       def read_array_data(length, endianness)

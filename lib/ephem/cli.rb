@@ -230,7 +230,8 @@ module Ephem
     end
 
     def self.open_kernel(path)
-      daf = Ephem::IO::DAF.new(File.open(path, "rb"))
+      file = File.open(path, "rb")
+      daf = Ephem::IO::DAF.new(file)
 
       if daf.file_type == :pck
         Ephem::PCK.new(daf: daf)
@@ -238,7 +239,7 @@ module Ephem
         Ephem::SPK.new(daf: daf)
       end
     rescue
-      daf&.close
+      (daf || file)&.close
       raise
     end
   end
