@@ -6,6 +6,16 @@
 
 - Remove `Ephem::IO::DAF#map_array`, an alias of `#read_array` kept from
   jplephem. Call `#read_array` instead ([#106], [#115])
+- `Ephem::OutOfRangeError` now inherits from `Ephem::Error`, so `rescue
+  Ephem::Error` catches it ([#94], [#120])
+- `SPK.open` and `PCK.open` raise `Ephem::FileFormatError` instead of
+  `ArgumentError` when given the wrong kind of kernel, and no longer turn
+  `Errno::EACCES` into `ArgumentError` ([#94], [#120])
+- Unsupported SPK segment types and position queries on orientation segments
+  raise `Ephem::UnsupportedError` instead of `NotImplementedError` ([#94],
+  [#120])
+- Remove `Ephem::IndexError`. `Vector#[]` and `Orientation#[]` raise Ruby's
+  `IndexError` ([#94], [#120])
 
 ### Features
 
@@ -49,6 +59,7 @@
   now compares components strictly, consistent with `hash` ([#99], [#123])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
+[#94]: https://github.com/rhannequin/ruby-ephem/issues/94
 [#96]: https://github.com/rhannequin/ruby-ephem/issues/96
 [#97]: https://github.com/rhannequin/ruby-ephem/issues/97
 [#99]: https://github.com/rhannequin/ruby-ephem/issues/99
@@ -66,6 +77,7 @@
 [#117]: https://github.com/rhannequin/ruby-ephem/pull/117
 [#118]: https://github.com/rhannequin/ruby-ephem/pull/118
 [#119]: https://github.com/rhannequin/ruby-ephem/pull/119
+[#120]: https://github.com/rhannequin/ruby-ephem/pull/120
 [#121]: https://github.com/rhannequin/ruby-ephem/pull/121
 [#122]: https://github.com/rhannequin/ruby-ephem/pull/122
 [#123]: https://github.com/rhannequin/ruby-ephem/pull/123
