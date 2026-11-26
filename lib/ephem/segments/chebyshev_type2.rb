@@ -6,31 +6,30 @@ module Ephem
     module ChebyshevType2
       include Core::Constants
 
+      Records = Struct.new(
+        :midpoints,
+        :radii,
+        :coefficients,
+        :velocity_coefficients,
+        keyword_init: true
+      )
+
       def initialize(...)
         super
-        @data_loaded = false
+        @records = nil
         @data_lock = Mutex.new
       end
 
       # @return [void]
       def clear_data
-        @data_lock.synchronize do
-          @data_loaded = false
-          @midpoints = nil
-          @radii = nil
-          @coefficients = nil
-        end
+        @data_lock.synchronize { @records = nil }
       end
 
       private
 
       def load_data
-        @data_lock.synchronize do
-          return if @data_loaded
-
-          process_coefficient_data(load_coefficient_data)
-
-          @data_loaded = true
+        @records || @data_lock.synchronize do
+          @records ||= process_coefficient_data(load_coefficient_data)
         end
       end
 
@@ -54,12 +53,12 @@ module Ephem
 
         coefficients = coefficients_raw.each_slice(record_size).to_a
 
-        @midpoints = coefficients.map { |row| row[0] }
-        @radii = coefficients.map { |row| row[1] }
+        midpoints = coefficients.map { |row| row[0] }.freeze
+        radii = coefficients.map { |row| row[1] }.freeze
         n_terms = coefficient_count
         n_components = component_count
 
-        @coefficients = Array.new(segment_count) do |i|
+        terms = Array.new(segment_count) do |i|
           row = coefficients[i][2..]
           Array.new(n_terms) do |k|
             Array.new(n_components) do |j|
@@ -67,6 +66,13 @@ module Ephem
             end
           end
         end
+
+        Records.new(
+          midpoints: midpoints,
+          radii: radii,
+          coefficients: terms.freeze,
+          velocity_coefficients: nil
+        ).freeze
       end
 
       def convert_to_seconds(tdb, tdb2)
@@ -82,37 +88,40 @@ module Ephem
         (time - Time::J2000_EPOCH + offset) * Time::SECONDS_PER_DAY
       end
 
-      def generate_position(tdb_seconds)
-        interval = find_interval(tdb_seconds)
-        normalized_time = compute_normalized_time(tdb_seconds, interval)
-        coeffs = @coefficients[interval]
+      def generate_position(records, tdb_seconds)
+        interval = find_interval(records, tdb_seconds)
+        normalized_time =
+          compute_normalized_time(records, tdb_seconds, interval)
+        coeffs = records.coefficients[interval]
         Computation::ChebyshevPolynomial.evaluate(coeffs, normalized_time)
       end
 
-      def generate_single(tdb_seconds)
-        interval = find_interval(tdb_seconds)
-        normalized_time = compute_normalized_time(tdb_seconds, interval)
+      def generate_single(records, tdb_seconds)
+        interval = find_interval(records, tdb_seconds)
+        normalized_time =
+          compute_normalized_time(records, tdb_seconds, interval)
 
-        coeffs = @coefficients[interval] # already [n_terms][3]
+        coeffs = records.coefficients[interval] # already [n_terms][3]
         Computation::ChebyshevPolynomial.evaluate_with_derivative(
           coeffs,
           normalized_time,
-          @radii[interval]
+          records.radii[interval]
         )
       end
 
-      def generate_multiple(tdb_seconds)
-        tdb_seconds.map { |time| generate_single(time) }
+      def generate_multiple(records, tdb_seconds)
+        tdb_seconds.map { |time| generate_single(records, time) }
       end
 
-      def find_interval(tdb_seconds)
+      def find_interval(records, tdb_seconds)
         last_interval = @last_interval
-        if last_interval && time_in_interval?(tdb_seconds, last_interval)
+        if last_interval &&
+            time_in_interval?(records, tdb_seconds, last_interval)
           return last_interval
         end
 
-        midpoints = @midpoints
-        radii = @radii
+        midpoints = records.midpoints
+        radii = records.radii
         left = 0
         right = midpoints.size - 1
 
@@ -146,32 +155,35 @@ module Ephem
         )
       end
 
-      def request_out_of_range_error(error, tdb, tdb2)
-        times = uncovered_times(tdb, tdb2)
+      def request_out_of_range_error(records, error, tdb, tdb2)
+        times = uncovered_times(records, tdb, tdb2)
         times.empty? ? error : out_of_range_error(times)
       end
 
-      def uncovered_times(tdb, tdb2)
+      def uncovered_times(records, tdb, tdb2)
         Array(tdb).filter_map do |time|
-          time + tdb2 unless covered_by_records?(time_to_seconds(time, tdb2))
+          tdb_seconds = time_to_seconds(time, tdb2)
+          time + tdb2 unless covered_by_records?(records, tdb_seconds)
         end
       end
 
-      def covered_by_records?(tdb_seconds)
-        interval = (0...@midpoints.size).bsearch do |index|
-          @midpoints[index] + @radii[index] >= tdb_seconds
+      def covered_by_records?(records, tdb_seconds)
+        midpoints = records.midpoints
+        radii = records.radii
+        interval = (0...midpoints.size).bsearch do |index|
+          midpoints[index] + radii[index] >= tdb_seconds
         end
-        interval && time_in_interval?(tdb_seconds, interval)
+        interval && time_in_interval?(records, tdb_seconds, interval)
       end
 
-      def time_in_interval?(time, interval)
-        min_time = @midpoints[interval] - @radii[interval]
-        max_time = @midpoints[interval] + @radii[interval]
-        time.between?(min_time, max_time)
+      def time_in_interval?(records, time, interval)
+        midpoint = records.midpoints[interval]
+        radius = records.radii[interval]
+        time.between?(midpoint - radius, midpoint + radius)
       end
 
-      def compute_normalized_time(time_seconds, interval)
-        (time_seconds - @midpoints[interval]) / @radii[interval]
+      def compute_normalized_time(records, time_seconds, interval)
+        (time_seconds - records.midpoints[interval]) / records.radii[interval]
       end
     end
   end

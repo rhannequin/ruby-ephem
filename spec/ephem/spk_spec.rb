@@ -90,6 +90,42 @@ RSpec.describe Ephem::SPK do
         described_class.open(de421_2000_excerpt) { |spk| spk.close }
       end.not_to raise_error
     end
+
+    it "raises FileFormatError for an empty file" do
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        empty_path = File.join(temp_dir, "empty.bsp")
+        File.binwrite(empty_path, "")
+
+        expect { described_class.open(empty_path) }.to raise_error(
+          Ephem::FileFormatError,
+          "Truncated file: expected 1024 bytes of record 1, got 0"
+        )
+      end
+    end
+
+    it "raises FileFormatError for a file cut inside the summary record" do
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        truncated_path =
+          truncated_copy(de421_2000_excerpt, 2548, directory: temp_dir)
+
+        expect { described_class.open(truncated_path) }.to raise_error(
+          Ephem::FileFormatError,
+          "Truncated file: expected 1024 bytes of record 3, got 500"
+        )
+      end
+    end
+
+    it "closes the file when it is truncated" do
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        truncated_path =
+          truncated_copy(de421_2000_excerpt, 1000, directory: temp_dir)
+        opened_files = track_opened_files
+
+        expect { described_class.open(truncated_path) }
+          .to raise_error(Ephem::FileFormatError)
+        expect(opened_files).to contain_exactly(be_closed)
+      end
+    end
   end
 
   describe "#initialize" do

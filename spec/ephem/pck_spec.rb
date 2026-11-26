@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tmpdir"
+
 RSpec.describe Ephem::PCK do
   include TestSpkHelper
 
@@ -37,6 +39,33 @@ RSpec.describe Ephem::PCK do
       expect(daf).to receive(:close)
       expect { described_class.open("kernel.bpc") }
         .to raise_error(Ephem::UnsupportedError)
+    end
+
+    it "raises FileFormatError when the last record is only partly present" do
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        truncated_path = truncated_copy(
+          moon_pa_de440_boundary_excerpt,
+          4196,
+          directory: temp_dir
+        )
+
+        expect { described_class.open(truncated_path) }.to raise_error(
+          Ephem::FileFormatError,
+          "Truncated file: expected 1024 bytes of record 5, got 100"
+        )
+      end
+    end
+
+    it "closes the file when it is truncated" do
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        truncated_path =
+          truncated_copy(moon_pa_de440_boundary_excerpt, 0, directory: temp_dir)
+        opened_files = track_opened_files
+
+        expect { described_class.open(truncated_path) }
+          .to raise_error(Ephem::FileFormatError)
+        expect(opened_files).to contain_exactly(be_closed)
+      end
     end
 
     it "yields the kernel to the block" do

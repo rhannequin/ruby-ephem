@@ -19,7 +19,7 @@
 - `Ephem::OutOfRangeError#out_of_range_times` is always an Array of every
   uncovered time, as Julian Dates. It used to be a single number, in seconds
   since J2000 or in Julian Date depending on the source ([#127], [#128])
-- More errors inherit from `Ephem::Error` ([#129]):
+- More errors inherit from `Ephem::Error` ([#129], [#138]):
   - `position_at` and `state_at` on PCK segments and groups raise
     `Ephem::UnsupportedError` instead of `NoMethodError`
   - Reading from a kernel or one of its segments after `close` raises the new
@@ -91,6 +91,17 @@
 - `ruby-ephem` writes errors to stderr and exits with status 1 when a command
   fails, rejects invalid `--targets` values instead of reading them as `0`, and
   converts dates to the Julian Date at midnight instead of noon ([#95], [#114])
+- `Vector#/` always returns Float components, so `Vector[1, 2, 3] / 2` is
+  `Vector[0.5, 1.0, 1.5]` instead of `Vector[0, 1, 1]`. Dividing by `0` gives
+  Infinity or NaN components instead of raising `ZeroDivisionError` ([#130],
+  [#136])
+- Raise `Ephem::FileFormatError` naming the missing record when a kernel is
+  empty or ends inside one of its file, comment, summary or name records,
+  instead of an `IOError` or a record silently padded with null bytes.
+  `SPK.open`, `PCK.open` and the `ruby-ephem` command also close the file when
+  the kernel cannot be read ([#133], [#137])
+- Fix a race where clearing a segment's data, or closing its kernel, while
+  another thread queries it raised `NoMethodError` ([#132], [#139])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#94]: https://github.com/rhannequin/ruby-ephem/issues/94
@@ -129,9 +140,16 @@
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
 [#129]: https://github.com/rhannequin/ruby-ephem/issues/129
+[#130]: https://github.com/rhannequin/ruby-ephem/issues/130
 [#131]: https://github.com/rhannequin/ruby-ephem/issues/131
+[#132]: https://github.com/rhannequin/ruby-ephem/issues/132
+[#133]: https://github.com/rhannequin/ruby-ephem/issues/133
 [#134]: https://github.com/rhannequin/ruby-ephem/pull/134
 [#135]: https://github.com/rhannequin/ruby-ephem/pull/135
+[#136]: https://github.com/rhannequin/ruby-ephem/pull/136
+[#137]: https://github.com/rhannequin/ruby-ephem/pull/137
+[#138]: https://github.com/rhannequin/ruby-ephem/pull/138
+[#139]: https://github.com/rhannequin/ruby-ephem/pull/139
 
 ## [0.5.2] - 2026-11-24
 

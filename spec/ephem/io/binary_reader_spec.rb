@@ -30,13 +30,13 @@ RSpec.describe Ephem::IO::BinaryReader do
       expect(reader.read_record(2)).to eq(second_record)
     end
 
-    it "pads a short final record with null bytes" do
+    it "raises FileFormatError when the record is only partly present" do
       reader = build_reader("abc")
 
-      record = reader.read_record(1)
-
-      expect(record.bytesize).to eq(Ephem::IO::BinaryReader::RECORD_SIZE)
-      expect(record).to start_with("abc\0")
+      expect { reader.read_record(1) }.to raise_error(
+        Ephem::FileFormatError,
+        "Truncated file: expected 1024 bytes of record 1, got 3"
+      )
     end
 
     it "raises ArgumentError for a non-positive record number" do
@@ -48,12 +48,21 @@ RSpec.describe Ephem::IO::BinaryReader do
       )
     end
 
-    it "raises IOError when the record is past the end of the file" do
+    it "raises FileFormatError when the record is past the end of the file" do
       reader = build_reader("abc")
 
       expect { reader.read_record(2) }.to raise_error(
-        IOError,
-        "Failed to read record"
+        Ephem::FileFormatError,
+        "Truncated file: expected 1024 bytes of record 2, got 0"
+      )
+    end
+
+    it "raises FileFormatError when the file is empty" do
+      reader = build_reader("")
+
+      expect { reader.read_record(1) }.to raise_error(
+        Ephem::FileFormatError,
+        "Truncated file: expected 1024 bytes of record 1, got 0"
       )
     end
   end
