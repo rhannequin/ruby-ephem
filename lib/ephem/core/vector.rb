@@ -210,7 +210,7 @@ module Ephem
         when 0 then x
         when 1 then y
         when 2 then z
-        else raise IndexError, "Invalid index: #{index}"
+        else raise ::IndexError, "Invalid index: #{index}"
         end
       end
 

@@ -69,4 +69,36 @@ RSpec.describe Ephem::Segments::BaseSegment do
       expect(segment.describe).to end_with("-> Unknown Target (2000001)")
     end
   end
+
+  describe "#compute" do
+    it "raises UnsupportedError for an unimplemented data type" do
+      segment = build_segment(data_type: 21)
+
+      expect { segment.compute(2451545.0) }.to raise_error(
+        Ephem::UnsupportedError, /compute\(\) for data type 21/
+      )
+    end
+  end
+
+  describe "#compute_and_differentiate" do
+    it "raises UnsupportedError for an unimplemented data type" do
+      segment = build_segment(data_type: 21)
+
+      expect { segment.compute_and_differentiate(2451545.0) }
+        .to raise_error(
+          Ephem::UnsupportedError,
+          /compute_and_differentiate\(\) for data type 21/
+        )
+    end
+  end
+
+  def build_segment(data_type:)
+    descriptor = [100.0, 200.0, 3, 0, 1, data_type, 0, 100]
+
+    described_class.new(
+      daf: double("daf"),
+      source: "DE-0421LE-0421",
+      descriptor: descriptor
+    )
+  end
 end

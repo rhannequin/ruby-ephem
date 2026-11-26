@@ -96,10 +96,10 @@ RSpec.describe Ephem::Segments::OrientationSegment do
       segment = create_segment_with_data
 
       expect { segment.compute(0.0) }.to raise_error(
-        NotImplementedError, /angles_at or #orientation_at/
+        Ephem::UnsupportedError, /angles_at or #orientation_at/
       )
       expect { segment.compute_and_differentiate(0.0) }.to raise_error(
-        NotImplementedError, /orientation_at/
+        Ephem::UnsupportedError, /orientation_at/
       )
     end
   end

@@ -103,14 +103,16 @@ module Ephem
         (tdb + tdb2).between?(@start_jd, @end_jd)
       end
 
+      # @raise [Ephem::UnsupportedError] the segment's data type has no
+      #   implementation
       def compute(_tdb, _tdb2 = 0.0)
-        raise NotImplementedError,
-          "#{self.class} has not implemented compute() for data type #{@data_type}"
+        raise UnsupportedError, unsupported_message("compute")
       end
 
+      # @raise [Ephem::UnsupportedError] the segment's data type has no
+      #   implementation
       def compute_and_differentiate(_tdb, _tdb2 = 0.0)
-        raise NotImplementedError,
-          "#{self.class} has not implemented compute_and_differentiate() for data type #{@data_type}"
+        raise UnsupportedError, unsupported_message("compute_and_differentiate")
       end
 
       def clear_data
@@ -118,6 +120,11 @@ module Ephem
       end
 
       private
+
+      def unsupported_message(method_name)
+        "#{self.class} has not implemented #{method_name}() " \
+          "for data type #{@data_type}"
+      end
 
       def parse_descriptor(descriptor)
         @start_second,

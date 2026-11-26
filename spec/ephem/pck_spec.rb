@@ -15,8 +15,16 @@ RSpec.describe Ephem::PCK do
 
     it "rejects an SPK file" do
       expect { described_class.open(test_spk) }.to raise_error(
-        ArgumentError, /not a binary PCK/
+        Ephem::FileFormatError, /not a binary PCK/
       )
+    end
+
+    it "lets a permission error through unchanged" do
+      allow(File).to receive(:open)
+        .and_raise(Errno::EACCES, "kernel.bpc")
+
+      expect { described_class.open("kernel.bpc") }
+        .to raise_error(Errno::EACCES)
     end
 
     it "closes the DAF when the kernel cannot be built" do
@@ -123,10 +131,10 @@ RSpec.describe Ephem::PCK do
       group = pck[31008]
 
       expect { group.compute(2452000.0) }.to raise_error(
-        NotImplementedError, /angles_at or #orientation_at/
+        Ephem::UnsupportedError, /angles_at or #orientation_at/
       )
       expect { group.compute_and_differentiate(2452000.0) }.to raise_error(
-        NotImplementedError, /orientation_at/
+        Ephem::UnsupportedError, /orientation_at/
       )
 
       pck.close

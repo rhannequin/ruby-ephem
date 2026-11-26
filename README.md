@@ -170,6 +170,22 @@ blocks (`about_x`, `about_y`, `about_z`, `multiply`, `apply`) if you need a
 different axis order or an additional fixed rotation (such as the PA -> ME
 offset, whose constants the consumer supplies).
 
+## Errors
+
+Errors about kernels, coverage and downloads inherit from `Ephem::Error`, so
+a single `rescue Ephem::Error` catches them. The most common ones are:
+
+- `Ephem::OutOfRangeError`: the requested time is outside the kernel's
+  coverage. `#out_of_range_times` returns the offending times.
+- `Ephem::FileFormatError`: the file is not a valid kernel, or is the wrong
+  kind (an SPK passed to `Ephem::PCK.open`, or the other way round).
+- `Ephem::UnsupportedError`: the kernel uses a segment or data type the gem
+  does not implement.
+
+Errors from the file system, such as `Errno::ENOENT` or `Errno::EACCES`, are
+not wrapped, and invalid arguments raise Ruby's own errors (`ArgumentError`,
+or `IndexError` for an out-of-range `Vector#[]` or `Orientation#[]`).
+
 ## CLI
 
 The gem also provides a CLI to generate an excerpt from an original kernel file.
