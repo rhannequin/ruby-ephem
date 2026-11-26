@@ -121,10 +121,6 @@ RSpec.describe Ephem::Segments::OrientationSegment do
       end
     end
 
-    allow(daf).to receive(:map_array) do |start_word, end_word|
-      daf.read_array(start_word, end_word)
-    end
-
     daf
   end
 

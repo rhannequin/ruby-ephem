@@ -19,7 +19,7 @@ module Ephem
       }.freeze
 
       POSITION_ERROR_MARGIN = 0.0 # exact match
-      VELOCITY_ERROR_MARGIN = 0.000000002 # 0.002 mm/s
+      VELOCITY_ERROR_MARGIN = 0.000000002 # km/day, about 2e-11 m/s
 
       def self.run(date:, kernel:, target:)
         new.run(date: date, kernel: kernel, target: target)

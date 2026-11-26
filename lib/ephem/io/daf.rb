@@ -33,7 +33,6 @@ module Ephem
           endianness: @endianness
         )
       end
-      alias_method :map_array, :read_array
 
       def close
         @binary_reader&.close

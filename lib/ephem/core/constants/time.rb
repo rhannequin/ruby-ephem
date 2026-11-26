@@ -4,7 +4,7 @@ module Ephem
   module Core
     module Constants
       module Time
-        # Julian Date of J2000 epoch (2000-01-01T12:00:00Z)
+        # Julian Date of the J2000 epoch (2000-01-01 12:00:00 TT)
         J2000_EPOCH = 2451545.0
 
         # Number of seconds in a day

@@ -9,12 +9,11 @@ class ChebyshevType2TestHost
 
   def initialize(component_count: 3, midpoints: nil, radii: nil,
     coefficients: nil)
+    super()
     @component_count = component_count
     @midpoints = midpoints
     @radii = radii
     @coefficients = coefficients
-    @data_lock = Mutex.new
-    @data_loaded = false
   end
 
   private

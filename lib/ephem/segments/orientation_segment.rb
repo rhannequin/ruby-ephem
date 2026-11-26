@@ -11,12 +11,6 @@ module Ephem
 
       COMPONENT_COUNT = 3 # phi, theta, psi
 
-      def initialize(daf:, source:, descriptor:)
-        super
-        @data_loaded = false
-        @data_lock = Mutex.new
-      end
-
       # @return [Integer] NAIF frame ID of the oriented body frame
       alias_method :body, :target
       # @return [Integer] NAIF ID of the inertial reference frame
