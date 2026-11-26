@@ -109,6 +109,33 @@ position = Ephem::SPK.open("tmp/de421.bsp") do |kernel|
 end
 ```
 
+### Positions between any two bodies
+
+`spk[center, target]` only returns pairs stored in the kernel. A JPL DE
+kernel, for instance, stores the Earth relative to the Earth-Moon
+barycenter (3), not relative to the Solar System Barycenter (0) or to the
+Moon. `SPK#position_at` and `SPK#state_at` find the stored pairs linking
+any two bodies and add or subtract them for you:
+
+```rb
+time = 2460676.5
+
+# Earth relative to the Solar System Barycenter: (0 -> 3) + (3 -> 399)
+spk.position_at(target: 399, center: 0, tdb: time)
+
+# Moon relative to the Earth: (3 -> 301) - (3 -> 399)
+state = spk.state_at(target: 301, center: 399, tdb: time)
+state.position # km
+state.velocity # km/day
+
+# Arrays of times and a split Julian Date are supported too
+spk.position_at(target: 301, center: 399, tdb: [time, time + 1])
+spk.position_at(target: 301, center: 399, tdb: 2460676, tdb2: 0.5)
+```
+
+A `KeyError` is raised when no chain of stored pairs links the two
+bodies.
+
 ## Orientation kernels (binary PCK)
 
 Binary PCK (`DAF/PCK`) kernels store the orientation of a body frame over time
