@@ -3,6 +3,7 @@
 require "parallel"
 
 require_relative "../lib/ephem/tasks/validate_accuracy"
+require_relative "../lib/ephem/tasks/validate_testpo"
 
 desc "
 Validate accuracy of library by comparing with python-jplephem.
@@ -26,6 +27,14 @@ task :validate_accuracy do
 end
 
 namespace :validate_accuracy do
+  desc "
+  Validate accuracy of library against the IMCCE testpo files.
+  Usage: rake validate_accuracy:testpo [kernel=inpop21a]
+  "
+  task :testpo do
+    exit 1 unless run_testpo_validations(ENV["kernel"])
+  end
+
   task :all do
     kernels = Ephem::Tasks::ValidateAccuracy::KERNELS.keys
     targets = (1..10).to_a.map(&:to_s)
@@ -41,7 +50,15 @@ namespace :validate_accuracy do
         target: params[:target]
       )
     end
+    testpo_passed = run_testpo_validations
 
-    exit 1 if results.any?(FalseClass)
+    exit 1 if results.any?(FalseClass) || !testpo_passed
+  end
+
+  def run_testpo_validations(kernel = nil)
+    kernels = kernel ? [kernel] : Ephem::Tasks::ValidateTestpo::KERNELS.keys
+    kernels
+      .map { |name| Ephem::Tasks::ValidateTestpo.run(kernel: name) }
+      .all?
   end
 end

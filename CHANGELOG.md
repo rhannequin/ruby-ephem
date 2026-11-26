@@ -85,6 +85,8 @@
 - Out-of-range errors name the requested Julian Date and calendar date, the pair
   or body, and the range it covers, instead of a time in seconds since J2000
   ([#127], [#128])
+- Validate INPOP21a against the IMCCE `testpo` file with
+  `rake validate_accuracy:testpo`, also run by `validate_accuracy:all` in CI
 
 ### Bug fixes
 
