@@ -25,6 +25,9 @@
 - `SPK.open` and `PCK.open` take a block, like `File.open`: the kernel is closed
   when the block returns or raises, and the block's value is returned ([#100],
   [#116])
+- Add `SPK#position_at` and `SPK#state_at` to get the position or state of any
+  target relative to any center, chaining the stored pairs that link them
+  ([#107], [#112])
 
 ### Improvements
 
@@ -82,10 +85,12 @@
 [#104]: https://github.com/rhannequin/ruby-ephem/issues/104
 [#105]: https://github.com/rhannequin/ruby-ephem/issues/105
 [#106]: https://github.com/rhannequin/ruby-ephem/issues/106
+[#107]: https://github.com/rhannequin/ruby-ephem/issues/107
 [#108]: https://github.com/rhannequin/ruby-ephem/issues/108
 [#109]: https://github.com/rhannequin/ruby-ephem/issues/109
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#111]: https://github.com/rhannequin/ruby-ephem/pull/111
+[#112]: https://github.com/rhannequin/ruby-ephem/pull/112
 [#113]: https://github.com/rhannequin/ruby-ephem/pull/113
 [#114]: https://github.com/rhannequin/ruby-ephem/pull/114
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
