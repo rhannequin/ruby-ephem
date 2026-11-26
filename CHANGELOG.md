@@ -60,11 +60,16 @@
 - `Vector#==` and `Orientation#==` return false for objects of another class,
   including `nil`, instead of raising `Ephem::InvalidInputError`. Their `eql?`
   now compares components strictly, consistent with `hash` ([#99], [#123])
+- `Excerpt` raises errors instead of printing them and skipping the segment, and
+  raises `Ephem::UnsupportedError` for segment types it cannot excerpt. The
+  excerpt is written to a temporary file and renamed into place, so a failure
+  leaves no partial file ([#98], [#113])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#94]: https://github.com/rhannequin/ruby-ephem/issues/94
 [#96]: https://github.com/rhannequin/ruby-ephem/issues/96
 [#97]: https://github.com/rhannequin/ruby-ephem/issues/97
+[#98]: https://github.com/rhannequin/ruby-ephem/issues/98
 [#99]: https://github.com/rhannequin/ruby-ephem/issues/99
 [#100]: https://github.com/rhannequin/ruby-ephem/issues/100
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
@@ -77,6 +82,7 @@
 [#109]: https://github.com/rhannequin/ruby-ephem/issues/109
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#111]: https://github.com/rhannequin/ruby-ephem/pull/111
+[#113]: https://github.com/rhannequin/ruby-ephem/pull/113
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
 [#116]: https://github.com/rhannequin/ruby-ephem/pull/116
 [#117]: https://github.com/rhannequin/ruby-ephem/pull/117
