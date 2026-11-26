@@ -89,10 +89,17 @@ module Ephem
       end
 
       def read_array_data(length, endianness)
-        data = @file.read(8 * length)
-        raise IOError, "Failed to read array" unless data
+        format = "#{endianness_format(endianness)}#{length}"
+        expected_bytes = 8 * length
+        data = @file.read(expected_bytes)
+        read_bytes = data ? data.bytesize : 0
+        if read_bytes < expected_bytes
+          raise FileFormatError,
+            "Truncated file: expected #{expected_bytes} bytes of array " \
+            "data, got #{read_bytes}"
+        end
 
-        data.unpack("#{endianness_format(endianness)}#{length}")
+        data.unpack(format)
       end
 
       def endianness_format(endianness)
