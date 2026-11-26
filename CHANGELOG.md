@@ -19,6 +19,13 @@
 - `Ephem::OutOfRangeError#out_of_range_times` is always an Array of every
   uncovered time, as Julian Dates. It used to be a single number, in seconds
   since J2000 or in Julian Date depending on the source ([#127], [#128])
+- More errors inherit from `Ephem::Error` ([#129]):
+  - `position_at` and `state_at` on PCK segments and groups raise
+    `Ephem::UnsupportedError` instead of `NoMethodError`
+  - Reading from a kernel or one of its segments after `close` raises the new
+    `Ephem::ClosedKernelError` instead of `IOError`
+  - `Ephem::Download` wraps network, TLS and archive errors in
+    `Ephem::DownloadError`, keeping the original error as `cause`
 
 ### Features
 
@@ -113,6 +120,7 @@
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
+[#129]: https://github.com/rhannequin/ruby-ephem/issues/129
 
 ## [0.5.2] - 2026-11-24
 

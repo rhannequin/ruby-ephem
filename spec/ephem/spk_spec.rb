@@ -140,6 +140,27 @@ RSpec.describe Ephem::SPK do
 
       spk.close
     end
+
+    it "makes later queries raise a ClosedKernelError" do
+      spk = described_class.open(de421_2000_excerpt)
+      segment = spk[0, 3]
+      segment.state_at(2451545.0)
+
+      spk.close
+
+      expect { segment.state_at(2451545.0) }.to raise_error(
+        Ephem::ClosedKernelError, "Cannot read from a closed kernel"
+      )
+      expect { spk.position_at(target: 3, center: 0, tdb: 2451545.0) }
+        .to raise_error(Ephem::ClosedKernelError)
+    end
+
+    it "makes segments from the block form raise a ClosedKernelError" do
+      segment = described_class.open(de421_2000_excerpt) { |spk| spk[0, 3] }
+
+      expect { segment.position_at(2451545.0) }
+        .to raise_error(Ephem::ClosedKernelError)
+    end
   end
 
   describe "#type" do

@@ -92,6 +92,19 @@ RSpec.describe Ephem::Segments::BaseSegment do
     end
   end
 
+  describe "#position_at and #state_at" do
+    it "raises UnsupportedError for an unimplemented data type" do
+      segment = build_segment(data_type: 21)
+
+      expect { segment.position_at(2451545.0) }.to raise_error(
+        Ephem::UnsupportedError, /position_at\(\) for data type 21/
+      )
+      expect { segment.state_at(2451545.0) }.to raise_error(
+        Ephem::UnsupportedError, /state_at\(\) for data type 21/
+      )
+    end
+  end
+
   def build_segment(data_type:)
     descriptor = [100.0, 200.0, 3, 0, 1, data_type, 0, 100]
 

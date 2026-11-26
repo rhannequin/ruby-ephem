@@ -188,6 +188,80 @@ RSpec.describe Ephem::Download do
       end
     end
 
+    context "when the connection fails" do
+      it "wraps network errors in a DownloadError" do
+        network_errors.each do |network_error|
+          allow(Net::HTTP).to receive(:start).and_raise(network_error)
+
+          Dir.mktmpdir do |directory|
+            target_path = File.join(directory, "de440.bsp")
+
+            expect {
+              described_class.call(name: "de440.bsp", target: target_path)
+            }.to raise_error(
+              Ephem::DownloadError,
+              /\AFailed to download #{Regexp.escape(jpl_url("de440.bsp"))}: /
+            ) { |error| expect(error.cause).to be(network_error) }
+            expect(Dir.children(directory)).to be_empty
+          end
+        end
+      end
+
+      it "wraps errors raised while reading the body" do
+        reset_response = Net::HTTPOK.new("1.1", "200", "OK")
+        allow(reset_response).to receive(:read_body)
+          .and_yield("partial data".b)
+          .and_raise(Errno::ECONNRESET)
+        stub_http_response(reset_response)
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "de440.bsp")
+          File.binwrite(target_path, "existing kernel")
+
+          expect {
+            described_class.call(name: "de440.bsp", target: target_path)
+          }.to raise_error(Ephem::DownloadError) { |error|
+            expect(error.cause).to be_a(Errno::ECONNRESET)
+          }
+          expect(File.binread(target_path)).to eq("existing kernel")
+          expect(Dir.children(directory)).to eq(["de440.bsp"])
+        end
+      end
+    end
+
+    context "when the IMCCE archive is corrupt" do
+      it "wraps a gzip error in a DownloadError" do
+        stub_http_response(successful_response("not a gzip archive"))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "inpop19a.bsp")
+
+          expect {
+            described_class.call(name: "inpop19a.bsp", target: target_path)
+          }.to raise_error(
+            Ephem::DownloadError,
+            /\Ainpop19a\/inpop19a_TDB_m100_p100_spice.tar.gz is not a valid/
+          ) { |error| expect(error.cause).to be_a(Zlib::GzipFile::Error) }
+          expect(Dir.children(directory)).to be_empty
+        end
+      end
+
+      it "wraps an invalid tar archive in a DownloadError" do
+        stub_http_response(successful_response(gzip("not a tar" * 200)))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "inpop19a.bsp")
+
+          expect {
+            described_class.call(name: "inpop19a.bsp", target: target_path)
+          }.to raise_error(Ephem::DownloadError) { |error|
+            expect(error.cause).to be_a(Gem::Package::TarInvalidError)
+          }
+          expect(Dir.children(directory)).to be_empty
+        end
+      end
+    end
+
     context "when the download is interrupted" do
       it "keeps the existing kernel and removes the partial file" do
         interrupted_response = Net::HTTPOK.new("1.1", "200", "OK")
@@ -227,6 +301,22 @@ RSpec.describe Ephem::Download do
     end
   end
 
+  def network_errors
+    [
+      SocketError.new("getaddrinfo: nodename nor servname provided"),
+      Net::OpenTimeout.new("execution expired"),
+      Net::ReadTimeout.new("Net::ReadTimeout"),
+      OpenSSL::SSL::SSLError.new("certificate verify failed"),
+      EOFError.new("end of file reached"),
+      Errno::ECONNRESET.new,
+      Errno::ECONNREFUSED.new
+    ]
+  end
+
+  def jpl_url(name)
+    URI.join(described_class::JPL_BASE_URL, name).to_s
+  end
+
   def not_found_response
     Net::HTTPNotFound.new("1.1", "404", "Not Found")
   end
@@ -255,6 +345,12 @@ RSpec.describe Ephem::Download do
     Encoding.default_internal = encoding
   ensure
     $VERBOSE = original_verbose
+  end
+
+  def gzip(content)
+    archive = StringIO.new
+    Zlib::GzipWriter.wrap(archive) { |gz| gz.write(content) }
+    archive.string
   end
 
   def tar_gz_with(entries)

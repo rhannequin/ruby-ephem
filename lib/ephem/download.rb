@@ -195,6 +195,10 @@ module Ephem
 
       raise DownloadError,
         "#{IMCCE_KERNELS_MATCHING[@name]} does not contain #{kernel_path}"
+    rescue Zlib::Error, Gem::Package::Error => error
+      raise DownloadError,
+        "#{IMCCE_KERNELS_MATCHING[@name]} is not a valid archive: " \
+        "#{error.message}"
     end
 
     def copy_entry(entry, file)
@@ -220,6 +224,13 @@ module Ephem
           response.read_body { |chunk| file.write(chunk) }
         end
       end
+    rescue SocketError, Net::OpenTimeout, Net::ReadTimeout,
+      Net::WriteTimeout, Net::HTTPBadResponse, Net::ProtocolError,
+      OpenSSL::SSL::SSLError, EOFError, Errno::ECONNRESET,
+      Errno::ECONNREFUSED, Errno::ECONNABORTED, Errno::EHOSTUNREACH,
+      Errno::EHOSTDOWN, Errno::ENETUNREACH, Errno::ENETDOWN,
+      Errno::ETIMEDOUT, Errno::EPIPE => error
+      raise DownloadError, "Failed to download #{uri}: #{error.message}"
     end
   end
 end

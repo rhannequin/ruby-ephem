@@ -89,6 +89,20 @@ RSpec.describe Ephem::PCK do
     end
   end
 
+  describe "#close" do
+    it "makes later queries raise a ClosedKernelError" do
+      pck = described_class.open(moon_pa_de440_excerpt)
+      segment = pck[31008]
+      segment.orientation_at(2452000.0)
+
+      pck.close
+
+      expect { segment.orientation_at(2452000.0) }.to raise_error(
+        Ephem::ClosedKernelError, "Cannot read from a closed kernel"
+      )
+    end
+  end
+
   describe "#[]" do
     it "returns the orientation source for a body frame" do
       pck = described_class.open(moon_pa_de440_excerpt)
@@ -197,6 +211,12 @@ RSpec.describe Ephem::PCK do
         Ephem::UnsupportedError, /angles_at or #orientation_at/
       )
       expect { group.compute_and_differentiate(2452000.0) }.to raise_error(
+        Ephem::UnsupportedError, /orientation_at/
+      )
+      expect { group.position_at(2452000.0) }.to raise_error(
+        Ephem::UnsupportedError, /angles_at or #orientation_at/
+      )
+      expect { group.state_at(2452000.0) }.to raise_error(
         Ephem::UnsupportedError, /orientation_at/
       )
 

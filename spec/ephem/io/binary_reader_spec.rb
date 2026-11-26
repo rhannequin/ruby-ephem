@@ -141,6 +141,29 @@ RSpec.describe Ephem::IO::BinaryReader do
 
       expect(binary_io).to be_closed
     end
+
+    it "makes later reads raise a ClosedKernelError" do
+      reader = build_reader([1.0].pack("E") * 128)
+
+      reader.close
+
+      expect { reader.read_record(1) }.to raise_error(
+        Ephem::ClosedKernelError, "Cannot read from a closed kernel"
+      )
+      expect {
+        reader.read_array(start_word: 1, end_word: 1, endianness: :little)
+      }.to raise_error(Ephem::ClosedKernelError)
+    end
+
+    it "reads from a file object that cannot tell whether it is closed" do
+      binary_io = build_binary_io([1.0].pack("E"))
+      binary_io.singleton_class.undef_method(:closed?)
+      reader = Ephem::IO::BinaryReader.new(binary_io)
+
+      expect(
+        reader.read_array(start_word: 1, end_word: 1, endianness: :little)
+      ).to eq([1.0])
+    end
   end
 
   def build_reader(bytes)

@@ -23,6 +23,7 @@ module Ephem
         validate_record_number(record_number)
 
         @lock.synchronize do
+          ensure_open
           seek_to_record(record_number)
           read_and_pad_record
         end
@@ -36,13 +37,14 @@ module Ephem
         # enter this critical section at a time. This ensures atomic reads of
         # the array data, preventing data corruption
         @lock.synchronize do
+          ensure_open
           seek_to_word(start_word)
           read_array_data(length, endianness)
         end
       end
 
       def close
-        @file.close
+        @lock.synchronize { @file.close }
       end
 
       private
@@ -71,6 +73,12 @@ module Ephem
           raise ArgumentError,
             "Invalid array bounds: start_word (#{start_word}) must be <= end_word (#{end_word})"
         end
+      end
+
+      def ensure_open
+        return unless @file.respond_to?(:closed?) && @file.closed?
+
+        raise ClosedKernelError, "Cannot read from a closed kernel"
       end
 
       def seek_to_record(record_number)
