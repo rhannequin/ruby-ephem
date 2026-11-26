@@ -7,6 +7,12 @@
 - Remove `Ephem::IO::DAF#map_array`, an alias of `#read_array` kept from
   jplephem. Call `#read_array` instead ([#106], [#115])
 
+### Features
+
+- Add `Vector#*` and `Vector#/` with a scalar and unary `Vector#-@`, and give
+  `State` `==`, `eql?` and `hash`. `State` instances are now frozen ([#108],
+  [#121])
+
 ### Improvements
 
 - Raise `Ephem::UnsupportedError` instead of a `RuntimeError` for an unsupported
@@ -52,6 +58,7 @@
 [#104]: https://github.com/rhannequin/ruby-ephem/issues/104
 [#105]: https://github.com/rhannequin/ruby-ephem/issues/105
 [#106]: https://github.com/rhannequin/ruby-ephem/issues/106
+[#108]: https://github.com/rhannequin/ruby-ephem/issues/108
 [#109]: https://github.com/rhannequin/ruby-ephem/issues/109
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#111]: https://github.com/rhannequin/ruby-ephem/pull/111
@@ -59,6 +66,7 @@
 [#117]: https://github.com/rhannequin/ruby-ephem/pull/117
 [#118]: https://github.com/rhannequin/ruby-ephem/pull/118
 [#119]: https://github.com/rhannequin/ruby-ephem/pull/119
+[#121]: https://github.com/rhannequin/ruby-ephem/pull/121
 [#122]: https://github.com/rhannequin/ruby-ephem/pull/122
 [#123]: https://github.com/rhannequin/ruby-ephem/pull/123
 [#124]: https://github.com/rhannequin/ruby-ephem/pull/124
