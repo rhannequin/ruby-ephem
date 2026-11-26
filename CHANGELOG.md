@@ -38,10 +38,14 @@
 - Evaluate the velocity of SPK type 3 segments from their stored velocity
   coefficients, as SPICE does, instead of differentiating the position ([#96],
   [#111])
+- `Vector#==` and `Orientation#==` return false for objects of another class,
+  including `nil`, instead of raising `Ephem::InvalidInputError`. Their `eql?`
+  now compares components strictly, consistent with `hash` ([#99], [#123])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#96]: https://github.com/rhannequin/ruby-ephem/issues/96
 [#97]: https://github.com/rhannequin/ruby-ephem/issues/97
+[#99]: https://github.com/rhannequin/ruby-ephem/issues/99
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
 [#102]: https://github.com/rhannequin/ruby-ephem/issues/102
 [#103]: https://github.com/rhannequin/ruby-ephem/issues/103
@@ -56,6 +60,7 @@
 [#118]: https://github.com/rhannequin/ruby-ephem/pull/118
 [#119]: https://github.com/rhannequin/ruby-ephem/pull/119
 [#122]: https://github.com/rhannequin/ruby-ephem/pull/122
+[#123]: https://github.com/rhannequin/ruby-ephem/pull/123
 [#124]: https://github.com/rhannequin/ruby-ephem/pull/124
 [#125]: https://github.com/rhannequin/ruby-ephem/pull/125
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126

@@ -167,15 +167,77 @@ RSpec.describe Ephem::Core::Vector do
       expect(vector1 == vector2).to be(false)
     end
 
-    it "raises for non-vector comparison" do
+    it "returns false for objects of another class" do
       vector = described_class.new(1, 2, 3)
 
-      expect { vector == 1 }.to(
-        raise_error(
-          Ephem::InvalidInputError,
-          "Can only compare with another Vector"
-        )
-      )
+      expect(vector == 1).to be(false)
+      expect(vector == [1, 2, 3]).to be(false)
+    end
+
+    it "returns false for nil" do
+      vector = described_class.new(1, 2, 3)
+
+      expect(vector == nil).to be(false) # standard:disable Style/NilComparison
+    end
+
+    it "treats numerically equal components as equal" do
+      integer_vector = described_class.new(1, 2, 3)
+      float_vector = described_class.new(1.0, 2.0, 3.0)
+
+      expect(integer_vector == float_vector).to be(true)
+    end
+
+    it "supports Array#include? with mixed types" do
+      vector = described_class.new(1, 2, 3)
+      mixed = [nil, 1, "vector", described_class.new(1, 2, 3)]
+
+      expect(mixed.include?(vector)).to be(true)
+      expect([nil, 1, "vector"].include?(vector)).to be(false)
+    end
+
+    it "is equal to itself with NaN components" do
+      vector = described_class.new(Float::NAN, 2, 3)
+      same_vector = vector
+
+      expect(vector == same_vector).to be(true)
+      expect(vector.eql?(same_vector)).to be(true)
+      expect([vector].include?(same_vector)).to be(true)
+    end
+  end
+
+  describe "#eql?" do
+    it "returns true for vectors with identical components" do
+      vector1 = described_class.new(1, 2, 3)
+      vector2 = described_class.new(1, 2, 3)
+
+      expect(vector1.eql?(vector2)).to be(true)
+    end
+
+    it "returns false for numerically equal components of another type" do
+      integer_vector = described_class.new(1, 2, 3)
+      float_vector = described_class.new(1.0, 2.0, 3.0)
+
+      expect(integer_vector.eql?(float_vector)).to be(false)
+    end
+
+    it "returns false for objects of another class" do
+      vector = described_class.new(1, 2, 3)
+
+      expect(vector.eql?(nil)).to be(false)
+      expect(vector.eql?([1, 2, 3])).to be(false)
+    end
+  end
+
+  describe "as a hash key" do
+    it "looks up values by equal vectors" do
+      lookup = {
+        nil => :nothing,
+        "origin" => :string,
+        described_class.new(1, 2, 3) => :vector
+      }
+
+      expect(lookup[described_class.new(1, 2, 3)]).to eq(:vector)
+      expect(lookup[described_class.new(4, 5, 6)]).to be_nil
     end
   end
 end

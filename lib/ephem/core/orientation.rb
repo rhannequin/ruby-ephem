@@ -97,14 +97,30 @@ module Ephem
         [phi, theta, psi, rates, self.class].hash
       end
 
+      # @param other [Object] the object to compare with
+      # @return [Boolean] true if +other+ is an orientation with equal angles
+      #   and rates (compared with +==+), false otherwise (including for
+      #   objects of another class)
       def ==(other)
-        unless other.is_a?(self.class)
-          raise InvalidInputError, "Can only compare with another Orientation"
-        end
+        return true if equal?(other)
 
-        to_a == other.to_a && rates == other.rates
+        other.instance_of?(self.class) &&
+          phi == other.phi && theta == other.theta && psi == other.psi &&
+          rates == other.rates
       end
-      alias_method :eql?, :==
+
+      # Strict equality, as used by Hash keys: angles and rates are compared
+      # with +eql?+, consistently with {#hash}.
+      #
+      # @param other [Object] the object to compare with
+      # @return [Boolean]
+      def eql?(other)
+        return true if equal?(other)
+
+        other.instance_of?(self.class) &&
+          phi.eql?(other.phi) && theta.eql?(other.theta) &&
+          psi.eql?(other.psi) && rates.eql?(other.rates)
+      end
 
       private
 

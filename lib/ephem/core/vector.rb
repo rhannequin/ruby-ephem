@@ -167,24 +167,36 @@ module Ephem
         [x, y, z, self.class].hash
       end
 
-      # Checks equality with another vector.
+      # Checks equality with another object. Components are compared with
+      # +==+, so +Vector[1, 2, 3] == Vector[1.0, 2.0, 3.0]+.
       #
-      # @param other [Ephem::Core::Vector] The vector to compare with
+      # @param other [Object] The object to compare with
       #
-      # @return [Boolean] true if vectors are equal, false otherwise
-      #
-      # @raise [InvalidInputError] if comparing with non-Vector object
+      # @return [Boolean] true if +other+ is a vector with equal components,
+      #   false otherwise (including for objects of another class)
       #
       # @example Check if two vectors are equal
       #   vector1 == vector2
       def ==(other)
-        unless other.is_a?(self.class)
-          raise InvalidInputError, "Can only compare with another Vector"
-        end
+        return true if equal?(other)
 
-        [x, y, z] == [other.x, other.y, other.z]
+        other.instance_of?(self.class) &&
+          x == other.x && y == other.y && z == other.z
       end
-      alias_method :eql?, :==
+
+      # Checks strict equality, as used by Hash keys. Components are compared
+      # with +eql?+, consistently with {#hash}, so
+      # +Vector[1, 2, 3].eql?(Vector[1.0, 2.0, 3.0])+ is false.
+      #
+      # @param other [Object] The object to compare with
+      #
+      # @return [Boolean] true if +other+ is a vector with eql? components
+      def eql?(other)
+        return true if equal?(other)
+
+        other.instance_of?(self.class) &&
+          x.eql?(other.x) && y.eql?(other.y) && z.eql?(other.z)
+      end
     end
   end
 end
