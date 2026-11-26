@@ -98,6 +98,15 @@ puts "Position: #{state.position}"
 puts "Velocity: #{state.velocity}"
 # => Velocity: Vector[-1117315.1437825128, 254177.26336095092, 136149.03901534996]
 # The velocity is expressed in km/day
+
+# Close the kernel when you are done with it
+spk.close
+
+# Or pass a block: the kernel is closed when the block finishes, even if it
+# raises, and the block's value is returned
+position = Ephem::SPK.open("tmp/de421.bsp") do |kernel|
+  kernel[0, 5].position_at(2460676.5)
+end
 ```
 
 ## Orientation kernels (binary PCK)

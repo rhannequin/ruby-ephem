@@ -41,6 +41,55 @@ RSpec.describe Ephem::SPK do
       expect { described_class.open("spk_file.bsp") }
         .to raise_error(Errno::EACCES)
     end
+
+    it "yields the kernel to the block" do
+      yielded_kernel = nil
+
+      described_class.open(de421_2000_excerpt) do |spk|
+        yielded_kernel = spk
+      end
+
+      expect(yielded_kernel).to be_an_instance_of(described_class)
+    end
+
+    it "returns the block's value" do
+      result = described_class.open(de421_2000_excerpt) { :block_value }
+
+      expect(result).to eq(:block_value)
+    end
+
+    it "closes the file after the block returns" do
+      opened_files = track_opened_files
+
+      described_class.open(de421_2000_excerpt) { |spk| spk.comments }
+
+      expect(opened_files).to contain_exactly(be_closed)
+    end
+
+    it "closes the file when the block raises" do
+      opened_files = track_opened_files
+
+      expect do
+        described_class.open(de421_2000_excerpt) { raise "boom" }
+      end.to raise_error(RuntimeError, "boom")
+      expect(opened_files).to contain_exactly(be_closed)
+    end
+
+    it "leaves the file open without a block" do
+      opened_files = track_opened_files
+
+      spk = described_class.open(de421_2000_excerpt)
+      closed_states = opened_files.map(&:closed?)
+      spk.close
+
+      expect(closed_states).to eq([false])
+    end
+
+    it "allows the block to close the kernel itself" do
+      expect do
+        described_class.open(de421_2000_excerpt) { |spk| spk.close }
+      end.not_to raise_error
+    end
   end
 
   describe "#initialize" do
@@ -309,5 +358,13 @@ RSpec.describe Ephem::SPK do
 
       expect(spk.each_segment).to be_an(Enumerator)
     end
+  end
+
+  def track_opened_files
+    opened_files = []
+    allow(File).to receive(:open).and_wrap_original do |original, *arguments|
+      original.call(*arguments).tap { |file| opened_files << file }
+    end
+    opened_files
   end
 end

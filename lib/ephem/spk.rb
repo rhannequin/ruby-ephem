@@ -14,6 +14,9 @@ module Ephem
   #   segment = spk[0, 10]
   #   spk.close
   #
+  # @example Opening an SPK file with a block, closed automatically
+  #   Ephem::SPK.open("de421.bsp") { |spk| spk[0, 10].position_at(2451545.0) }
+  #
   class SPK
     TYPES = [
       INPOP = "IMCCE INPOP",
@@ -43,10 +46,27 @@ module Ephem
 
     # Opens an SPK file at the specified path.
     #
+    # Without a block, returns the open kernel; the caller must close it.
+    # With a block, yields the kernel, closes it when the block returns or
+    # raises, and returns the block's value, like +File.open+.
+    #
     # @param path [String] Path to the SPK file
-    # @return [SPK] A new SPK instance
+    # @yieldparam spk [SPK] the open kernel
+    # @return [SPK] the open kernel, if no block is given
+    # @return [Object] the block's value, if a block is given
     # @raise [Ephem::FileFormatError] If the file is a binary PCK
     def self.open(path)
+      spk = load_kernel(path)
+      return spk unless block_given?
+
+      begin
+        yield spk
+      ensure
+        spk.close
+      end
+    end
+
+    def self.load_kernel(path)
       daf = IO::DAF.new(File.open(path, "rb"))
       if daf.file_type == :pck
         raise FileFormatError,
@@ -58,6 +78,7 @@ module Ephem
       daf&.close
       raise
     end
+    private_class_method :load_kernel
 
     # Closes the SPK file and cleans up resources.
     # This method should be called when you're done using the SPK file.
