@@ -505,6 +505,17 @@ RSpec.describe Ephem::SPK do
       end
     end
 
+    it "keeps the two directions of a pair of bodies apart" do
+      with_test_spk do |spk|
+        moon_from_earth =
+          spk.position_at(target: 301, center: 399, tdb: test_time)
+        earth_from_moon =
+          spk.position_at(target: 399, center: 301, tdb: test_time)
+
+        expect(earth_from_moon).to eq(-moon_from_earth)
+      end
+    end
+
     it "returns a zero vector for a body relative to itself" do
       with_test_spk do |spk|
         position = spk.position_at(target: 399, center: 399, tdb: test_time)
@@ -591,6 +602,30 @@ RSpec.describe Ephem::SPK do
         earth = spk[3, 399].compute_and_differentiate(test_time)
         expect_close_vectors(state.position, negated(earth.position))
         expect_close_vectors(state.velocity, negated(earth.velocity))
+      end
+    end
+
+    it "matches the state summed from the stored pairs" do
+      with_test_spk do |spk|
+        state = spk.state_at(target: 199, center: 299, tdb: test_time)
+
+        mercury_barycenter = spk[0, 1].compute_and_differentiate(test_time)
+        mercury = spk[1, 199].compute_and_differentiate(test_time)
+        venus_barycenter = spk[0, 2].compute_and_differentiate(test_time)
+        venus = spk[2, 299].compute_and_differentiate(test_time)
+        expected_position = mercury_barycenter.position + mercury.position -
+          venus_barycenter.position - venus.position
+        expected_velocity = mercury_barycenter.velocity + mercury.velocity -
+          venus_barycenter.velocity - venus.velocity
+        expect_close_vectors(state.position, expected_position)
+        expect_close_vectors(state.velocity, expected_velocity)
+      end
+    end
+
+    it "raises OutOfRangeError naming the pair that does not cover the time" do
+      with_test_spk do |spk|
+        expect { spk.state_at(target: 301, center: 399, tdb: 0.0) }
+          .to raise_error(Ephem::OutOfRangeError, /\(3\) -> Moon \(301\)/)
       end
     end
 

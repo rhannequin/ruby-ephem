@@ -49,6 +49,55 @@ RSpec.describe Ephem::Segments::Segment do
     end
   end
 
+  describe "#position_components" do
+    it "returns the components of the computed position" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+
+      components = segment.position_components(time, 0.25)
+
+      expect(components).to eq(segment.compute(time, 0.25).to_a)
+    end
+
+    it "raises OutOfRangeError naming the requested time" do
+      segment = create_segment_with_data
+
+      expect { segment.position_components(2451544.0) }.to raise_error(
+        Ephem::OutOfRangeError, /\AJD 2451544.0 \(1999-12-31\)/
+      )
+    end
+  end
+
+  describe "#state_components" do
+    it "returns the components of the computed state" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+
+      components = segment.state_components(time, 0.25)
+
+      expected = segment.compute_and_differentiate(time, 0.25).to_arrays
+      expect(components).to eq(expected)
+    end
+
+    it "returns the stored velocity of a type 3 segment" do
+      segment = create_type3_segment
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+
+      components = segment.state_components(time)
+
+      expected = segment.compute_and_differentiate(time).to_arrays
+      expect(components).to eq(expected)
+    end
+
+    it "raises OutOfRangeError naming the requested time" do
+      segment = create_segment_with_data
+
+      expect { segment.state_components(2451544.0) }.to raise_error(
+        Ephem::OutOfRangeError, /\AJD 2451544.0 \(1999-12-31\)/
+      )
+    end
+  end
+
   describe "#compute_and_differentiate" do
     it "returns position and velocity vectors for time within range" do
       segment = create_segment_with_data

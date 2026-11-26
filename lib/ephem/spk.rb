@@ -214,13 +214,16 @@ module Ephem
     end
 
     def chain(target, center)
-      @chains[[target, center]] ||= begin
-        links = path_links(target, center)
-        if links.one? && links.first.forward
-          links.first.source
-        else
-          Segments::PositionChain.new(links)
-        end
+      centers = @chains[target] ||= {}
+      centers[center] ||= build_chain(target, center)
+    end
+
+    def build_chain(target, center)
+      links = path_links(target, center)
+      if links.one? && links.first.forward
+        links.first.source
+      else
+        Segments::PositionChain.new(links)
       end
     end
 

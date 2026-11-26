@@ -86,6 +86,38 @@ module Ephem
       end
       alias_method :state_at, :compute_and_differentiate
 
+      # Position at a single time as an [x, y, z] Array, without building a
+      # Vector. Used by {PositionChain} to sum the pairs on a path.
+      #
+      # @api private
+      # @param tdb [Numeric] Time in TDB Julian Date
+      # @param tdb2 [Numeric] Optional fractional part of TDB date
+      # @return [Array<Float>] Position in km
+      # @raise [Ephem::OutOfRangeError] if time is outside segment coverage
+      def position_components(tdb, tdb2 = 0.0)
+        records = load_data
+        generate_position(records, time_to_seconds(tdb, tdb2))
+      rescue OutOfRangeError => error
+        raise request_out_of_range_error(records, error, tdb, tdb2), cause: nil
+      end
+
+      # Position and velocity at a single time as two [x, y, z] Arrays,
+      # without building a State. Used by {PositionChain} to sum the pairs on
+      # a path.
+      #
+      # @api private
+      # @param tdb [Numeric] Time in TDB Julian Date
+      # @param tdb2 [Numeric] Optional fractional part of TDB date
+      # @return [Array(Array<Float>, Array<Float>)] Position in km and
+      #   velocity in km/day
+      # @raise [Ephem::OutOfRangeError] if time is outside segment coverage
+      def state_components(tdb, tdb2 = 0.0)
+        records = load_data
+        generate_single(records, time_to_seconds(tdb, tdb2))
+      rescue OutOfRangeError => error
+        raise request_out_of_range_error(records, error, tdb, tdb2), cause: nil
+      end
+
       private
 
       def process_coefficient_data(data)

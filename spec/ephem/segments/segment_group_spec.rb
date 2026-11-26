@@ -68,6 +68,41 @@ RSpec.describe Ephem::Segments::PositionGroup do
     end
   end
 
+  describe "#position_components" do
+    it "routes the time to the covering segment" do
+      early = build_position_segment(covers: 0.0..99.0)
+      late = build_position_segment(covers: 100.0..200.0)
+      allow(late).to receive(:position_components)
+        .with(150.0, 0.25)
+        .and_return([1.0, 2.0, 3.0])
+      group = described_class.new([early, late])
+
+      expect(group.position_components(150.0, 0.25)).to eq([1.0, 2.0, 3.0])
+    end
+  end
+
+  describe "#state_components" do
+    it "routes the time to the covering segment" do
+      early = build_position_segment(covers: 0.0..99.0)
+      late = build_position_segment(covers: 100.0..200.0)
+      components = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+      allow(early).to receive(:state_components)
+        .with(50.0, 0.0)
+        .and_return(components)
+      group = described_class.new([early, late])
+
+      expect(group.state_components(50.0)).to eq(components)
+    end
+
+    it "raises OutOfRangeError when no segment covers the time" do
+      early = build_position_segment(covers: 0.0..99.0)
+      group = described_class.new([early])
+
+      expect { group.state_components(150.0) }
+        .to raise_error(Ephem::OutOfRangeError)
+    end
+  end
+
   describe "#center and #target" do
     it "delegate to the first segment" do
       segment = build_position_segment(covers: 0.0..1.0)
