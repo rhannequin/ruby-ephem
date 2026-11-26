@@ -16,6 +16,9 @@
   [#120])
 - Remove `Ephem::IndexError`. `Vector#[]` and `Orientation#[]` raise Ruby's
   `IndexError` ([#94], [#120])
+- `Ephem::OutOfRangeError#out_of_range_times` is always an Array of every
+  uncovered time, as Julian Dates. It used to be a single number, in seconds
+  since J2000 or in Julian Date depending on the source ([#127], [#128])
 
 ### Features
 
@@ -43,6 +46,9 @@
 - Load `Ephem::CLI`, `Ephem::Download` and `Ephem::Excerpt` on first use, so
   `require "ephem"` no longer loads `net/http`, `optparse`, `date`, `tempfile`
   or `zlib` ([#105], [#119])
+- Out-of-range errors name the requested Julian Date and calendar date, the pair
+  or body, and the range it covers, instead of a time in seconds since J2000
+  ([#127], [#128])
 
 ### Bug fixes
 
@@ -105,6 +111,8 @@
 [#124]: https://github.com/rhannequin/ruby-ephem/pull/124
 [#125]: https://github.com/rhannequin/ruby-ephem/pull/125
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
+[#127]: https://github.com/rhannequin/ruby-ephem/issues/127
+[#128]: https://github.com/rhannequin/ruby-ephem/pull/128
 
 ## [0.5.2] - 2026-11-24
 

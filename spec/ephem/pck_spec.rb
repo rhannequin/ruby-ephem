@@ -175,6 +175,20 @@ RSpec.describe Ephem::PCK do
       pck.close
     end
 
+    it "explains a time outside both segments" do
+      pck = described_class.open(moon_pa_de440_boundary_excerpt)
+      group = pck[31008]
+
+      expect { group.angles_at([2607000.0, 2451545.0]) }.to raise_error(
+        Ephem::OutOfRangeError,
+        "JD 2451545.0 (2000-01-01) is outside the coverage of " \
+        "frame 31008 relative to frame 1, " \
+        "which covers JD 2606920.5..2607384.5 (2425-05-28..2426-09-04)"
+      ) { |error| expect(error.out_of_range_times).to eq([2451545.0]) }
+
+      pck.close
+    end
+
     it "rejects position queries with a helpful error" do
       pck = described_class.open(moon_pa_de440_boundary_excerpt)
       group = pck[31008]

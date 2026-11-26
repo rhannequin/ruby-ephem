@@ -79,19 +79,24 @@ module Ephem
         start_date = format_date(*julian_to_gregorian(@start_jd))
         end_date = format_date(*julian_to_gregorian(@end_jd))
 
-        center_name = get_body_name(@center, "Unknown Center")
-        target_name = get_body_name(@target, "Unknown Target")
-
         dates = "#{start_date}..#{end_date}"
-        center = "#{center_name} (#{@center})"
-        target = "#{target_name} (#{@target})"
-        description = "#{dates} Type #{@data_type} #{center} -> #{target}"
+        description = "#{dates} Type #{@data_type} #{label}"
         return description unless verbose
 
         <<~DESCRIPTION.chomp
           #{description}
           frame=#{@frame} source=#{@source}
         DESCRIPTION
+      end
+
+      # What the segment describes, as used in descriptions and errors.
+      #
+      # @return [String] e.g. "Earth-Moon Barycenter (3) -> Moon (301)"
+      def label
+        center_name = get_body_name(@center, "Unknown Center")
+        target_name = get_body_name(@target, "Unknown Target")
+
+        "#{center_name} (#{@center}) -> #{target_name} (#{@target})"
       end
 
       # Whether the given time falls within this segment's coverage.

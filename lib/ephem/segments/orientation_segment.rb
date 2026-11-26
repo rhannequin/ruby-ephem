@@ -34,6 +34,8 @@ module Ephem
             to_orientation(generate_position(seconds))
           end
         end
+      rescue OutOfRangeError => error
+        raise request_out_of_range_error(error, tdb, tdb2), cause: nil
       end
 
       # Euler angles and their rates at the given time.
@@ -55,6 +57,8 @@ module Ephem
             to_orientation(angles, rates)
           end
         end
+      rescue OutOfRangeError => error
+        raise request_out_of_range_error(error, tdb, tdb2), cause: nil
       end
 
       # The reference-frame to body-fixed rotation matrix at the given time,
@@ -70,13 +74,17 @@ module Ephem
         angles.is_a?(Array) ? angles.map(&:to_matrix) : angles.to_matrix
       end
 
+      # @return [String] e.g. "frame 31008 relative to frame 1"
+      def label
+        "frame #{body} relative to frame #{reference_frame}"
+      end
+
       def describe(verbose: false)
         start_date = format_date(*julian_to_gregorian(@start_jd))
         end_date = format_date(*julian_to_gregorian(@end_jd))
 
-        description =
-          "#{start_date}..#{end_date} Type #{@data_type} orientation of " \
-          "frame #{body} relative to frame #{reference_frame}"
+        dates = "#{start_date}..#{end_date}"
+        description = "#{dates} Type #{@data_type} orientation of #{label}"
         return description unless verbose
 
         <<~DESCRIPTION.chomp

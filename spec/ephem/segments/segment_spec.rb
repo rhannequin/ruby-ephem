@@ -14,26 +14,38 @@ RSpec.describe Ephem::Segments::Segment do
       expect(result.z).to be_within(1e-12).of(3.0)
     end
 
-    it "raises OutOfRangeError for time before start" do
+    it "raises OutOfRangeError naming the time, pair and coverage" do
       segment = create_segment_with_data
-      time = Ephem::Core::Constants::Time::J2000_EPOCH
-      early_time = time - 1.0
 
-      expect { segment.compute(early_time) }.to raise_error(
+      expect { segment.compute(2451544.0) }.to raise_error(
         Ephem::OutOfRangeError,
-        /Time .* is outside the coverage of this segment/
+        "JD 2451544.0 (1999-12-31) is outside the coverage of " \
+        "Solar System Barycenter (0) -> Earth-Moon Barycenter (3), " \
+        "which covers JD 2451545.0..2451546.0 (2000-01-01..2000-01-02)"
       )
     end
 
-    it "raises OutOfRangeError for time after end" do
+    it "reports the time with its tdb2 fraction" do
+      segment = create_segment_with_data
+
+      expect { segment.compute(2451545.0, 2.0) }.to raise_error(
+        Ephem::OutOfRangeError, /\AJD 2451547.0 \(2000-01-03\)/
+      ) { |error| expect(error.out_of_range_times).to eq([2451547.0]) }
+    end
+
+    it "reports every uncovered time of an array" do
       segment = create_segment_with_data
       time = Ephem::Core::Constants::Time::J2000_EPOCH
+      early_time = time - 1.0
       late_time = time + 2.0
 
-      expect { segment.compute(late_time) }.to raise_error(
-        Ephem::OutOfRangeError,
-        /Time .* is outside the coverage of this segment/
-      )
+      expect { segment.compute([early_time, time, late_time]) }
+        .to raise_error(
+          Ephem::OutOfRangeError,
+          /\AJD 2451544.0 \(1999-12-31\) and 1 other time are outside/
+        ) do |error|
+          expect(error.out_of_range_times).to eq([early_time, late_time])
+        end
     end
   end
 
@@ -158,6 +170,29 @@ RSpec.describe Ephem::Segments::Segment do
       state_after = segment.state_at(time).to_arrays
 
       expect(state_after).to eq(state_before)
+    end
+  end
+
+  describe "#state_at" do
+    it "reports every uncovered time of an array" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+      late_time = time + 2.0
+
+      expect { segment.state_at([time, late_time]) }
+        .to raise_error(Ephem::OutOfRangeError) do |error|
+          expect(error.out_of_range_times).to eq([late_time])
+        end
+    end
+  end
+
+  describe "#label" do
+    it "names the center and target" do
+      segment = create_segment_with_data
+
+      expect(segment.label).to eq(
+        "Solar System Barycenter (0) -> Earth-Moon Barycenter (3)"
+      )
     end
   end
 
