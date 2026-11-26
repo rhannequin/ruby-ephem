@@ -133,6 +133,12 @@ RSpec.describe Ephem::Core::State do
 
       expect(state).not_to eql(other_state)
     end
+
+    it "returns false for a non-State object" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+
+      expect(state).not_to eql(state.to_arrays)
+    end
   end
 
   describe "#hash" do

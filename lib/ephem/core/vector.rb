@@ -86,7 +86,7 @@ module Ephem
       #
       # @param other [Numeric] The factor to multiply each component by
       #
-      # @return [Ephem::Vector] A new vector scaled by the given factor
+      # @return [Ephem::Core::Vector] A new vector scaled by the given factor
       #
       # @raise [Ephem::InvalidInputError] if other is not numeric
       #
@@ -108,7 +108,7 @@ module Ephem
       #
       # @param other [Numeric] The divisor applied to each component
       #
-      # @return [Ephem::Vector] A new vector divided by the given scalar
+      # @return [Ephem::Core::Vector] A new vector divided by the given scalar
       #
       # @raise [Ephem::InvalidInputError] if other is not numeric
       # @raise [ZeroDivisionError] if the divisor is zero and the component
@@ -127,7 +127,8 @@ module Ephem
 
       # Negates the vector.
       #
-      # @return [Ephem::Vector] A new vector pointing in the opposite direction
+      # @return [Ephem::Core::Vector] A new vector pointing in the opposite
+      #   direction
       #
       # @example Reverse a center-to-target vector
       #   target_to_center = -center_to_target

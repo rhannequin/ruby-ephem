@@ -85,11 +85,22 @@ module Ephem
       # @example Check if two states are equal
       #   state1 == state2
       def ==(other)
-        other.is_a?(self.class) &&
+        other.instance_of?(self.class) &&
           position == other.position &&
           velocity == other.velocity
       end
-      alias_method :eql?, :==
+
+      # Checks strict equality with another state, as used by Hash keys.
+      #
+      # @param other [Object] The object to compare with
+      #
+      # @return [Boolean] true if other is a State whose position and velocity
+      #   vectors are eql?, false otherwise
+      def eql?(other)
+        other.instance_of?(self.class) &&
+          position.eql?(other.position) &&
+          velocity.eql?(other.velocity)
+      end
     end
   end
 end
