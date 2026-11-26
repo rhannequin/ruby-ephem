@@ -87,6 +87,7 @@
   ([#127], [#128])
 - Validate INPOP21a against the IMCCE `testpo` file with
   `rake validate_accuracy:testpo`, also run by `validate_accuracy:all` in CI
+  ([#143])
 
 ### Bug fixes
 
@@ -171,6 +172,7 @@
 [#138]: https://github.com/rhannequin/ruby-ephem/pull/138
 [#139]: https://github.com/rhannequin/ruby-ephem/pull/139
 [#142]: https://github.com/rhannequin/ruby-ephem/pull/142
+[#143]: https://github.com/rhannequin/ruby-ephem/pull/143
 
 ## [0.5.2] - 2026-11-24
 
