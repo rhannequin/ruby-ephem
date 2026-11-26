@@ -140,39 +140,39 @@ RSpec.describe Ephem::SPK do
   describe "#close" do
     it "closes the DAF and clears segment data" do
       daf = instance_double(Ephem::IO::DAF)
-      segment1 = instance_double(
+      first_segment = instance_double(
         Ephem::Segments::BaseSegment,
         center: 399,
         target: 301
       )
-      segment2 = instance_double(
+      second_segment = instance_double(
         Ephem::Segments::BaseSegment,
         center: 399,
         target: 302
       )
 
-      descriptor1 = double("descriptor1")
-      descriptor2 = double("descriptor2")
-      allow(descriptor1).to receive(:[])
+      first_descriptor = double("first descriptor")
+      second_descriptor = double("second descriptor")
+      allow(first_descriptor).to receive(:[])
         .with(described_class::DATA_TYPE_IDENTIFIER)
         .and_return(2)
-      allow(descriptor2).to receive(:[])
+      allow(second_descriptor).to receive(:[])
         .with(described_class::DATA_TYPE_IDENTIFIER)
         .and_return(2)
 
       allow(daf).to receive(:summaries).and_return([
-        [double("source1"), descriptor1],
-        [double("source2"), descriptor2]
+        [double("first source"), first_descriptor],
+        [double("second source"), second_descriptor]
       ])
 
       allow(Ephem::Segments::BaseSegment).to receive(:new)
-        .and_return(segment1, segment2)
+        .and_return(first_segment, second_segment)
 
       spk = described_class.new(daf: daf)
 
       expect(daf).to receive(:close)
-      expect(segment1).to receive(:clear_data)
-      expect(segment2).to receive(:clear_data)
+      expect(first_segment).to receive(:clear_data)
+      expect(second_segment).to receive(:clear_data)
 
       spk.close
     end
@@ -239,35 +239,35 @@ RSpec.describe Ephem::SPK do
   describe "#to_s" do
     it "returns a formatted description of the SPK file and its segments" do
       daf = instance_double(Ephem::IO::DAF)
-      segment1 = instance_double(
+      first_segment = instance_double(
         Ephem::Segments::BaseSegment,
         to_s: "Segment 1",
         center: 399,
         target: 301
       )
-      segment2 = instance_double(
+      second_segment = instance_double(
         Ephem::Segments::BaseSegment,
         to_s: "Segment 2",
         center: 399,
         target: 302
       )
 
-      descriptor1 = double("descriptor1")
-      descriptor2 = double("descriptor2")
-      allow(descriptor1).to receive(:[])
+      first_descriptor = double("first descriptor")
+      second_descriptor = double("second descriptor")
+      allow(first_descriptor).to receive(:[])
         .with(described_class::DATA_TYPE_IDENTIFIER)
         .and_return(2)
-      allow(descriptor2).to receive(:[])
+      allow(second_descriptor).to receive(:[])
         .with(described_class::DATA_TYPE_IDENTIFIER)
         .and_return(2)
 
       allow(daf).to receive(:summaries).and_return([
-        [double("source1"), descriptor1],
-        [double("source2"), descriptor2]
+        [double("first source"), first_descriptor],
+        [double("second source"), second_descriptor]
       ])
 
       allow(Ephem::Segments::BaseSegment).to receive(:new)
-        .and_return(segment1, segment2)
+        .and_return(first_segment, second_segment)
 
       spk = described_class.new(daf: daf)
       expected_output = <<~DESCRIPTION
@@ -400,40 +400,40 @@ RSpec.describe Ephem::SPK do
   describe "#each_segment" do
     it "yields each segment when a block is given" do
       daf = instance_double(Ephem::IO::DAF)
-      segment1 = instance_double(
+      first_segment = instance_double(
         Ephem::Segments::BaseSegment,
         center: 399,
         target: 301
       )
-      segment2 = instance_double(
+      second_segment = instance_double(
         Ephem::Segments::BaseSegment,
         center: 399,
         target: 302
       )
 
-      descriptor1 = double("descriptor1")
-      descriptor2 = double("descriptor2")
-      allow(descriptor1).to receive(:[])
+      first_descriptor = double("first descriptor")
+      second_descriptor = double("second descriptor")
+      allow(first_descriptor).to receive(:[])
         .with(described_class::DATA_TYPE_IDENTIFIER)
         .and_return(2)
-      allow(descriptor2).to receive(:[])
+      allow(second_descriptor).to receive(:[])
         .with(described_class::DATA_TYPE_IDENTIFIER)
         .and_return(2)
 
       allow(daf).to receive(:summaries).and_return([
-        [double("source1"), descriptor1],
-        [double("source2"), descriptor2]
+        [double("first source"), first_descriptor],
+        [double("second source"), second_descriptor]
       ])
 
       allow(Ephem::Segments::BaseSegment).to receive(:new)
-        .and_return(segment1, segment2)
+        .and_return(first_segment, second_segment)
 
       spk = described_class.new(daf: daf)
       segments = []
 
       spk.each_segment { |segment| segments << segment }
 
-      expect(segments).to eq([segment1, segment2])
+      expect(segments).to eq([first_segment, second_segment])
     end
 
     it "returns an enumerator when no block is given" do

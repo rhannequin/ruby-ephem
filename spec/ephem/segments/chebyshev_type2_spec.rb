@@ -261,16 +261,6 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
 
       expect(position).to eq(host.send(:generate_position, host.records, 0.5))
     end
-
-    it "returns a velocity identical to the standalone derivative" do
-      host = build_evaluation_host
-      expected_velocity = Ephem::Computation::ChebyshevPolynomial
-        .evaluate_derivative(evaluation_coefficients, 0.5, 1.0)
-
-      _position, velocity = host.send(:generate_single, host.records, 0.5)
-
-      expect(velocity).to eq(expected_velocity)
-    end
   end
 
   def build_host(component_count: 3)

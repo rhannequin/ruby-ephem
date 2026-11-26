@@ -32,40 +32,31 @@ module Ephem
         # Convert Julian Date to Gregorian calendar date using the algorithm
         # from Fundamentals of Astrodynamics (Bate, Mueller, White) pg. 42
 
-        # Adjust Julian Date and calculate integer and fractional parts
-        jd = julian_date + 0.5  # Add 0.5 to Julian Date for correct rounding
-        z = jd.floor            # Integer part of adjusted Julian Date
-        f = jd - z              # Fractional part of adjusted Julian Date
+        shifted_date = julian_date + 0.5
+        day_number = shifted_date.floor
+        day_fraction = shifted_date - day_number
 
-        # Handle dates before and after the Gregorian calendar reform of 1582
-        a = if z < 2299161 # 2299161 is the Julian Date of 1582-10-15T00:00:00Z
-          z                # Use integer part directly for Julian calendar dates
+        # 2299161 is the Julian Date of 1582-10-15T00:00:00Z
+        calendar_day_number = if day_number < 2299161
+          day_number
         else
           # 1867216.25 is the Julian Date of 1500-03-01T00:00:00Z
-          alpha = ((z - 1867216.25) / 36524.25).floor
-          # Adjust for Gregorian calendar
-          z + 1 + alpha - (alpha / 4).floor
+          elapsed_centuries = ((day_number - 1867216.25) / 36524.25).floor
+          day_number + 1 + elapsed_centuries - (elapsed_centuries / 4).floor
         end
 
-        # Calculate intermediate values
-        # 1524 is the number of days from 1 BC to 1 AD
-        b = a + 1524
-        # 365.25 is the number of days in a Julian year
-        c = ((b - 122.1) / 365.25).floor
-        # Number of days since 1 BC
-        d = (365.25 * c).floor
-        # 30.6001 is the average number of days in a month
-        e = ((b - d) / 30.6001).floor
+        days_since_epoch = calendar_day_number + 1524
+        year_count = ((days_since_epoch - 122.1) / 365.25).floor
+        days_in_whole_years = (365.25 * year_count).floor
+        month_count = ((days_since_epoch - days_in_whole_years) / 30.6001).floor
 
-        # Extract day, month, and year values from intermediate values
-        # Fractional part gives the day of month
-        day = b - d - (30.6001 * e).floor + f
-        # Months are numbered from 1 (January) to 12 (December)
-        month = (e < 14) ? e - 1 : e - 13
+        day = days_since_epoch - days_in_whole_years -
+          (30.6001 * month_count).floor + day_fraction
+        month = (month_count < 14) ? month_count - 1 : month_count - 13
         # 4716 BC is the year of Julian Date 0
-        year = (month > 2) ? c - 4716 : c - 4715
+        year = (month > 2) ? year_count - 4716 : year_count - 4715
 
-        [year, month, day.to_i]  # Return [year, month, day] as an array
+        [year, month, day.to_i]
       end
 
       # Formats a calendar date as YYYY-MM-DD

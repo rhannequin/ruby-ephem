@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    name: Validate (${{ matrix.kernel }}/2000-2050/${{ matrix.target }})
+    name: Validate against jplephem (all kernels and targets, 2000-2050)
     steps:
       - uses: actions/checkout@v7
       - name: Set up Ruby

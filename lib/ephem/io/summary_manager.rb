@@ -38,7 +38,6 @@ module Ephem
     #
     # @api public
     class SummaryManager
-      SUMMARY_RECORD_SIZE = 1024
       VALID_ENDIANNESS = [:little, :big].freeze
 
       # Initializes a new SummaryManager instance
@@ -92,14 +91,14 @@ module Ephem
         return if VALID_ENDIANNESS.include?(endianness)
 
         raise EndiannessError,
-          "Invalid endianness: #{endianness}. Must be one of: #{VALID_ENDIANNESS.join(", ")}"
+          "Invalid endianness: #{endianness}. " \
+          "Must be one of: #{VALID_ENDIANNESS.join(", ")}"
       end
 
       def setup_summary_format
         @summary_format = build_summary_format
         @summary_length = calculate_summary_length
         @summary_step = calculate_summary_step
-        @summaries_per_record = calculate_summaries_per_record
       end
 
       def build_summary_format
@@ -116,12 +115,6 @@ module Ephem
       def calculate_summary_step
         # Pad to 8-byte boundary
         @summary_length + (-@summary_length % 8)
-      end
-
-      def calculate_summaries_per_record
-        (
-          SUMMARY_RECORD_SIZE - RecordParser::SUMMARY_CONTROL_SIZE
-        ) / @summary_step
       end
 
       def iterate_summary_chain(record_number)
@@ -156,7 +149,7 @@ module Ephem
         name_data = @binary_reader.read_record(record_number + 1)
 
         process_summaries(
-          control[:n_summaries],
+          control[:summary_count],
           summary_data,
           name_data
         ) do |name, values|
@@ -177,8 +170,8 @@ module Ephem
       end
 
       def process_summaries(count, summary_data, name_data)
-        count.times do |i|
-          offset = i * @summary_step
+        count.times do |summary_index|
+          offset = summary_index * @summary_step
           values = extract_values(summary_data[offset, @summary_length])
           name = extract_name(name_data[offset, @summary_step])
           yield name, values

@@ -2,198 +2,86 @@
 
 RSpec.describe Ephem::Computation::ChebyshevPolynomial do
   describe ".evaluate" do
-    context "with degree 1 (constant only)" do
-      it "returns the constant vector" do
-        coeffs = [[1.0, 2.0, 3.0]]
-        t = 0.123
+    it "returns the constant term of a degree 0 polynomial" do
+      coefficients = [[1.0, 2.0, 3.0]]
 
-        result = described_class.evaluate(coeffs, t)
+      result = described_class.evaluate(coefficients, 0.123)
 
-        expect(result).to eq([1.0, 2.0, 3.0])
-      end
+      expect(result).to eq([1.0, 2.0, 3.0])
     end
 
-    context "with degree 2 (constant + linear)" do
-      it "returns componentwise a0 + t*a1" do
-        coeffs = [
-          [1.0, 5.0, -2.0],
-          [2.0, 1.5, 0.0]
-        ]
-        t = 0.75
-        expected = [
-          1.0 + 2.0 * 0.75,
-          5.0 + 1.5 * 0.75,
-          -2.0 + 0.0 * 0.75
-        ]
-
-        result = described_class.evaluate(coeffs, t)
-
-        expect_vector_close(result, expected)
-      end
-    end
-
-    context "with degree 3 (quadratic)" do
-      it "matches explicit sum a0*T0 + a1*T1 + a2*T2" do
-        coeffs = [
-          [1.0, 2.0, 3.0],
-          [4.0, 0.5, 0.0],
-          [-1.0, 2.0, 1.5]
-        ]
-        t = -0.2
-        t0 = 1
-        t1 = t
-        t2 = 2 * t * t - 1
-        expected = [
-          coeffs[0][0] * t0 + coeffs[1][0] * t1 + coeffs[2][0] * t2,
-          coeffs[0][1] * t0 + coeffs[1][1] * t1 + coeffs[2][1] * t2,
-          coeffs[0][2] * t0 + coeffs[1][2] * t1 + coeffs[2][2] * t2
-        ]
-
-        result = described_class.evaluate(coeffs, t)
-
-        expect_vector_close(result, expected)
-      end
-    end
-
-    context "with longer coefficients array" do
-      it "returns array of size 3" do
-        coeffs = [
-          [1.0, 2.0, 3.0],
-          [4.0, 5.0, 6.0],
-          [7.0, 8.0, 9.0],
-          [2.0, 1.0, 0.0]
-        ]
-        t = 0.333
-
-        result = described_class.evaluate(coeffs, t)
-
-        expect(result.size).to eq(3)
-      end
-    end
-
-    it "returns the same result for repeated calls" do
-      coeffs = [
-        [0.2, 1.5, 3.7],
-        [0.3, -0.1, 0.4],
-        [1.0, -0.5, -0.75]
-      ]
-      t = 0.62
-
-      result1 = described_class.evaluate(coeffs, t)
-      result2 = described_class.evaluate(coeffs, t)
-
-      expect(result1).to eq(result2)
-    end
-
-    it "returns different results for different normalized_time" do
-      coeffs = [
-        [2.0, 1.0, -1.0],
-        [0.1, 0.05, -0.09]
+    it "evaluates a degree 1 polynomial" do
+      coefficients = [
+        [1.0, 5.0, -2.0],
+        [2.0, 1.5, 0.0]
       ]
 
-      result1 = described_class.evaluate(coeffs, 0.9)
-      result2 = described_class.evaluate(coeffs, -0.9)
+      result = described_class.evaluate(coefficients, 0.75)
 
-      expect(result1).not_to eq(result2)
-    end
-  end
-
-  describe ".evaluate_derivative" do
-    context "with degree 1 (constant only)" do
-      it "returns zero vector" do
-        coeffs = [[1.0, 2.0, 3.0]]
-        t = -0.2
-        radius = 1000.0
-
-        result = described_class.evaluate_derivative(coeffs, t, radius)
-
-        expect(result).to eq([0.0, 0.0, 0.0])
-      end
+      expect_components_close(result, [2.5, 6.125, -2.0])
     end
 
-    context "with degree 2 (constant + linear)" do
-      it "returns 2*a1 * scale" do
-        coeffs = [
-          [0.0, 0.0, 0.0],
-          [2.0, -1.5, 4.0]
-        ]
-        t = 0.0
-        radius = 123.0
-        scale = Ephem::Core::Constants::Time::SECONDS_PER_DAY / (2.0 * radius)
-        expected = [2 * 2.0 * scale, 2 * -1.5 * scale, 2 * 4.0 * scale]
-
-        result = described_class.evaluate_derivative(coeffs, t, radius)
-
-        expect_vector_close(result, expected)
-      end
-    end
-
-    context "with degree 3 (quadratic)" do
-      it "computes correct Chebyshev derivative" do
-        coeffs = [
-          [1.0, 2.0, 3.0],
-          [0.5, 0.2, -1.5],
-          [-0.25, 1.0, 2.0]
-        ]
-        t = 0.15
-        radius = 2000.0
-
-        result = described_class.evaluate_derivative(coeffs, t, radius)
-
-        expect(result.size).to eq(3)
-      end
-    end
-
-    it "scales velocity according to radius" do
-      coeffs = [
-        [0.0, 0.0, 0.0],
-        [2.0, -2.0, 4.0]
+    it "evaluates a degree 2 polynomial" do
+      coefficients = [
+        [1.0, 2.0, 3.0],
+        [4.0, 0.5, 0.0],
+        [-1.0, 2.0, 1.5]
       ]
-      t = 0.25
-      radius1 = 1000.0
-      radius2 = 500.0
+      normalized_time = -0.2
 
-      result1 = described_class.evaluate_derivative(coeffs, t, radius1)
-      result2 = described_class.evaluate_derivative(coeffs, t, radius2)
+      result = described_class.evaluate(coefficients, normalized_time)
 
-      expect(result1).not_to eq(result2)
+      expected = coefficients.transpose.map do |component_coefficients|
+        chebyshev_sum(component_coefficients, normalized_time)
+      end
+      expect_components_close(result, expected)
     end
 
-    it "returns the same result for repeated calls" do
-      coeffs = [
-        [1.1, -0.1, 0.5],
-        [0.0, 2.0, -2.0],
-        [0.5, -1.0, 3.0]
+    it "evaluates a degree 3 polynomial" do
+      coefficients = [
+        [1.0, 2.0, 3.0],
+        [4.0, 5.0, 6.0],
+        [7.0, 8.0, 9.0],
+        [2.0, 1.0, 0.0]
       ]
-      t = 0.58
-      radius = 432.0
+      normalized_time = 0.333
 
-      result1 = described_class.evaluate_derivative(coeffs, t, radius)
-      result2 = described_class.evaluate_derivative(coeffs, t, radius)
+      result = described_class.evaluate(coefficients, normalized_time)
 
-      expect(result1).to eq(result2)
-    end
-
-    it "returns different results for different normalized_time" do
-      coeffs = [
-        [2.0, 1.0, -1.0],
-        [0.1, 0.05, -0.09],
-        [0.2, -0.7, 0.5]
-      ]
-      t = 0.3
-      t2 = -0.3
-      radius = 111.1
-
-      result1 = described_class.evaluate_derivative(coeffs, t, radius)
-      result2 = described_class.evaluate_derivative(coeffs, t2, radius)
-
-      expect(result1).not_to eq(result2)
+      expected = coefficients.transpose.map do |component_coefficients|
+        chebyshev_sum(component_coefficients, normalized_time)
+      end
+      expect_components_close(result, expected)
     end
   end
 
   describe ".evaluate_with_derivative" do
-    it "matches #evaluate and #evaluate_derivative exactly" do
-      coeffs = [
+    it "returns a zero velocity for a degree 0 polynomial" do
+      position, velocity =
+        described_class.evaluate_with_derivative([[1.0, 2.0, 3.0]], 0.3, 100.0)
+
+      expect(position).to eq([1.0, 2.0, 3.0])
+      expect(velocity).to eq([0.0, 0.0, 0.0])
+    end
+
+    it "returns the linear term scaled to units per day" do
+      coefficients = [
+        [0.0, 0.0, 0.0],
+        [2.0, -1.5, 4.0]
+      ]
+      radius = 123.0
+
+      _position, velocity =
+        described_class.evaluate_with_derivative(coefficients, 0.0, radius)
+
+      expected = [2.0, -1.5, 4.0].map do |coefficient|
+        coefficient * seconds_per_day / radius
+      end
+      expect_components_close(velocity, expected)
+    end
+
+    it "evaluates position and velocity of a degree 3 polynomial" do
+      coefficients = [
         [1.0, 2.0, 3.0],
         [0.5, 0.2, -1.5],
         [-0.25, 1.0, 2.0],
@@ -201,29 +89,74 @@ RSpec.describe Ephem::Computation::ChebyshevPolynomial do
       ]
       radius = 2000.0
 
-      [-1.0, -0.3, 0.0, 0.42, 1.0].each do |t|
-        position, velocity =
-          described_class.evaluate_with_derivative(coeffs, t, radius)
+      [-1.0, -0.3, 0.0, 0.42, 1.0].each do |normalized_time|
+        position, velocity = described_class.evaluate_with_derivative(
+          coefficients, normalized_time, radius
+        )
 
-        expect(position).to eq(described_class.evaluate(coeffs, t))
-        expect(velocity)
-          .to eq(described_class.evaluate_derivative(coeffs, t, radius))
+        components = coefficients.transpose
+        expected_position = components.map do |component_coefficients|
+          chebyshev_sum(component_coefficients, normalized_time)
+        end
+        expected_velocity = components.map do |component_coefficients|
+          chebyshev_derivative(component_coefficients, normalized_time) *
+            seconds_per_day / radius
+        end
+        expect_components_close(position, expected_position)
+        expect_components_close(velocity, expected_velocity)
       end
     end
 
-    it "returns a zero velocity for a constant polynomial" do
-      position, velocity =
-        described_class.evaluate_with_derivative([[1.0, 2.0, 3.0]], 0.3, 100.0)
+    it "returns the same position as .evaluate" do
+      coefficients = [
+        [0.2, 1.5, 3.7],
+        [0.3, -0.1, 0.4],
+        [1.0, -0.5, -0.75]
+      ]
 
-      expect(position).to eq([1.0, 2.0, 3.0])
-      expect(velocity).to eq([0.0, 0.0, 0.0])
+      position, _velocity =
+        described_class.evaluate_with_derivative(coefficients, 0.62, 432.0)
+
+      expect(position).to eq(described_class.evaluate(coefficients, 0.62))
+    end
+
+    it "halves the velocity when the interval radius doubles" do
+      coefficients = [
+        [0.0, 0.0, 0.0],
+        [2.0, -2.0, 4.0]
+      ]
+
+      _position, short_velocity =
+        described_class.evaluate_with_derivative(coefficients, 0.25, 500.0)
+      _position, long_velocity =
+        described_class.evaluate_with_derivative(coefficients, 0.25, 1000.0)
+
+      halved = short_velocity.map { |component| component / 2.0 }
+      expect_components_close(long_velocity, halved)
     end
   end
 
-  def expect_vector_close(result, expected, tol = 1e-10)
-    expect(result.size).to eq(expected.size)
-    result.zip(expected).each do |a, b|
-      expect(a).to be_within(tol).of(b)
+  def chebyshev_sum(component_coefficients, normalized_time)
+    component_coefficients.each_with_index.sum do |coefficient, degree|
+      coefficient * Math.cos(degree * Math.acos(normalized_time))
+    end
+  end
+
+  def chebyshev_derivative(component_coefficients, normalized_time)
+    first, second, third = component_coefficients.drop(1)
+    first +
+      second * 4.0 * normalized_time +
+      third * (12.0 * normalized_time**2 - 3.0)
+  end
+
+  def seconds_per_day
+    Ephem::Core::Constants::Time::SECONDS_PER_DAY
+  end
+
+  def expect_components_close(actual, expected, tolerance = 1e-10)
+    expect(actual.size).to eq(expected.size)
+    actual.zip(expected).each do |actual_component, expected_component|
+      expect(actual_component).to be_within(tolerance).of(expected_component)
     end
   end
 end

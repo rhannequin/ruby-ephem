@@ -44,8 +44,8 @@ module Ephem
           position = generate_position(records, tdb_seconds)
           Core::Vector.new(position[0], position[1], position[2])
         else
-          tdb_seconds.map do |t|
-            position = generate_position(records, t)
+          tdb_seconds.map do |time|
+            position = generate_position(records, time)
             Core::Vector.new(position[0], position[1], position[2])
           end
         end
@@ -68,16 +68,16 @@ module Ephem
 
         case tdb_seconds
         when Numeric
-          pos_array, vel_array = generate_single(records, tdb_seconds)
+          position, velocity = generate_single(records, tdb_seconds)
           Core::State.new(
-            Core::Vector.new(pos_array[0], pos_array[1], pos_array[2]),
-            Core::Vector.new(vel_array[0], vel_array[1], vel_array[2])
+            Core::Vector.new(position[0], position[1], position[2]),
+            Core::Vector.new(velocity[0], velocity[1], velocity[2])
           )
         else
-          generate_multiple(records, tdb_seconds).map do |pos_array, vel_array|
+          generate_multiple(records, tdb_seconds).map do |position, velocity|
             Core::State.new(
-              Core::Vector.new(pos_array[0], pos_array[1], pos_array[2]),
-              Core::Vector.new(vel_array[0], vel_array[1], vel_array[2])
+              Core::Vector.new(position[0], position[1], position[2]),
+              Core::Vector.new(velocity[0], velocity[1], velocity[2])
             )
           end
         end

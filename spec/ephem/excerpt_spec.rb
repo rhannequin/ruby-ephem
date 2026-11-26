@@ -514,8 +514,8 @@ RSpec.describe Ephem::Excerpt do
   def build_writer(file, endianness:)
     writer = Ephem::Excerpt::DAFWriter.new(file)
     writer.endianness = endianness
-    writer.fward = 4
-    writer.bward = 4
+    writer.forward_record = 4
+    writer.backward_record = 4
     writer.free = 513
     writer
   end

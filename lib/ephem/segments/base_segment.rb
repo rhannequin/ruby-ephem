@@ -135,7 +135,6 @@ module Ephem
       end
 
       def clear_data
-        # Placeholder method to clear any cached data
       end
 
       private

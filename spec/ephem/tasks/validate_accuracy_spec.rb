@@ -3,60 +3,56 @@
 require "ephem/tasks/validate_accuracy"
 
 RSpec.describe Ephem::Tasks::ValidateAccuracy do
-  before do
-    @original_stdout = $stdout
-    $stdout = StringIO.new
-  end
-
-  after do
-    $stdout = @original_stdout
-  end
-
   describe ".run" do
-    context "when the task succeeds" do
-      it "returns true" do
-        csv_content = [
-          "julian_date" => "2451546",
-          "center" => "0",
-          "x" => "-1.7305359679278996e+07",
-          "y" => "-6.0974293023407288e+07",
-          "z" => "-3.0812429629787814e+07",
-          "vx" => "3.2491819082937399e+06",
-          "vy" => "-5.6242306220424012e+05",
-          "vz" => "-6.3724054778491484e+05"
-        ]
-        date = "2000"
-        kernel = "de405"
-        target = "1"
-        allow(CSV).to receive(:foreach).and_return(csv_content.each)
+    it "returns true when every row matches" do
+      stub_rows(mercury_row, mercury_row)
 
-        run = described_class.run(date: date, kernel: kernel, target: target)
+      result = nil
+      expect { result = run_task }
+        .to output(/\A2 validations passed \(de405\/2000-2050\/1\)/)
+        .to_stdout
 
-        expect(run).to be true
-      end
+      expect(result).to be true
     end
 
-    context "when a validation doesn't pass" do
-      it "returns false" do
-        csv_content = [
-          "julian_date" => "2451546",
-          "center" => "0",
-          "x" => "0",
-          "y" => "0",
-          "z" => "0",
-          "vx" => "0",
-          "vy" => "0",
-          "vz" => "0"
-        ]
-        date = "2000"
-        kernel = "de405"
-        target = "1"
-        allow(CSV).to receive(:foreach).and_return(csv_content.each)
+    it "returns false when a position does not match" do
+      stub_rows(mercury_row.merge("x" => "0"))
 
-        run = described_class.run(date: date, kernel: kernel, target: target)
+      result = nil
+      expect { result = run_task }
+        .to output(/Position error for de405 at 2451546.0/).to_stdout
 
-        expect(run).to be false
-      end
+      expect(result).to be false
     end
+
+    it "returns false when a velocity does not match" do
+      stub_rows(mercury_row.merge("vx" => "0"))
+
+      result = nil
+      expect { result = run_task }
+        .to output(/Velocity error for de405 at 2451546.0/).to_stdout
+
+      expect(result).to be false
+    end
+  end
+
+  def run_task
+    described_class.run(date: "2000", kernel: "de405", target: "1")
+  end
+
+  def stub_rows(*rows)
+    allow(CSV).to receive(:foreach).and_return(rows.each)
+  end
+
+  def mercury_row
+    {
+      "julian_date" => "2451546",
+      "x" => "-1.7305359679278996e+07",
+      "y" => "-6.0974293023407288e+07",
+      "z" => "-3.0812429629787814e+07",
+      "vx" => "3.2491819082937399e+06",
+      "vy" => "-5.6242306220424012e+05",
+      "vz" => "-6.3724054778491484e+05"
+    }
   end
 end

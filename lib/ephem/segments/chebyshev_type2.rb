@@ -55,14 +55,13 @@ module Ephem
 
         midpoints = coefficients.map { |row| row[0] }.freeze
         radii = coefficients.map { |row| row[1] }.freeze
-        n_terms = coefficient_count
-        n_components = component_count
+        dimension_count = component_count
 
-        terms = Array.new(segment_count) do |i|
-          row = coefficients[i][2..]
-          Array.new(n_terms) do |k|
-            Array.new(n_components) do |j|
-              row[k + j * n_terms]
+        terms = Array.new(segment_count) do |record_index|
+          row = coefficients[record_index][2..]
+          Array.new(coefficient_count) do |degree|
+            Array.new(dimension_count) do |component|
+              row[degree + component * coefficient_count]
             end
           end
         end
@@ -78,7 +77,7 @@ module Ephem
       def convert_to_seconds(tdb, tdb2)
         case tdb
         when Array
-          tdb.map { |t| time_to_seconds(t, tdb2) }
+          tdb.map { |time| time_to_seconds(time, tdb2) }
         else
           time_to_seconds(tdb, tdb2)
         end
@@ -92,8 +91,8 @@ module Ephem
         interval = find_interval(records, tdb_seconds)
         normalized_time =
           compute_normalized_time(records, tdb_seconds, interval)
-        coeffs = records.coefficients[interval]
-        Computation::ChebyshevPolynomial.evaluate(coeffs, normalized_time)
+        coefficients = records.coefficients[interval]
+        Computation::ChebyshevPolynomial.evaluate(coefficients, normalized_time)
       end
 
       def generate_single(records, tdb_seconds)
@@ -101,9 +100,9 @@ module Ephem
         normalized_time =
           compute_normalized_time(records, tdb_seconds, interval)
 
-        coeffs = records.coefficients[interval] # already [n_terms][3]
+        coefficients = records.coefficients[interval]
         Computation::ChebyshevPolynomial.evaluate_with_derivative(
-          coeffs,
+          coefficients,
           normalized_time,
           records.radii[interval]
         )
@@ -126,19 +125,19 @@ module Ephem
         right = midpoints.size - 1
 
         while left <= right
-          mid = (left + right) / 2
-          midpoint = midpoints[mid]
-          radius = radii[mid]
+          middle = (left + right) / 2
+          midpoint = midpoints[middle]
+          radius = radii[middle]
           min_time = midpoint - radius
           max_time = midpoint + radius
 
           if tdb_seconds < min_time
-            right = mid - 1
+            right = middle - 1
           elsif tdb_seconds > max_time
-            left = mid + 1
+            left = middle + 1
           else
-            @last_interval = mid
-            return mid
+            @last_interval = middle
+            return middle
           end
         end
 

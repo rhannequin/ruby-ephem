@@ -429,11 +429,13 @@ RSpec.describe Ephem::Download do
 
   def tar_gz_with(entries)
     archive = StringIO.new
-    Zlib::GzipWriter.wrap(archive) do |gz|
-      Gem::Package::TarWriter.new(gz) do |tar|
+    Zlib::GzipWriter.wrap(archive) do |gzip_writer|
+      Gem::Package::TarWriter.new(gzip_writer) do |tar_writer|
         entries.each do |archive_path, content|
-          tar.add_file_simple(archive_path, 0o644, content.bytesize) do |out|
-            out.write(content)
+          tar_writer.add_file_simple(
+            archive_path, 0o644, content.bytesize
+          ) do |entry_file|
+            entry_file.write(content)
           end
         end
       end

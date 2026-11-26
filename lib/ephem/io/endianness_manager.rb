@@ -34,10 +34,8 @@ module Ephem
       end
 
       def detect_from_naif_daf
-        FORMATS.each do |format, endian|
-          if valid_format?(format, endian)
-            return {format: format, endianness: endian}
-          end
+        FORMATS.each_value do |endianness|
+          return endianness if valid_endianness?(endianness)
         end
         raise EndiannessError, "Unable to determine file endianness"
       end
@@ -45,23 +43,12 @@ module Ephem
       def detect_from_daf_prefix
         validate_ftpstr
         format = extract_format
-        endianness = FORMATS.fetch(format) do
+        FORMATS.fetch(format) do
           raise FileFormatError, "Unknown format #{format.inspect}"
         end
-
-        {format: format, endianness: endianness}
       end
 
       def validate_ftpstr
-        # The Fixed-length Transfer Protocol String (FTPSTR) is expected to be
-        # found in bytes 501-1000 of the file record. If it's not present, the
-        # file is considered damaged.
-        #
-        # The file format and endianness are determined from bytes 89-96 of the
-        # file record. If the format is unknown, an exception is raised.
-        #
-        # Finally, the file record is unpacked using the determined format and
-        # endianness.
         ftpstr_section = @file_record[500, 500].gsub(/\A\0+|\0+\z/, "")
         unless ftpstr_section == FTPSTR
           raise FileFormatError, "This SPK file has been damaged"
@@ -72,8 +59,8 @@ module Ephem
         @file_record[88, 8].strip
       end
 
-      def valid_format?(format, endian)
-        temp_parser = RecordParser.new(endianness: endian)
+      def valid_endianness?(endianness)
+        temp_parser = RecordParser.new(endianness: endianness)
         record_data = temp_parser.parse_file_record(@file_record)
         record_data.double_count == 2
       rescue

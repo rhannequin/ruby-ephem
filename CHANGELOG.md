@@ -43,6 +43,14 @@
 - `require "ephem"` no longer loads `net/http`, `optparse`, `date`, `tempfile`
   or `zlib`. Code that used them without requiring them must now require them
   itself ([#105], [#119])
+- Remove unused code: `ChebyshevPolynomial.evaluate_derivative` (use
+  `.evaluate_with_derivative`), `SPK::TYPES` (`SPK::INPOP` and `SPK::JPL_DE`
+  remain), the `IO::RecordData` readers for the backward and free record
+  pointers, format, FTP string and reserved areas, and the
+  `Excerpt::DAFWriter` readers other than `summary_format` ([#142])
+- Rename `Excerpt::DAFWriter#fward=` and `#bward=` to `#forward_record=` and
+  `#backward_record=`, and the `:n_summaries` key returned by
+  `IO::RecordParser#parse_summary_control` to `:summary_count` ([#142])
 
 ### Features
 
@@ -160,6 +168,7 @@
 [#137]: https://github.com/rhannequin/ruby-ephem/pull/137
 [#138]: https://github.com/rhannequin/ruby-ephem/pull/138
 [#139]: https://github.com/rhannequin/ruby-ephem/pull/139
+[#142]: https://github.com/rhannequin/ruby-ephem/pull/142
 
 ## [0.5.2] - 2026-11-24
 
