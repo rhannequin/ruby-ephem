@@ -135,14 +135,7 @@ module Ephem
       end
 
       def get_body_name(id, default)
-        name = TARGET_NAMES.fetch(id, default)
-        titlecase(name)
-      end
-
-      def titlecase(name)
-        return name if name.start_with?("1", "C/", "DSS-")
-
-        name.split.then { |words| words.map(&:capitalize).join(" ") }
+        TARGET_NAMES.fetch(id, default)
       end
     end
   end

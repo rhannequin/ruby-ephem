@@ -100,7 +100,7 @@ RSpec.describe Ephem::Segments::Segment do
 
       description = segment.describe
 
-      expect(description).to include("Earth-moon Barycenter (3)")
+      expect(description).to include("Earth-Moon Barycenter (3)")
       expect(description).to include("Solar System Barycenter (0)")
       expect(description).to include("Type 2")
       expect(description).to match(/\d{4}-\d{2}-\d{2}\.{2}\d{4}-\d{2}-\d{2}/)
@@ -187,7 +187,7 @@ RSpec.describe Ephem::Segments::Segment do
     descriptor = [
       0.0,     # start_second
       86400.0, # end_second
-      3,       # target (Earth-moon Barycenter)
+      3,       # target (Earth-Moon Barycenter)
       0,       # center (Solar System Barycenter)
       1,       # frame
       data_type,
