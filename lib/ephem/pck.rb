@@ -43,14 +43,15 @@ module Ephem
     end
 
     def self.load_kernel(path)
-      daf = IO::DAF.new(File.open(path, "rb"))
+      file = File.open(path, "rb")
+      daf = IO::DAF.new(file)
       unless daf.file_type == :pck
         raise FileFormatError, "#{path} is not a binary PCK (DAF/PCK) file"
       end
 
       new(daf: daf)
     rescue
-      daf&.close
+      (daf || file)&.close
       raise
     end
     private_class_method :load_kernel

@@ -76,6 +76,11 @@
 - `ruby-ephem` writes errors to stderr and exits with status 1 when a command
   fails, rejects invalid `--targets` values instead of reading them as `0`, and
   converts dates to the Julian Date at midnight instead of noon ([#95], [#114])
+- Raise `Ephem::FileFormatError` naming the missing record when a kernel is
+  empty or ends inside one of its file, comment, summary or name records,
+  instead of an `IOError` or a record silently padded with null bytes.
+  `SPK.open`, `PCK.open` and the `ruby-ephem` command also close the file when
+  the kernel cannot be read ([#133])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#94]: https://github.com/rhannequin/ruby-ephem/issues/94
@@ -113,6 +118,7 @@
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
+[#133]: https://github.com/rhannequin/ruby-ephem/issues/133
 
 ## [0.5.2] - 2026-11-24
 

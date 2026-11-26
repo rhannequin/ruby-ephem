@@ -220,8 +220,9 @@ a single `rescue Ephem::Error` catches them. The most common ones are:
   JD 2451536.5..2451920.5 (1999-12-24..2001-01-11)
   ```
 
-- `Ephem::FileFormatError`: the file is not a valid kernel, or is the wrong
-  kind (an SPK passed to `Ephem::PCK.open`, or the other way round).
+- `Ephem::FileFormatError`: the file is not a valid kernel, is empty or
+  truncated, or is the wrong kind (an SPK passed to `Ephem::PCK.open`, or the
+  other way round).
 - `Ephem::UnsupportedError`: the kernel uses a segment or data type the gem
   does not implement.
 - `Ephem::InvalidInputError`: a `Vector` or `Orientation` was given
