@@ -106,17 +106,22 @@ module Ephem
       end
 
       def find_interval(tdb_seconds)
-        left = 0
-        right = @midpoints.size - 1
-
-        if @last_interval && time_in_interval?(tdb_seconds, @last_interval)
-          return @last_interval
+        last_interval = @last_interval
+        if last_interval && time_in_interval?(tdb_seconds, last_interval)
+          return last_interval
         end
+
+        midpoints = @midpoints
+        radii = @radii
+        left = 0
+        right = midpoints.size - 1
 
         while left <= right
           mid = (left + right) / 2
-          min_time = @midpoints[mid] - @radii[mid]
-          max_time = @midpoints[mid] + @radii[mid]
+          midpoint = midpoints[mid]
+          radius = radii[mid]
+          min_time = midpoint - radius
+          max_time = midpoint + radius
 
           if tdb_seconds < min_time
             right = mid - 1
