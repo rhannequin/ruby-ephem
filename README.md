@@ -211,8 +211,9 @@ The following kernels have been used:
 * DE440s
 
 The times tested are integer Julian Dates in TDB (noon TDB) for every day
-between 2000-01-01 and 2050-01-01. Vectors tested are always with `center` 0 (Solar System Barycenter),
-and `target` from `1` (Mercury Barycenter) to `10` (Sun).
+between 2000-01-01 and 2050-01-01. Vectors tested are always with `center` 0
+(Solar System Barycenter), and `target` from `1` (Mercury Barycenter) to `10`
+(Sun).
 
 Rake tasks ensure data from this library match with `jplephem`. Positions match
 exactly and velocities are within 2e-9 km/day (about 2e-11 m/s).

@@ -3,10 +3,6 @@
 module Ephem
   module Segments
     # Shared evaluation machinery for DAF "type 2" Chebyshev segments.
-    #
-    # Including classes must define a private +component_count+ and set
-    # +@daf+, +@start_i+ and +@end_i+. The lazy-loading state is set up here,
-    # after the including class's superclass +initialize+ has run.
     module ChebyshevType2
       include Core::Constants
 
