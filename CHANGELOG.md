@@ -26,7 +26,10 @@
 
 - Show body names as written, so segment descriptions say "Earth-Moon
   Barycenter" instead of "Earth-moon Barycenter" ([#101], [#126])
+- Read DAF summary integers as signed, so segments with a negative NAIF ID
+  (spacecraft, some small bodies) can be looked up and excerpted ([#93], [#117])
 
+[#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
 [#104]: https://github.com/rhannequin/ruby-ephem/issues/104
 [#105]: https://github.com/rhannequin/ruby-ephem/issues/105
@@ -34,6 +37,7 @@
 [#109]: https://github.com/rhannequin/ruby-ephem/issues/109
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
+[#117]: https://github.com/rhannequin/ruby-ephem/pull/117
 [#119]: https://github.com/rhannequin/ruby-ephem/pull/119
 [#124]: https://github.com/rhannequin/ruby-ephem/pull/124
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126

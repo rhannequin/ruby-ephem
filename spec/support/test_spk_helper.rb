@@ -24,4 +24,18 @@ module TestSpkHelper
   def moon_pa_de440_boundary_excerpt
     File.path("#{__dir__}/data/moon_pa_de440_boundary_excerpt.bpc")
   end
+
+  def de421_2000_excerpt_with_first_target(target, directory:)
+    data = File.binread(de421_2000_excerpt)
+    double_count, forward_record = data.unpack("@8V@76V")
+    record_size = Ephem::IO::BinaryReader::RECORD_SIZE
+    control_size = Ephem::IO::RecordParser::SUMMARY_CONTROL_SIZE
+    target_offset =
+      (forward_record - 1) * record_size + control_size + double_count * 8
+    data[target_offset, 4] = [target].pack("l<")
+
+    path = File.join(directory, "de421_2000_excerpt_target_#{target}.bsp")
+    File.binwrite(path, data)
+    path
+  end
 end

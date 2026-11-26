@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tmpdir"
+
 RSpec.describe Ephem::SPK do
   include TestSpkHelper
 
@@ -216,6 +218,27 @@ RSpec.describe Ephem::SPK do
         KeyError,
         "No segment found for center: 399, target: 302"
       )
+    end
+
+    it "finds a segment with a negative target ID" do
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        original_spk = described_class.open(de421_2000_excerpt)
+        patched_spk = described_class.open(
+          de421_2000_excerpt_with_first_target(-82, directory: temp_dir)
+        )
+        test_time = 2451545.0
+
+        patched_segment = patched_spk[0, -82]
+
+        original_state = original_spk[0, 1].compute_and_differentiate(test_time)
+        patched_state = patched_segment.compute_and_differentiate(test_time)
+        expect(patched_segment.target).to eq(-82)
+        expect(patched_state.position.to_a).to eq original_state.position.to_a
+        expect(patched_state.velocity.to_a).to eq original_state.velocity.to_a
+
+        original_spk.close
+        patched_spk.close
+      end
     end
   end
 
