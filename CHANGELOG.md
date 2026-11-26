@@ -30,8 +30,11 @@
   (spacecraft, some small bodies) can be looked up and excerpted ([#93], [#117])
 - Raise `Ephem::FileFormatError` when a kernel file is truncated, instead of
   failing later with an unrelated `NoMethodError` ([#103], [#122])
+- Fix a race in the cached interval lookup that could return a wrong position
+  when the same segment is queried from several threads ([#97], [#125])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
+[#97]: https://github.com/rhannequin/ruby-ephem/issues/97
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
 [#103]: https://github.com/rhannequin/ruby-ephem/issues/103
 [#104]: https://github.com/rhannequin/ruby-ephem/issues/104
@@ -44,6 +47,7 @@
 [#119]: https://github.com/rhannequin/ruby-ephem/pull/119
 [#122]: https://github.com/rhannequin/ruby-ephem/pull/122
 [#124]: https://github.com/rhannequin/ruby-ephem/pull/124
+[#125]: https://github.com/rhannequin/ruby-ephem/pull/125
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 
 ## [0.5.2] - 2026-11-24
