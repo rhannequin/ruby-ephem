@@ -23,7 +23,8 @@ RSpec.describe Ephem::Segments::BaseSegment do
         descriptor: descriptor
       )
 
-      expected = "2000-01-01..2000-01-01 Type 2 Solar System Barycenter (0) -> Earth-moon Barycenter (3)"
+      expected = "2000-01-01..2000-01-01 Type 2 " \
+        "Solar System Barycenter (0) -> Earth-Moon Barycenter (3)"
       expect(segment.describe).to eq(expected)
     end
 
@@ -49,10 +50,23 @@ RSpec.describe Ephem::Segments::BaseSegment do
       )
 
       expected = <<~DESCRIPTION.chomp
-        2000-01-01..2000-01-01 Type 2 Solar System Barycenter (0) -> Earth-moon Barycenter (3)
+        2000-01-01..2000-01-01 Type 2 Solar System Barycenter (0) -> \
+        Earth-Moon Barycenter (3)
         frame=1 source=DE-0421LE-0421
       DESCRIPTION
       expect(segment.describe(verbose: true)).to eq(expected)
+    end
+
+    it "falls back to a generic name for unknown bodies" do
+      unknown_body_id = 2_000_001
+      descriptor = [100.0, 200.0, unknown_body_id, 0, 1, 2, 0, 100]
+      segment = described_class.new(
+        daf: double("daf"),
+        source: "DE-0421LE-0421",
+        descriptor: descriptor
+      )
+
+      expect(segment.describe).to end_with("-> Unknown Target (2000001)")
     end
   end
 end
