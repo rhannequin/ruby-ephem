@@ -68,33 +68,78 @@ module Ephem
 
     IMCCE_KERNELS = {
       "inpop10b.bsp" => "inpop10b_TDB_m100_p100_spice.bsp",
+      "inpop10b.bpc" => "inpop10b_TDB_m100_p100_spice.bpc",
       "inpop10b_large.bsp" => "inpop10b_TDB_m1000_p1000_spice.bsp",
+      "inpop10b_large.bpc" => "inpop10b_TDB_m1000_p1000_spice.bpc",
       "inpop10e.bsp" => "inpop10e_TDB_m100_p100_spice.bsp",
+      "inpop10e.bpc" => "inpop10e_TDB_m100_p100_spice.bpc",
       "inpop10e_large.bsp" => "inpop10e_TDB_m1000_p1000_spice.bsp",
+      "inpop10e_large.bpc" => "inpop10e_TDB_m1000_p1000_spice.bpc",
       "inpop13c.bsp" => "inpop13c_TDB_m100_p100_spice.bsp",
+      "inpop13c.bpc" => "inpop13c_TDB_m100_p100_spice.bpc",
+      "inpop13c_time.bsp" => "inpop13c_TDB_m100_p100_spice_time.bsp",
       "inpop13c_large.bsp" => "inpop13c_TDB_m1000_p1000_spice.bsp",
+      "inpop13c_large.bpc" => "inpop13c_TDB_m1000_p1000_spice.bpc",
+      "inpop13c_large_time.bsp" => "inpop13c_TDB_m1000_p1000_spice_time.bsp",
       "inpop17a.bsp" => "inpop17a_TDB_m100_p100_spice.bsp",
+      "inpop17a.bpc" => "inpop17a_TDB_m100_p100_spice.bpc",
+      "inpop17a_time.bsp" => "inpop17a_TDB_m100_p100_spice_time.bsp",
       "inpop17a_large.bsp" => "inpop17a_TDB_m1000_p1000_spice.bsp",
+      "inpop17a_large.bpc" => "inpop17a_TDB_m1000_p1000_spice.bpc",
+      "inpop17a_large_time.bsp" => "inpop17a_TDB_m1000_p1000_spice_time.bsp",
       "inpop19a.bsp" => "inpop19a_TDB_m100_p100_spice.bsp",
+      "inpop19a.bpc" => "inpop19a_TDB_m100_p100_spice.bpc",
+      "inpop19a_time.bsp" => "inpop19a_TDB_m100_p100_spice_time.bsp",
       "inpop19a_large.bsp" => "inpop19a_TDB_m1000_p1000_spice.bsp",
+      "inpop19a_large.bpc" => "inpop19a_TDB_m1000_p1000_spice.bpc",
+      "inpop19a_large_time.bsp" => "inpop19a_TDB_m1000_p1000_spice_time.bsp",
       "inpop21a.bsp" => "inpop21a_TDB_m100_p100_spice.bsp",
-      "inpop21a_large.bsp" => "inpop21a_TDB_m1000_p1000_spice.bsp"
+      "inpop21a.bpc" => "inpop21a_TDB_m100_p100_spice.bpc",
+      "inpop21a_time.bsp" => "inpop21a_TDB_m100_p100_spice_time.bsp",
+      "inpop21a_large.bsp" => "inpop21a_TDB_m1000_p1000_spice.bsp",
+      "inpop21a_large.bpc" => "inpop21a_TDB_m1000_p1000_spice.bpc",
+      "inpop21a_large_time.bsp" => "inpop21a_TDB_m1000_p1000_spice_time.bsp"
     }.freeze
 
     IMCCE_KERNELS_MATCHING = {
       "inpop10b.bsp" => "inpop10b/inpop10b_TDB_m100_p100_spice.tar.gz",
+      "inpop10b.bpc" => "inpop10b/inpop10b_TDB_m100_p100_spice.tar.gz",
       "inpop10b_large.bsp" => "inpop10b/inpop10b_TDB_m1000_p1000_spice.tar.gz",
+      "inpop10b_large.bpc" => "inpop10b/inpop10b_TDB_m1000_p1000_spice.tar.gz",
       "inpop10e.bsp" => "inpop10e/inpop10e_TDB_m100_p100_spice_release2.tar.gz",
+      "inpop10e.bpc" => "inpop10e/inpop10e_TDB_m100_p100_spice_release2.tar.gz",
       "inpop10e_large.bsp" =>
         "inpop10e/inpop10e_TDB_m1000_p1000_spice_release2.tar.gz",
+      "inpop10e_large.bpc" =>
+        "inpop10e/inpop10e_TDB_m1000_p1000_spice_release2.tar.gz",
       "inpop13c.bsp" => "inpop13c/inpop13c_TDB_m100_p100_spice.tar.gz",
+      "inpop13c.bpc" => "inpop13c/inpop13c_TDB_m100_p100_spice.tar.gz",
+      "inpop13c_time.bsp" => "inpop13c/inpop13c_TDB_m100_p100_spice.tar.gz",
       "inpop13c_large.bsp" => "inpop13c/inpop13c_TDB_m1000_p1000_spice.tar.gz",
+      "inpop13c_large.bpc" => "inpop13c/inpop13c_TDB_m1000_p1000_spice.tar.gz",
+      "inpop13c_large_time.bsp" =>
+        "inpop13c/inpop13c_TDB_m1000_p1000_spice.tar.gz",
       "inpop17a.bsp" => "inpop17a/inpop17a_TDB_m100_p100_spice.tar.gz",
+      "inpop17a.bpc" => "inpop17a/inpop17a_TDB_m100_p100_spice.tar.gz",
+      "inpop17a_time.bsp" => "inpop17a/inpop17a_TDB_m100_p100_spice.tar.gz",
       "inpop17a_large.bsp" => "inpop17a/inpop17a_TDB_m1000_p1000_spice.tar.gz",
+      "inpop17a_large.bpc" => "inpop17a/inpop17a_TDB_m1000_p1000_spice.tar.gz",
+      "inpop17a_large_time.bsp" =>
+        "inpop17a/inpop17a_TDB_m1000_p1000_spice.tar.gz",
       "inpop19a.bsp" => "inpop19a/inpop19a_TDB_m100_p100_spice.tar.gz",
+      "inpop19a.bpc" => "inpop19a/inpop19a_TDB_m100_p100_spice.tar.gz",
+      "inpop19a_time.bsp" => "inpop19a/inpop19a_TDB_m100_p100_spice.tar.gz",
       "inpop19a_large.bsp" => "inpop19a/inpop19a_TDB_m1000_p1000_spice.tar.gz",
+      "inpop19a_large.bpc" => "inpop19a/inpop19a_TDB_m1000_p1000_spice.tar.gz",
+      "inpop19a_large_time.bsp" =>
+        "inpop19a/inpop19a_TDB_m1000_p1000_spice.tar.gz",
       "inpop21a.bsp" => "inpop21a/inpop21a_TDB_m100_p100_spice.tar.gz",
-      "inpop21a_large.bsp" => "inpop21a/inpop21a_TDB_m1000_p1000_spice.tar.gz"
+      "inpop21a.bpc" => "inpop21a/inpop21a_TDB_m100_p100_spice.tar.gz",
+      "inpop21a_time.bsp" => "inpop21a/inpop21a_TDB_m100_p100_spice.tar.gz",
+      "inpop21a_large.bsp" => "inpop21a/inpop21a_TDB_m1000_p1000_spice.tar.gz",
+      "inpop21a_large.bpc" => "inpop21a/inpop21a_TDB_m1000_p1000_spice.tar.gz",
+      "inpop21a_large_time.bsp" =>
+        "inpop21a/inpop21a_TDB_m1000_p1000_spice.tar.gz"
     }.freeze
 
     SUPPORTED_KERNELS =

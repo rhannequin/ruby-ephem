@@ -27,7 +27,9 @@ module Ephem
         Bodies::SATURN => "Saturn",
         Bodies::URANUS => "Uranus",
         Bodies::NEPTUNE => "Neptune",
-        Bodies::PLUTO => "Pluto"
+        Bodies::PLUTO => "Pluto",
+        Bodies::TIME_CENTER => "Time Center",
+        Bodies::TT_MINUS_TDB => "TT-TDB"
       }.freeze
 
       # @return [Ephem::IO::DAF] the DAF object representing the data file

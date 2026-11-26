@@ -103,6 +103,41 @@ RSpec.describe Ephem::Download do
         end
       end
 
+      it "extracts the time ephemeris kernel shipped beside the SPK" do
+        name = "inpop21a_time.bsp"
+        archive = tar_gz_with(
+          imcce_path("inpop21a.bsp") => "planetary-kernel-data",
+          imcce_path("inpop21a.bpc") => "lunar-orientation-data",
+          imcce_path(name) => "time-ephemeris-data"
+        )
+        stub_http_response(successful_response(archive))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, name)
+
+          described_class.call(name: name, target: target_path)
+
+          expect(File.binread(target_path)).to eq("time-ephemeris-data")
+        end
+      end
+
+      it "extracts the lunar orientation kernel shipped beside the SPK" do
+        name = "inpop21a.bpc"
+        archive = tar_gz_with(
+          imcce_path("inpop21a.bsp") => "planetary-kernel-data",
+          imcce_path(name) => "lunar-orientation-data"
+        )
+        stub_http_response(successful_response(archive))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, name)
+
+          described_class.call(name: name, target: target_path)
+
+          expect(File.binread(target_path)).to eq("lunar-orientation-data")
+        end
+      end
+
       it "writes kernels larger than one archive read chunk" do
         name = "inpop19a.bsp"
         kernel_content = "x" * (described_class::ARCHIVE_READ_CHUNK_SIZE + 1)
