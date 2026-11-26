@@ -93,6 +93,8 @@
   instead of an `IOError` or a record silently padded with null bytes.
   `SPK.open`, `PCK.open` and the `ruby-ephem` command also close the file when
   the kernel cannot be read ([#133], [#137])
+- Fix a race where clearing a segment's data, or closing its kernel, while
+  another thread queries it raised `NoMethodError` ([#132], [#139])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#94]: https://github.com/rhannequin/ruby-ephem/issues/94
@@ -132,11 +134,13 @@
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
 [#130]: https://github.com/rhannequin/ruby-ephem/issues/130
 [#131]: https://github.com/rhannequin/ruby-ephem/issues/131
+[#132]: https://github.com/rhannequin/ruby-ephem/issues/132
 [#133]: https://github.com/rhannequin/ruby-ephem/issues/133
 [#134]: https://github.com/rhannequin/ruby-ephem/pull/134
 [#135]: https://github.com/rhannequin/ruby-ephem/pull/135
 [#136]: https://github.com/rhannequin/ruby-ephem/pull/136
 [#137]: https://github.com/rhannequin/ruby-ephem/pull/137
+[#139]: https://github.com/rhannequin/ruby-ephem/pull/139
 
 ## [0.5.2] - 2026-11-24
 

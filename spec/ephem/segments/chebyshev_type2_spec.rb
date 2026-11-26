@@ -1,19 +1,22 @@
 # frozen_string_literal: true
 
-# Minimal host that mixes in the module and exposes the state its methods
+# Minimal host that mixes in the module and exposes the records its methods
 # read, so the shared evaluation machinery can be exercised on its own.
 class ChebyshevType2TestHost
   include Ephem::Segments::ChebyshevType2
 
-  attr_reader :midpoints, :radii, :coefficients
+  attr_reader :records
 
   def initialize(component_count: 3, midpoints: nil, radii: nil,
     coefficients: nil)
     super()
     @component_count = component_count
-    @midpoints = midpoints
-    @radii = radii
-    @coefficients = coefficients
+    @records = Ephem::Segments::ChebyshevType2::Records.new(
+      midpoints: midpoints,
+      radii: radii,
+      coefficients: coefficients,
+      velocity_coefficients: nil
+    )
     @start_jd = 2451545.0
     @end_jd = 2451546.0
   end
@@ -68,60 +71,62 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
     it "selects the interval whose window covers the time" do
       host = build_search_host
 
-      expect(host.send(:find_interval, 100.0)).to eq(0)
-      expect(host.send(:find_interval, 300.0)).to eq(1)
+      expect(host.send(:find_interval, host.records, 100.0)).to eq(0)
+      expect(host.send(:find_interval, host.records, 300.0)).to eq(1)
     end
 
     it "treats both ends of an interval window as covered" do
       host = build_search_host
 
-      expect(host.send(:find_interval, 90.0)).to eq(0)
-      expect(host.send(:find_interval, 110.0)).to eq(0)
+      expect(host.send(:find_interval, host.records, 90.0)).to eq(0)
+      expect(host.send(:find_interval, host.records, 110.0)).to eq(0)
     end
 
     it "still returns the right interval after caching a previous one" do
       host = build_search_host
 
-      host.send(:find_interval, 105.0)
+      host.send(:find_interval, host.records, 105.0)
 
-      expect(host.send(:find_interval, 105.0)).to eq(0)
-      expect(host.send(:find_interval, 300.0)).to eq(1)
+      expect(host.send(:find_interval, host.records, 105.0)).to eq(0)
+      expect(host.send(:find_interval, host.records, 300.0)).to eq(1)
     end
 
     it "returns the cached interval it checked if the cache changes" do
       host = build_search_host
-      host.send(:find_interval, 105.0)
+      host.send(:find_interval, host.records, 105.0)
       overwrite_cache_after_check(host, other_interval: 1)
 
-      expect(host.send(:find_interval, 105.0)).to eq(0)
+      expect(host.send(:find_interval, host.records, 105.0)).to eq(0)
       expect(host).to have_received(:time_in_interval?)
     end
 
     it "raises when the time falls in a gap between intervals" do
       host = build_search_host
 
-      expect { host.send(:find_interval, 200.0) }
+      expect { host.send(:find_interval, host.records, 200.0) }
         .to raise_error(Ephem::OutOfRangeError)
     end
 
     it "raises when the time is before the first interval" do
       host = build_search_host
 
-      expect { host.send(:find_interval, 50.0) }
+      expect { host.send(:find_interval, host.records, 50.0) }
         .to raise_error(Ephem::OutOfRangeError)
     end
 
     it "raises when the time is after the last interval" do
       host = build_search_host
 
-      expect { host.send(:find_interval, 350.0) }
+      expect { host.send(:find_interval, host.records, 350.0) }
         .to raise_error(Ephem::OutOfRangeError)
     end
 
     it "reports the uncovered time as a Julian Date" do
       host = build_search_host
 
-      expect { host.send(:find_interval, 43200.0) }.to raise_error(
+      expect {
+        host.send(:find_interval, host.records, 43200.0)
+      }.to raise_error(
         Ephem::OutOfRangeError,
         /\AJD 2451545.5 \(2000-01-02\) is outside the coverage of test/
       ) { |error| expect(error.out_of_range_times).to eq([2451545.5]) }
@@ -134,7 +139,11 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
       original_error = Ephem::OutOfRangeError.new("original", [])
 
       error = host.send(
-        :request_out_of_range_error, original_error, 2451546.0, 0.0
+        :request_out_of_range_error,
+        host.records,
+        original_error,
+        2451546.0,
+        0.0
       )
 
       expect(error.out_of_range_times).to eq([2451546.0])
@@ -146,7 +155,11 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
       covered = 2451545.0 + 100.0 / 86400.0
 
       error = host.send(
-        :request_out_of_range_error, original_error, covered, 0.0
+        :request_out_of_range_error,
+        host.records,
+        original_error,
+        covered,
+        0.0
       )
 
       expect(error).to be(original_error)
@@ -163,7 +176,7 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
 
       times = [in_gap, covered, after_last]
 
-      uncovered = host.send(:uncovered_times, times, 0.0)
+      uncovered = host.send(:uncovered_times, host.records, times, 0.0)
 
       expect(uncovered).to eq([in_gap, after_last])
     end
@@ -171,7 +184,7 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
     it "accepts a single time" do
       host = build_search_host
 
-      expect(host.send(:uncovered_times, 2451545.0, 0.25))
+      expect(host.send(:uncovered_times, host.records, 2451545.0, 0.25))
         .to eq([2451545.25])
     end
   end
@@ -180,15 +193,15 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
     it "is true on the inclusive bounds of the window" do
       host = build_normalized_host
 
-      expect(host.send(:time_in_interval?, 90.0, 0)).to be true
-      expect(host.send(:time_in_interval?, 110.0, 0)).to be true
+      expect(host.send(:time_in_interval?, host.records, 90.0, 0)).to be true
+      expect(host.send(:time_in_interval?, host.records, 110.0, 0)).to be true
     end
 
     it "is false just outside the window" do
       host = build_normalized_host
 
-      expect(host.send(:time_in_interval?, 89.0, 0)).to be false
-      expect(host.send(:time_in_interval?, 111.0, 0)).to be false
+      expect(host.send(:time_in_interval?, host.records, 89.0, 0)).to be false
+      expect(host.send(:time_in_interval?, host.records, 111.0, 0)).to be false
     end
   end
 
@@ -196,10 +209,10 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
     it "maps the midpoint to zero and the window edges to plus/minus one" do
       host = build_normalized_host
 
-      expect(host.send(:compute_normalized_time, 100.0, 0)).to eq(0.0)
-      expect(host.send(:compute_normalized_time, 110.0, 0)).to eq(1.0)
-      expect(host.send(:compute_normalized_time, 90.0, 0)).to eq(-1.0)
-      expect(host.send(:compute_normalized_time, 105.0, 0)).to eq(0.5)
+      expect(normalized_time(host, 100.0)).to eq(0.0)
+      expect(normalized_time(host, 110.0)).to eq(1.0)
+      expect(normalized_time(host, 90.0)).to eq(-1.0)
+      expect(normalized_time(host, 105.0)).to eq(0.5)
     end
   end
 
@@ -214,14 +227,14 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
       segment_count = 2
       coefficient_count = 2
 
-      host.send(
+      records = host.send(
         :process_coefficient_data,
         [raw, record_size, segment_count, coefficient_count]
       )
 
-      expect(host.midpoints).to eq([100.0, 200.0])
-      expect(host.radii).to eq([10.0, 20.0])
-      expect(host.coefficients).to eq(
+      expect(records.midpoints).to eq([100.0, 200.0])
+      expect(records.radii).to eq([10.0, 20.0])
+      expect(records.coefficients).to eq(
         [
           [[1.0, 3.0], [2.0, 4.0]],
           [[5.0, 7.0], [6.0, 8.0]]
@@ -234,7 +247,7 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
     it "evaluates the polynomial at the normalized time" do
       host = build_evaluation_host
 
-      result = host.send(:generate_position, 0.5)
+      result = host.send(:generate_position, host.records, 0.5)
 
       expect(result).to eq([6.0, 12.0, 18.0])
     end
@@ -244,9 +257,9 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
     it "returns a position identical to the standalone evaluation" do
       host = build_evaluation_host
 
-      position, = host.send(:generate_single, 0.5)
+      position, = host.send(:generate_single, host.records, 0.5)
 
-      expect(position).to eq(host.send(:generate_position, 0.5))
+      expect(position).to eq(host.send(:generate_position, host.records, 0.5))
     end
 
     it "returns a velocity identical to the standalone derivative" do
@@ -254,7 +267,7 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
       expected_velocity = Ephem::Computation::ChebyshevPolynomial
         .evaluate_derivative(evaluation_coefficients, 0.5, 1.0)
 
-      _position, velocity = host.send(:generate_single, 0.5)
+      _position, velocity = host.send(:generate_single, host.records, 0.5)
 
       expect(velocity).to eq(expected_velocity)
     end
@@ -290,6 +303,10 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
       radii: [1.0],
       coefficients: [evaluation_coefficients]
     )
+  end
+
+  def normalized_time(host, time)
+    host.send(:compute_normalized_time, host.records, time, 0)
   end
 
   def evaluation_coefficients
