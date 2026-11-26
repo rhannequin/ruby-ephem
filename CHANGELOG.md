@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking changes
+
+- Remove `Ephem::IO::DAF#map_array`, an alias of `#read_array` kept from
+  jplephem. Call `#read_array` instead ([#106], [#115])
+
+[#106]: https://github.com/rhannequin/ruby-ephem/issues/106
+[#115]: https://github.com/rhannequin/ruby-ephem/pull/115
+
 ## [0.5.2] - 2026-11-24
 
 ### Bug fixes
