@@ -82,6 +82,15 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
       expect(host.send(:find_interval, 300.0)).to eq(1)
     end
 
+    it "returns the cached interval it checked if the cache changes" do
+      host = build_search_host
+      host.send(:find_interval, 105.0)
+      overwrite_cache_after_check(host, other_interval: 1)
+
+      expect(host.send(:find_interval, 105.0)).to eq(0)
+      expect(host).to have_received(:time_in_interval?)
+    end
+
     it "raises when the time falls in a gap between intervals" do
       host = build_search_host
 
@@ -197,6 +206,15 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
       midpoints: [100.0, 300.0],
       radii: [10.0, 10.0]
     )
+  end
+
+  def overwrite_cache_after_check(host, other_interval:)
+    allow(host).to receive(:time_in_interval?)
+      .and_wrap_original do |original, *arguments|
+        covered = original.call(*arguments)
+        host.instance_variable_set(:@last_interval, other_interval)
+        covered
+      end
   end
 
   def build_normalized_host
