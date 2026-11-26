@@ -38,6 +38,55 @@ RSpec.describe Ephem::PCK do
       expect { described_class.open("kernel.bpc") }
         .to raise_error(Ephem::UnsupportedError)
     end
+
+    it "yields the kernel to the block" do
+      yielded_kernel = nil
+
+      described_class.open(moon_pa_de440_excerpt) do |pck|
+        yielded_kernel = pck
+      end
+
+      expect(yielded_kernel).to be_an_instance_of(described_class)
+    end
+
+    it "returns the block's value" do
+      result = described_class.open(moon_pa_de440_excerpt) { :block_value }
+
+      expect(result).to eq(:block_value)
+    end
+
+    it "closes the file after the block returns" do
+      opened_files = track_opened_files
+
+      described_class.open(moon_pa_de440_excerpt) { |pck| pck.comments }
+
+      expect(opened_files).to contain_exactly(be_closed)
+    end
+
+    it "closes the file when the block raises" do
+      opened_files = track_opened_files
+
+      expect do
+        described_class.open(moon_pa_de440_excerpt) { raise "boom" }
+      end.to raise_error(RuntimeError, "boom")
+      expect(opened_files).to contain_exactly(be_closed)
+    end
+
+    it "leaves the file open without a block" do
+      opened_files = track_opened_files
+
+      pck = described_class.open(moon_pa_de440_excerpt)
+      closed_states = opened_files.map(&:closed?)
+      pck.close
+
+      expect(closed_states).to eq([false])
+    end
+
+    it "allows the block to close the kernel itself" do
+      expect do
+        described_class.open(moon_pa_de440_excerpt) { |pck| pck.close }
+      end.not_to raise_error
+    end
   end
 
   describe "#[]" do
@@ -181,5 +230,13 @@ RSpec.describe Ephem::PCK do
         rates: [4.41729372107692e-05, -7.15944475461727e-05, 0.229930175592345]
       }
     ]
+  end
+
+  def track_opened_files
+    opened_files = []
+    allow(File).to receive(:open).and_wrap_original do |original, *arguments|
+      original.call(*arguments).tap { |file| opened_files << file }
+    end
+    opened_files
   end
 end

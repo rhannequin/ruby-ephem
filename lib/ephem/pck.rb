@@ -22,10 +22,27 @@ module Ephem
 
     # Opens a binary PCK file.
     #
+    # Without a block, returns the open kernel; the caller must close it.
+    # With a block, yields the kernel, closes it when the block returns or
+    # raises, and returns the block's value, like +File.open+.
+    #
     # @param path [String] Path to the PCK (+.bpc+) file
-    # @return [PCK]
+    # @yieldparam pck [PCK] the open kernel
+    # @return [PCK] the open kernel, if no block is given
+    # @return [Object] the block's value, if a block is given
     # @raise [Ephem::FileFormatError] if the file is not a binary PCK
     def self.open(path)
+      pck = load_kernel(path)
+      return pck unless block_given?
+
+      begin
+        yield pck
+      ensure
+        pck.close
+      end
+    end
+
+    def self.load_kernel(path)
       daf = IO::DAF.new(File.open(path, "rb"))
       unless daf.file_type == :pck
         raise FileFormatError, "#{path} is not a binary PCK (DAF/PCK) file"
@@ -36,6 +53,7 @@ module Ephem
       daf&.close
       raise
     end
+    private_class_method :load_kernel
 
     # @return [void]
     def close
