@@ -28,12 +28,26 @@
     `Ephem::DownloadError`, keeping the original error as `cause`
 - `Ephem::Download` no longer accepts `de431.bsp`, which JPL has removed and
   now answers with a 404. Use `de431t.bsp` instead ([#131], [#135])
+- Unsupported SPK data types in `Segment` raise `Ephem::UnsupportedError`
+  instead of a `RuntimeError` ([#106], [#115])
+- `State` instances are frozen ([#108], [#121])
+- `Vector#eql?` and `Orientation#eql?` compare components strictly, consistent
+  with `hash`, so `Vector[1, 2, 3].eql?(Vector[1.0, 2.0, 3.0])` is now false
+  ([#99], [#123])
+- `Excerpt` raises errors instead of printing them and skipping the segment, and
+  raises `Ephem::UnsupportedError` for segment types it cannot excerpt ([#98],
+  [#113])
+- `ruby-ephem excerpt` converts dates to the Julian Date at midnight instead of
+  noon, so an excerpt starts and ends 12 hours earlier than before ([#95],
+  [#114])
+- `require "ephem"` no longer loads `net/http`, `optparse`, `date`, `tempfile`
+  or `zlib`. Code that used them without requiring them must now require them
+  itself ([#105], [#119])
 
 ### Features
 
 - Add `Vector#*` and `Vector#/` with a scalar and unary `Vector#-@`, and give
-  `State` `==`, `eql?` and `hash`. `State` instances are now frozen ([#108],
-  [#121])
+  `State` `==`, `eql?` and `hash` ([#108], [#121])
 - `SPK.open` and `PCK.open` take a block, like `File.open`: the kernel is closed
   when the block returns or raises, and the block's value is returned ([#100],
   [#116])
@@ -49,15 +63,14 @@
 
 ### Improvements
 
-- Raise `Ephem::UnsupportedError` instead of a `RuntimeError` for an unsupported
-  SPK data type in `Segment` ([#106], [#115])
 - Fix documentation errors: broken README links, an undefined variable in the
   rotation example, wrong constant names in YARD examples, and the J2000 epoch
   and accuracy wording ([#106], [#115])
 - Document how to enable YJIT, which makes computations about 2 to 2.5 times
   faster ([#104], [#110])
 - Ship only runtime files in the gem and require MFA to publish it. The
-  `validate_accuracy` rake task moves to `rakelib/` ([#109], [#124])
+  `validate_accuracy` rake task is defined in `rakelib/`, and its code under
+  `lib/ephem/tasks/` is left out of the gem ([#109], [#124])
 - Load `Ephem::CLI`, `Ephem::Download` and `Ephem::Excerpt` on first use, so
   `require "ephem"` no longer loads `net/http`, `optparse`, `date`, `tempfile`
   or `zlib` ([#105], [#119])
@@ -82,15 +95,12 @@
   coefficients, as SPICE does, instead of differentiating the position ([#96],
   [#111])
 - `Vector#==` and `Orientation#==` return false for objects of another class,
-  including `nil`, instead of raising `Ephem::InvalidInputError`. Their `eql?`
-  now compares components strictly, consistent with `hash` ([#99], [#123])
-- `Excerpt` raises errors instead of printing them and skipping the segment, and
-  raises `Ephem::UnsupportedError` for segment types it cannot excerpt. The
-  excerpt is written to a temporary file and renamed into place, so a failure
-  leaves no partial file ([#98], [#113])
+  including `nil`, instead of raising `Ephem::InvalidInputError` ([#99], [#123])
+- `Excerpt` writes the excerpt to a temporary file and renames it into place,
+  so a failure leaves no partial file ([#98], [#113])
 - `ruby-ephem` writes errors to stderr and exits with status 1 when a command
-  fails, rejects invalid `--targets` values instead of reading them as `0`, and
-  converts dates to the Julian Date at midnight instead of noon ([#95], [#114])
+  fails, and rejects invalid `--targets` values instead of reading them as `0`
+  ([#95], [#114])
 - `Vector#/` always returns Float components, so `Vector[1, 2, 3] / 2` is
   `Vector[0.5, 1.0, 1.5]` instead of `Vector[0, 1, 1]`. Dividing by `0` gives
   Infinity or NaN components instead of raising `ZeroDivisionError` ([#130],
