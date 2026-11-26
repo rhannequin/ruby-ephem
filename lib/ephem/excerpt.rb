@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "securerandom"
+
 module Ephem
   # The Excerpt class creates DAF excerpts (SPK or binary PCK) with reduced time
   # spans and bodies. This is useful for creating smaller files that focus only
@@ -18,6 +20,11 @@ module Ephem
     S_PER_DAY = Core::Constants::Time::SECONDS_PER_DAY
     J2000_EPOCH = Core::Constants::Time::J2000_EPOCH
     RECORD_SIZE = 1024
+    SUPPORTED_DATA_TYPES = {spk: [2, 3], pck: [2]}.freeze
+    DATA_TYPE_INDEXES = {
+      spk: SPK::DATA_TYPE_IDENTIFIER,
+      pck: PCK::DATA_TYPE_IDENTIFIER
+    }.freeze
 
     # @param kernel [Ephem::SPK, Ephem::PCK] The kernel to excerpt from
     def initialize(kernel)
@@ -40,17 +47,42 @@ module Ephem
     def extract(output_path:, start_jd:, end_jd:, target_ids: nil, debug: false)
       start_seconds = seconds_since_j2000(start_jd)
       end_seconds = seconds_since_j2000(end_jd)
-      output_file = File.open(output_path, "wb+")
-      copy_file_header(output_file)
-      initialize_summary_section(output_file)
-      writer = create_daf_writer(output_file, debug)
-      process_segments(writer, start_seconds, end_seconds, target_ids, debug)
-      output_file.close
+      write_excerpt(output_path, start_seconds, end_seconds, target_ids, debug)
 
       reopen(output_path)
     end
 
     private
+
+    def write_excerpt(
+      output_path,
+      start_seconds,
+      end_seconds,
+      target_ids,
+      debug
+    )
+      temp_file = File.open(
+        "#{output_path}.#{SecureRandom.hex(8)}.tmp",
+        File::RDWR | File::CREAT | File::EXCL | File::BINARY,
+        0o666
+      )
+      copy_file_header(temp_file)
+      initialize_summary_section(temp_file)
+      writer = create_daf_writer(temp_file, debug)
+      process_segments(writer, start_seconds, end_seconds, target_ids, debug)
+      temp_file.close
+      File.rename(temp_file.path, output_path)
+      temp_file = nil
+    ensure
+      discard(temp_file) if temp_file
+    end
+
+    def discard(file)
+      file.close
+      File.unlink(file.path)
+    rescue SystemCallError
+      nil
+    end
 
     def reopen(path)
       (@daf.file_type == :pck) ? PCK.open(path) : SPK.open(path)
@@ -154,12 +186,15 @@ module Ephem
         puts "start=#{start_pos}, end=#{end_pos}"
       end
 
+      ensure_supported_data_type(name, values)
+
       # Read the metadata from the end of the array
       init, intlen, rsize, n = @daf.read_array(end_pos - 3, end_pos)
       rsize = rsize.to_i
 
       if debug
-        puts "  Metadata: init=#{init}, intlen=#{intlen}, rsize=#{rsize}, n=#{n}"
+        puts "  Metadata: init=#{init}, intlen=#{intlen}, " \
+          "rsize=#{rsize}, n=#{n}"
       end
 
       # Calculate which portion of the data to extract based on the date range
@@ -220,10 +255,16 @@ module Ephem
       end
 
       true
-    rescue => e
-      puts "Error processing segment #{segment_index} (#{name}): #{e.message}"
-      puts e.backtrace.join("\n") if debug
-      false
+    end
+
+    def ensure_supported_data_type(name, values)
+      file_type = (@daf.file_type == :pck) ? :pck : :spk
+      data_type = values[DATA_TYPE_INDEXES.fetch(file_type)].to_i
+      return if SUPPORTED_DATA_TYPES.fetch(file_type).include?(data_type)
+
+      raise UnsupportedError,
+        "Cannot excerpt #{file_type.upcase} segment #{name.strip.inspect}: " \
+        "data type #{data_type} is not supported"
     end
 
     # Clips a value between lower and upper bounds
@@ -266,7 +307,7 @@ module Ephem
         # Set formats based on endianness
         if @endianness == :little
           @double_format = "E"  # Little-endian double
-          @int_format = "l"     # Little-endian signed long (32-bit)
+          @int_format = "l<"    # Little-endian signed long (32-bit)
         else
           @double_format = "G"  # Big-endian double
           @int_format = "l>"    # Big-endian signed long (32-bit)
@@ -295,15 +336,10 @@ module Ephem
         bward_pos = 80
         free_pos = 84
 
-        if @endianness == :little
-          data[fward_pos, 4] = [@fward].pack("l")
-          data[bward_pos, 4] = [@bward].pack("l")
-          data[free_pos, 4] = [@free].pack("l")
-        else
-          data[fward_pos, 4] = [@fward].pack("N")
-          data[bward_pos, 4] = [@bward].pack("N")
-          data[free_pos, 4] = [@free].pack("N")
-        end
+        int_format = (@endianness == :little) ? "l<" : "l>"
+        data[fward_pos, 4] = [@fward].pack(int_format)
+        data[bward_pos, 4] = [@bward].pack(int_format)
+        data[free_pos, 4] = [@free].pack(int_format)
 
         # Write the updated record back to the file
         @file.seek(0)

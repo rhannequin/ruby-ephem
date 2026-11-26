@@ -295,5 +295,228 @@ RSpec.describe Ephem::Excerpt do
         excerpt_spk.close
       end
     end
+
+    it "raises errors raised while extracting a segment" do
+      spk = Ephem::SPK.open(test_spk)
+      allow(spk.daf).to receive(:read_array)
+        .and_raise(Ephem::FileFormatError, "corrupted array")
+
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        excerpt_path = File.join(temp_dir, "excerpt.bsp")
+
+        expect { extract_year_2020(spk, excerpt_path) }
+          .to raise_error(Ephem::FileFormatError, "corrupted array")
+      end
+
+      spk.close
+    end
+
+    it "does not print anything when extraction fails" do
+      spk = Ephem::SPK.open(test_spk)
+      allow(spk.daf).to receive(:read_array)
+        .and_raise(Ephem::FileFormatError, "corrupted array")
+
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        excerpt_path = File.join(temp_dir, "excerpt.bsp")
+
+        expect { extract_ignoring_errors(spk, excerpt_path) }
+          .not_to output.to_stdout
+      end
+
+      spk.close
+    end
+
+    it "closes and removes the partial file when extraction fails" do
+      spk = Ephem::SPK.open(test_spk)
+      allow(spk.daf).to receive(:read_array)
+        .and_raise(Ephem::FileFormatError, "corrupted array")
+
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        excerpt_path = File.join(temp_dir, "excerpt.bsp")
+        output_files = record_temp_files
+
+        expect { extract_year_2020(spk, excerpt_path) }
+          .to raise_error(Ephem::FileFormatError)
+        expect(output_files.size).to eq 1
+        expect(output_files.first).to be_closed
+        expect(Dir.children(temp_dir)).to be_empty
+      end
+
+      spk.close
+    end
+
+    it "keeps an existing output file when extraction fails" do
+      spk = Ephem::SPK.open(test_spk)
+      allow(spk.daf).to receive(:read_array)
+        .and_raise(Ephem::FileFormatError, "corrupted array")
+
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        excerpt_path = File.join(temp_dir, "excerpt.bsp")
+        File.write(excerpt_path, "previous excerpt")
+
+        expect { extract_year_2020(spk, excerpt_path) }
+          .to raise_error(Ephem::FileFormatError)
+        expect(File.read(excerpt_path)).to eq "previous excerpt"
+      end
+
+      spk.close
+    end
+
+    it "can write the excerpt over its own source kernel" do
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        kernel_path = File.join(temp_dir, "kernel.bsp")
+        FileUtils.cp(test_spk, kernel_path)
+        spk = Ephem::SPK.open(kernel_path)
+
+        excerpt_spk = extract_year_2020(spk, kernel_path)
+
+        expect(excerpt_spk.segments.size).to eq spk.segments.size
+        expect(File.size(kernel_path)).to be < File.size(test_spk)
+
+        spk.close
+        excerpt_spk.close
+      end
+    end
+
+    it "raises UnsupportedError for an unsupported SPK data type" do
+      spk = Ephem::SPK.open(test_spk)
+      stub_data_type(spk, data_type_index: 5, data_type: 9)
+
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        excerpt_path = File.join(temp_dir, "excerpt.bsp")
+
+        expect { extract_year_2020(spk, excerpt_path) }.to raise_error(
+          Ephem::UnsupportedError, /SPK segment .* data type 9/
+        )
+        expect(File.exist?(excerpt_path)).to be false
+      end
+
+      spk.close
+    end
+
+    it "raises UnsupportedError for an unsupported PCK data type" do
+      pck = Ephem::PCK.open(moon_pa_de440_excerpt)
+      stub_data_type(pck, data_type_index: 4, data_type: 3)
+
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        excerpt_path = File.join(temp_dir, "excerpt.bpc")
+
+        expect { extract_year_2020(pck, excerpt_path) }.to raise_error(
+          Ephem::UnsupportedError, /PCK segment .* data type 3/
+        )
+        expect(File.exist?(excerpt_path)).to be false
+      end
+
+      pck.close
+    end
+
+    it "excerpts a binary PCK" do
+      pck = Ephem::PCK.open(moon_pa_de440_excerpt)
+
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        excerpt_path = File.join(temp_dir, "excerpt.bpc")
+        excerpt_pck = extract_year_2020(pck, excerpt_path)
+
+        expect(excerpt_pck).to be_a(Ephem::PCK)
+        expect(excerpt_pck[31008].body).to eq 31008
+
+        excerpt_pck.close
+      end
+
+      pck.close
+    end
+  end
+
+  describe Ephem::Excerpt::DAFWriter do
+    describe "#write_file_record" do
+      it "packs little-endian record pointers as little-endian integers" do
+        file = StringIO.new("\0".b * Ephem::Excerpt::RECORD_SIZE)
+        writer = build_writer(file, endianness: :little)
+
+        writer.write_file_record
+
+        expect(file.string.byteslice(76, 12)).to eq(
+          "\x04\x00\x00\x00\x04\x00\x00\x00\x01\x02\x00\x00".b
+        )
+      end
+
+      it "packs big-endian record pointers as big-endian integers" do
+        file = StringIO.new("\0".b * Ephem::Excerpt::RECORD_SIZE)
+        writer = build_writer(file, endianness: :big)
+
+        writer.write_file_record
+
+        expect(file.string.byteslice(76, 12)).to eq(
+          "\x00\x00\x00\x04\x00\x00\x00\x04\x00\x00\x02\x01".b
+        )
+      end
+    end
+
+    describe "#setup_formats" do
+      it "packs little-endian summary integers as little-endian" do
+        writer = Ephem::Excerpt::DAFWriter.new(StringIO.new)
+        writer.endianness = :little
+        writer.setup_formats(2, 6)
+
+        packed = [0.0, 0.0, 3, 0, 1, 2, 641, 1024]
+          .pack(writer.summary_format)
+
+        expect(packed.byteslice(16, 4)).to eq "\x03\x00\x00\x00".b
+        expect(packed.byteslice(36, 4)).to eq "\x00\x04\x00\x00".b
+      end
+
+      it "packs negative summary integers as signed" do
+        writer = Ephem::Excerpt::DAFWriter.new(StringIO.new)
+        writer.endianness = :big
+        writer.setup_formats(2, 6)
+
+        packed = [0.0, 0.0, -31, 0, 1, 2, 641, 1024]
+          .pack(writer.summary_format)
+
+        expect(packed.byteslice(16, 4).unpack1("l>")).to eq(-31)
+      end
+    end
+  end
+
+  def extract_year_2020(kernel, output_path)
+    Ephem::Excerpt.new(kernel).extract(
+      output_path: output_path,
+      start_jd: 2458849.5,
+      end_jd: 2459215.5
+    )
+  end
+
+  def extract_ignoring_errors(kernel, output_path)
+    extract_year_2020(kernel, output_path)
+  rescue Ephem::Error
+    nil
+  end
+
+  def stub_data_type(kernel, data_type_index:, data_type:)
+    summaries = kernel.daf.summaries.map do |name, values|
+      altered_values = values.dup
+      altered_values[data_type_index] = data_type
+      [name, altered_values]
+    end
+    allow(kernel.daf).to receive(:summaries).and_return(summaries)
+  end
+
+  def record_temp_files
+    temp_files = []
+    allow(File).to receive(:open).and_wrap_original do |original, *args|
+      file = original.call(*args)
+      temp_files << file if args.first.to_s.end_with?(".tmp")
+      file
+    end
+    temp_files
+  end
+
+  def build_writer(file, endianness:)
+    writer = Ephem::Excerpt::DAFWriter.new(file)
+    writer.endianness = endianness
+    writer.fward = 4
+    writer.bward = 4
+    writer.free = 513
+    writer
   end
 end
