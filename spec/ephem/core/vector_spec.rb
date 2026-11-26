@@ -71,6 +71,81 @@ RSpec.describe Ephem::Core::Vector do
     end
   end
 
+  describe "#*" do
+    it "multiplies each component by the scalar" do
+      vector = described_class.new(1, 2, 3)
+
+      result = vector * 2
+
+      expect(result).to be_a(described_class)
+      expect(result.to_a).to eq([2, 4, 6])
+    end
+
+    it "multiplies by a float scalar" do
+      vector = described_class.new(1.0, -2.0, 3.0)
+
+      result = vector * 0.5
+
+      expect(result.to_a).to eq([0.5, -1.0, 1.5])
+    end
+
+    it "does not mutate the original vector" do
+      vector = described_class.new(1, 2, 3)
+
+      _scaled = vector * 2
+
+      expect(vector.to_a).to eq([1, 2, 3])
+    end
+
+    it "raises InvalidInputError for a non-numeric scalar" do
+      vector = described_class.new(1, 2, 3)
+
+      expect { vector * described_class.new(1, 2, 3) }.to raise_error(
+        Ephem::InvalidInputError,
+        "Can only multiply a Vector by a Numeric"
+      )
+    end
+  end
+
+  describe "#/" do
+    it "divides each component by the scalar" do
+      vector = described_class.new(2.0, 4.0, 6.0)
+
+      result = vector / 2.0
+
+      expect(result).to be_a(described_class)
+      expect(result.to_a).to eq([1.0, 2.0, 3.0])
+    end
+
+    it "follows Ruby integer division for integer operands" do
+      vector = described_class.new(3, 4, 5)
+
+      result = vector / 2
+
+      expect(result.to_a).to eq([1, 2, 2])
+    end
+
+    it "raises InvalidInputError for a non-numeric scalar" do
+      vector = described_class.new(1, 2, 3)
+
+      expect { vector / "2" }.to raise_error(
+        Ephem::InvalidInputError,
+        "Can only divide a Vector by a Numeric"
+      )
+    end
+  end
+
+  describe "#-@" do
+    it "negates each component" do
+      vector = described_class.new(1, -2, 3)
+
+      result = -vector
+
+      expect(result).to be_a(described_class)
+      expect(result.to_a).to eq([-1, 2, -3])
+    end
+  end
+
   describe "#dot" do
     it "calculates dot product correctly" do
       vector1 = described_class.new(1, 2, 3)
