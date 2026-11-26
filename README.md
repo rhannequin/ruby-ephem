@@ -191,9 +191,7 @@ matrix = orientation.to_matrix
 # Geocentric Earth->Moon vector (km) from the SPK kernel used above, in the
 # same inertial frame (J2000) as the orientation
 spk = Ephem::SPK.open("tmp/de421.bsp")
-moon = spk[3, 301].position_at(2451545.0)
-earth = spk[3, 399].position_at(2451545.0)
-earth_to_moon = moon - earth
+earth_to_moon = spk.position_at(target: 301, center: 399, tdb: 2451545.0)
 
 # Project it into the body-fixed frame
 body_fixed = Ephem::Core::Rotation.apply(matrix, earth_to_moon)
