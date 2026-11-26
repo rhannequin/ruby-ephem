@@ -35,8 +35,12 @@
 - Raise `Ephem::FileFormatError` instead of looping forever when the summary
   record chain of a malformed kernel points back to an earlier record ([#102],
   [#118])
+- Evaluate the velocity of SPK type 3 segments from their stored velocity
+  coefficients, as SPICE does, instead of differentiating the position ([#96],
+  [#111])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
+[#96]: https://github.com/rhannequin/ruby-ephem/issues/96
 [#97]: https://github.com/rhannequin/ruby-ephem/issues/97
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
 [#102]: https://github.com/rhannequin/ruby-ephem/issues/102
@@ -46,6 +50,7 @@
 [#106]: https://github.com/rhannequin/ruby-ephem/issues/106
 [#109]: https://github.com/rhannequin/ruby-ephem/issues/109
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
+[#111]: https://github.com/rhannequin/ruby-ephem/pull/111
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
 [#117]: https://github.com/rhannequin/ruby-ephem/pull/117
 [#118]: https://github.com/rhannequin/ruby-ephem/pull/118
