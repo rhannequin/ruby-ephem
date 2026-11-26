@@ -40,7 +40,8 @@ module Ephem
         :target,
         :center,
         :component,
-        :expected_value
+        :expected_value,
+        keyword_init: true
       )
 
       def self.run(kernel:)
