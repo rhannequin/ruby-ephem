@@ -53,7 +53,7 @@ RSpec.describe Ephem::Core::Orientation do
 
     it "raises for an invalid index" do
       expect { described_class.new(1.0, 2.0, 3.0)[3] }
-        .to raise_error(Ephem::IndexError)
+        .to raise_error(::IndexError)
     end
   end
 

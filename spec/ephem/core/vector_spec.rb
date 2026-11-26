@@ -190,7 +190,7 @@ RSpec.describe Ephem::Core::Vector do
     it "raises IndexError for invalid index" do
       vector = described_class.new(1, 2, 3)
 
-      expect { vector[3] }.to raise_error(Ephem::IndexError, "Invalid index: 3")
+      expect { vector[3] }.to raise_error(::IndexError, "Invalid index: 3")
     end
   end
 

@@ -76,13 +76,13 @@ module Ephem
 
       # @param index [Integer] 0 for phi, 1 for theta, 2 for psi
       # @return [Numeric] the angle at the given index
-      # @raise [Ephem::IndexError] if index is not 0, 1, or 2
+      # @raise [IndexError] if index is not 0, 1, or 2
       def [](index)
         case index
         when 0 then phi
         when 1 then theta
         when 2 then psi
-        else raise IndexError, "Invalid index: #{index}"
+        else raise ::IndexError, "Invalid index: #{index}"
         end
       end
 

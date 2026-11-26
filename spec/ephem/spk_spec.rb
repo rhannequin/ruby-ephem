@@ -30,8 +30,16 @@ RSpec.describe Ephem::SPK do
 
     it "rejects a binary PCK file" do
       expect { described_class.open(moon_pa_de440_excerpt) }.to raise_error(
-        ArgumentError, /binary PCK file, use Ephem::PCK/
+        Ephem::FileFormatError, /binary PCK file, use Ephem::PCK/
       )
+    end
+
+    it "lets a permission error through unchanged" do
+      allow(File).to receive(:open)
+        .and_raise(Errno::EACCES, "spk_file.bsp")
+
+      expect { described_class.open("spk_file.bsp") }
+        .to raise_error(Errno::EACCES)
     end
   end
 
