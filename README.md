@@ -12,7 +12,7 @@ These files are a collection of numerical integrations of the equations of
 motion of the Solar System, used to calculate the positions of the planets,
 the Moon, and other celestial bodies with high precision.
 
-Ephem supports planetary ephemerides like DE421, DE430, INPOP19A, etc. (SPK),
+Ephem supports planetary ephemerides like DE421, DE430, INPOP21A, etc. (SPK),
 as well as binary PCK orientation kernels such as the lunar orientation kernel
 `moon_pa_de440_200625.bpc`.
 
@@ -43,7 +43,7 @@ begin with:
 
 * `de421.bsp`: from 1900 to 2050, 17 MB
 * `de440s.bsp`: from 1849 to 2150, 32 MB
-* `inpop19a.bsp`: from 1900 to 2100, 22 MB
+* `inpop21a.bsp`: from 1900 to 2100, 22 MB
 
 ## Usage
 
@@ -337,11 +337,29 @@ If you wish to test them all in parallel, you can run:
 rake validate_accuracy:all
 ```
 
-For every commit, one test is executed in CI to ensure quality and accuracy
-is always respected. At the moment, we don't run them all in CI to save
-usage time.
+`validate_accuracy:all` also runs the IMCCE `testpo` validation below. CI runs
+it on every push to `main` and every pull request.
 
 [jplephem]: https://pypi.org/project/jplephem/
+
+### IMCCE testpo files
+
+IMCCE publishes a `testpo` file with each INPOP release. Each row gives one
+position or velocity component, in AU or AU/day, of a body relative to
+another, computed by IMCCE from its own ephemeris files. Unlike `jplephem`, it
+does not read the same kernel as this library, so it is an independent
+reference.
+
+INPOP21a is checked against the 18,263 rows of `testpo.INPOP21A_TDB` between
+2000 and 2050. They cover pairs among the Sun, the planets, Pluto, the Moon,
+the Earth, the Earth-Moon Barycenter and the Solar System Barycenter, so they
+also exercise positions chained across several pairs. Every value matches
+within 1e-13 AU or AU/day, the tolerance of JPL's `testeph`. The largest
+differences are about 1e-14.
+
+```
+rake validate_accuracy:testpo
+```
 
 ## YJIT
 
