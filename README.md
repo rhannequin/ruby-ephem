@@ -182,7 +182,8 @@ a single `rescue Ephem::Error` catches them. The most common ones are:
 - `Ephem::UnsupportedError`: the kernel uses a segment or data type the gem
   does not implement.
 - `Ephem::InvalidInputError`: a `Vector` or `Orientation` was given
-  non-numeric values.
+  non-numeric values, or a `Vector` was multiplied or divided by a
+  non-number.
 
 Some errors are Ruby's own and are not `Ephem::Error`:
 
