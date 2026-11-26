@@ -38,4 +38,10 @@ module TestSpkHelper
     File.binwrite(path, data)
     path
   end
+
+  def truncated_copy(path, byte_count, directory:)
+    truncated_path = File.join(directory, "truncated_#{File.basename(path)}")
+    File.binwrite(truncated_path, File.binread(path, byte_count))
+    truncated_path
+  end
 end

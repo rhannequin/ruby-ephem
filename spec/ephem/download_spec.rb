@@ -30,6 +30,23 @@ RSpec.describe Ephem::Download do
           expect(file_mode).to eq(0o666 & ~File.umask)
         end
       end
+
+      it "requests the kernels JPL currently serves" do
+        names = %w[de431t.bsp de442.bsp de442t.bsp]
+
+        names.each do |name|
+          http = stub_http_response(successful_response("jpl-kernel-data"))
+
+          Dir.mktmpdir do |directory|
+            target_path = File.join(directory, name)
+
+            described_class.call(name: name, target: target_path)
+
+            expect(http).to have_received(:request)
+              .with(have_attributes(path: "/ftp/eph/planets/bsp/#{name}"))
+          end
+        end
+      end
     end
 
     context "when Encoding.default_internal is set" do
@@ -100,6 +117,41 @@ RSpec.describe Ephem::Download do
           described_class.call(name: name, target: target_path)
 
           expect(File.binread(target_path)).to eq("imcce-kernel-data")
+        end
+      end
+
+      it "extracts the time ephemeris kernel shipped beside the SPK" do
+        name = "inpop21a_time.bsp"
+        archive = tar_gz_with(
+          imcce_path("inpop21a.bsp") => "planetary-kernel-data",
+          imcce_path("inpop21a.bpc") => "lunar-orientation-data",
+          imcce_path(name) => "time-ephemeris-data"
+        )
+        stub_http_response(successful_response(archive))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, name)
+
+          described_class.call(name: name, target: target_path)
+
+          expect(File.binread(target_path)).to eq("time-ephemeris-data")
+        end
+      end
+
+      it "extracts the lunar orientation kernel shipped beside the SPK" do
+        name = "inpop21a.bpc"
+        archive = tar_gz_with(
+          imcce_path("inpop21a.bsp") => "planetary-kernel-data",
+          imcce_path(name) => "lunar-orientation-data"
+        )
+        stub_http_response(successful_response(archive))
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, name)
+
+          described_class.call(name: name, target: target_path)
+
+          expect(File.binread(target_path)).to eq("lunar-orientation-data")
         end
       end
 
@@ -218,6 +270,12 @@ RSpec.describe Ephem::Download do
           "Kernel unsupported is not supported by the library at the moment."
         )
       end
+
+      it "raises an UnsupportedError for de431.bsp, which JPL removed" do
+        expect {
+          described_class.call(name: "de431.bsp", target: "path")
+        }.to raise_error(Ephem::UnsupportedError)
+      end
     end
   end
 
@@ -235,6 +293,7 @@ RSpec.describe Ephem::Download do
     http = double(request: nil)
     allow(http).to receive(:request).and_yield(response)
     allow(Net::HTTP).to receive(:start).and_yield(http)
+    http
   end
 
   def imcce_path(name)
