@@ -211,6 +211,10 @@ The gem also provides a CLI to generate an excerpt from an original kernel file.
 ruby-ephem excerpt [options] START_DATE END_DATE INPUT_FILE OUTPUT_FILE
 ```
 
+`START_DATE` and `END_DATE` are read in the Gregorian calendar and converted
+to the Julian Date at midnight of that day. Errors are written to stderr and
+the command exits with a non-zero status.
+
 For example, generate an excerpt from DE440s for the year 2025 only supporting
 the Sun, the Earth, the Moon and the Earth-Moon Barycenter:
 

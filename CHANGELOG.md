@@ -64,9 +64,13 @@
   raises `Ephem::UnsupportedError` for segment types it cannot excerpt. The
   excerpt is written to a temporary file and renamed into place, so a failure
   leaves no partial file ([#98], [#113])
+- `ruby-ephem` writes errors to stderr and exits with status 1 when a command
+  fails, rejects invalid `--targets` values instead of reading them as `0`, and
+  converts dates to the Julian Date at midnight instead of noon ([#95], [#114])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#94]: https://github.com/rhannequin/ruby-ephem/issues/94
+[#95]: https://github.com/rhannequin/ruby-ephem/issues/95
 [#96]: https://github.com/rhannequin/ruby-ephem/issues/96
 [#97]: https://github.com/rhannequin/ruby-ephem/issues/97
 [#98]: https://github.com/rhannequin/ruby-ephem/issues/98
@@ -83,6 +87,7 @@
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#111]: https://github.com/rhannequin/ruby-ephem/pull/111
 [#113]: https://github.com/rhannequin/ruby-ephem/pull/113
+[#114]: https://github.com/rhannequin/ruby-ephem/pull/114
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
 [#116]: https://github.com/rhannequin/ruby-ephem/pull/116
 [#117]: https://github.com/rhannequin/ruby-ephem/pull/117
