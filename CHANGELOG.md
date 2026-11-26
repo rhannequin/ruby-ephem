@@ -34,7 +34,7 @@
 - `Download` fetches the lunar orientation kernel (`inpop21a.bpc`) and the
   TT-TDB time ephemeris (`inpop21a_time.bsp`) that IMCCE ships with each INPOP
   kernel. Segments of the time ephemeris are described as "Time Center" ->
-  "TT-TDB"
+  "TT-TDB" ([#134])
 
 ### Improvements
 
@@ -117,6 +117,7 @@
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
+[#134]: https://github.com/rhannequin/ruby-ephem/pull/134
 
 ## [0.5.2] - 2026-11-24
 
