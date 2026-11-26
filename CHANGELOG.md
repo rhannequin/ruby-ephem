@@ -26,6 +26,8 @@
     `Ephem::ClosedKernelError` instead of `IOError`
   - `Ephem::Download` wraps network, TLS and archive errors in
     `Ephem::DownloadError`, keeping the original error as `cause`
+- `Ephem::Download` no longer accepts `de431.bsp`, which JPL has removed and
+  now answers with a 404. Use `de431t.bsp` instead ([#131], [#135])
 
 ### Features
 
@@ -42,6 +44,8 @@
   TT-TDB time ephemeris (`inpop21a_time.bsp`) that IMCCE ships with each INPOP
   kernel. Segments of the time ephemeris are described as "Time Center" ->
   "TT-TDB" ([#134])
+- `Ephem::Download` can download `de431t.bsp`, `de442.bsp` and `de442t.bsp`
+  from JPL ([#131], [#135])
 
 ### Improvements
 
@@ -125,7 +129,9 @@
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
 [#129]: https://github.com/rhannequin/ruby-ephem/issues/129
+[#131]: https://github.com/rhannequin/ruby-ephem/issues/131
 [#134]: https://github.com/rhannequin/ruby-ephem/pull/134
+[#135]: https://github.com/rhannequin/ruby-ephem/pull/135
 
 ## [0.5.2] - 2026-11-24
 

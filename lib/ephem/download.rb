@@ -36,7 +36,7 @@ module Ephem
       de430_1850-2150.bsp
       de430_plus_MarsPC.bsp
       de430t.bsp
-      de431.bsp
+      de431t.bsp
       de432t.bsp
       de433.bsp
       de433_plus_MarsPC.bsp
@@ -59,6 +59,8 @@ module Ephem
       de440s_plus_MarsPC.bsp
       de440t.bsp
       de441.bsp
+      de442.bsp
+      de442t.bsp
     ].freeze
 
     NAIF_PCK_KERNELS = %w[
