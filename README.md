@@ -209,8 +209,17 @@ offset, whose constants the consumer supplies).
 Errors about kernels, coverage and downloads inherit from `Ephem::Error`, so
 a single `rescue Ephem::Error` catches them. The most common ones are:
 
-- `Ephem::OutOfRangeError`: the requested time is outside the kernel's
-  coverage. `#out_of_range_times` returns the offending times.
+- `Ephem::OutOfRangeError`: a requested time is outside the kernel's
+  coverage. The message names the time, the pair or body and the covered
+  range, and `#out_of_range_times` returns every uncovered time as a Julian
+  Date:
+
+  ```
+  JD 2400000.5 (1858-11-17) is outside the coverage of Solar System
+  Barycenter (0) -> Earth-Moon Barycenter (3), which covers
+  JD 2451536.5..2451920.5 (1999-12-24..2001-01-11)
+  ```
+
 - `Ephem::FileFormatError`: the file is not a valid kernel, or is the wrong
   kind (an SPK passed to `Ephem::PCK.open`, or the other way round).
 - `Ephem::UnsupportedError`: the kernel uses a segment or data type the gem
