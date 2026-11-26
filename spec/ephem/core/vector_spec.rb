@@ -49,23 +49,23 @@ RSpec.describe Ephem::Core::Vector do
 
   describe "#+" do
     it "adds two vectors" do
-      vector1 = described_class.new(1, 2, 3)
-      vector2 = described_class.new(4, 5, 6)
+      vector = described_class.new(1, 2, 3)
+      other_vector = described_class.new(4, 5, 6)
 
-      result = vector1 + vector2
+      result = vector + other_vector
 
       expect(result.to_a).to eq([5, 7, 9])
       expect(result).to be_a(described_class)
-      expect(result).not_to equal(vector1)
+      expect(result).not_to equal(vector)
     end
   end
 
   describe "#-" do
     it "subtracts two vectors" do
-      vector1 = described_class.new(1, 2, 3)
-      vector2 = described_class.new(4, 5, 6)
+      vector = described_class.new(1, 2, 3)
+      other_vector = described_class.new(4, 5, 6)
 
-      result = vector1 - vector2
+      result = vector - other_vector
 
       expect(result.to_a).to eq([-3, -3, -3])
     end
@@ -177,10 +177,10 @@ RSpec.describe Ephem::Core::Vector do
 
   describe "#dot" do
     it "calculates dot product correctly" do
-      vector1 = described_class.new(1, 2, 3)
-      vector2 = described_class.new(4, 5, 6)
+      vector = described_class.new(1, 2, 3)
+      other_vector = described_class.new(4, 5, 6)
 
-      result = vector1.dot(vector2)
+      result = vector.dot(other_vector)
 
       expect(result).to eq(32) # (1*4 + 2*5 + 3*6)
     end
@@ -188,10 +188,10 @@ RSpec.describe Ephem::Core::Vector do
 
   describe "#cross" do
     it "calculates cross product correctly" do
-      vector1 = described_class.new(1, 2, 3)
-      vector2 = described_class.new(4, 5, 6)
+      vector = described_class.new(1, 2, 3)
+      other_vector = described_class.new(4, 5, 6)
 
-      result = vector1.cross(vector2)
+      result = vector.cross(other_vector)
 
       expect(result.to_a).to eq([-3, 6, -3])
     end
@@ -242,33 +242,33 @@ RSpec.describe Ephem::Core::Vector do
 
   describe "#hash" do
     it "returns consistent hash values for equal vectors" do
-      vector1 = described_class.new(1, 2, 3)
-      vector2 = described_class.new(1, 2, 3)
+      vector = described_class.new(1, 2, 3)
+      other_vector = described_class.new(1, 2, 3)
 
-      expect(vector1.hash).to eq(vector2.hash)
+      expect(vector.hash).to eq(other_vector.hash)
     end
 
     it "returns different hash values for different vectors" do
-      vector1 = described_class.new(1, 2, 3)
-      vector2 = described_class.new(4, 5, 6)
+      vector = described_class.new(1, 2, 3)
+      other_vector = described_class.new(4, 5, 6)
 
-      expect(vector1.hash).not_to eq(vector2.hash)
+      expect(vector.hash).not_to eq(other_vector.hash)
     end
   end
 
   describe "#==" do
     it "returns true for equal vectors" do
-      vector1 = described_class.new(1, 2, 3)
-      vector2 = described_class.new(1, 2, 3)
+      vector = described_class.new(1, 2, 3)
+      other_vector = described_class.new(1, 2, 3)
 
-      expect(vector1 == vector2).to be(true)
+      expect(vector == other_vector).to be(true)
     end
 
     it "returns false for different vectors" do
-      vector1 = described_class.new(1, 2, 3)
-      vector2 = described_class.new(4, 5, 6)
+      vector = described_class.new(1, 2, 3)
+      other_vector = described_class.new(4, 5, 6)
 
-      expect(vector1 == vector2).to be(false)
+      expect(vector == other_vector).to be(false)
     end
 
     it "returns false for objects of another class" do
@@ -311,10 +311,10 @@ RSpec.describe Ephem::Core::Vector do
 
   describe "#eql?" do
     it "returns true for vectors with identical components" do
-      vector1 = described_class.new(1, 2, 3)
-      vector2 = described_class.new(1, 2, 3)
+      vector = described_class.new(1, 2, 3)
+      other_vector = described_class.new(1, 2, 3)
 
-      expect(vector1.eql?(vector2)).to be(true)
+      expect(vector.eql?(other_vector)).to be(true)
     end
 
     it "returns false for numerically equal components of another type" do

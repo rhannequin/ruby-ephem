@@ -54,9 +54,7 @@ module Ephem
 
       def setup_file_format
         file_record = @binary_reader.read_record(1)
-        endianness_info = EndiannessManager.new(file_record).detect_endianness
-
-        @endianness = endianness_info[:endianness]
+        @endianness = EndiannessManager.new(file_record).detect_endianness
         @record_parser = RecordParser.new(endianness: @endianness)
         @record_data = @record_parser.parse_file_record(file_record)
       end

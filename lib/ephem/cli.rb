@@ -91,8 +91,8 @@ module Ephem
 
       begin
         arguments = option_parser.parse(args)
-      rescue OptionParser::ParseError => e
-        warn e.message
+      rescue OptionParser::ParseError => error
+        warn error.message
         warn option_parser
         return FAILURE
       end
@@ -120,8 +120,8 @@ module Ephem
       begin
         start_jd = gregorian_to_julian(start_date_str)
         end_jd = gregorian_to_julian(end_date_str)
-      rescue Date::Error => e
-        warn "Error parsing dates: #{e.message}"
+      rescue Date::Error => error
+        warn "Error parsing dates: #{error.message}"
         warn "Dates should be in YYYY-MM-DD format."
         return FAILURE
       end
@@ -209,9 +209,9 @@ module Ephem
       print_size_reduction(input_file, output_file)
 
       SUCCESS
-    rescue => e
-      warn "Error creating excerpt: #{e.message}"
-      warn e.backtrace if debug
+    rescue => error
+      warn "Error creating excerpt: #{error.message}"
+      warn error.backtrace if debug
       FAILURE
     ensure
       excerpt_kernel&.close

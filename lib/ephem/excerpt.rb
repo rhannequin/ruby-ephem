@@ -19,7 +19,7 @@ module Ephem
     # Constants for time calculations
     S_PER_DAY = Core::Constants::Time::SECONDS_PER_DAY
     J2000_EPOCH = Core::Constants::Time::J2000_EPOCH
-    RECORD_SIZE = 1024
+    RECORD_SIZE = IO::BinaryReader::RECORD_SIZE
     SUPPORTED_DATA_TYPES = {spk: [2, 3], pck: [2]}.freeze
     DATA_TYPE_INDEXES = {
       spk: SPK::DATA_TYPE_IDENTIFIER,
@@ -68,7 +68,7 @@ module Ephem
       )
       copy_file_header(temp_file)
       initialize_summary_section(temp_file)
-      writer = create_daf_writer(temp_file, debug)
+      writer = create_daf_writer(temp_file)
       process_segments(writer, start_seconds, end_seconds, target_ids, debug)
       temp_file.close
       File.rename(temp_file.path, output_path)
@@ -88,17 +88,16 @@ module Ephem
       (@daf.file_type == :pck) ? PCK.open(path) : SPK.open(path)
     end
 
-    def seconds_since_j2000(jd)
-      (jd - J2000_EPOCH) * S_PER_DAY
+    def seconds_since_j2000(julian_date)
+      (julian_date - J2000_EPOCH) * S_PER_DAY
     end
 
     def copy_file_header(output_file)
-      # Get the first record number of summaries from original DAF
-      fward = @daf.record_data.forward_record
+      first_summary_record = @daf.record_data.forward_record
 
       # Copy file record and comments
-      (1...fward).each do |n|
-        data = @binary_reader.read_record(n)
+      (1...first_summary_record).each do |record_number|
+        data = @binary_reader.read_record(record_number)
         output_file.write(data)
       end
     end
@@ -110,11 +109,12 @@ module Ephem
       output_file.write(name_data)
     end
 
-    def create_daf_writer(output_file, debug)
-      writer = DAFWriter.new(output_file, debug)
-      fward = @daf.record_data.forward_record
-      writer.fward = writer.bward = fward
-      writer.free = (fward + 1) * (RECORD_SIZE / 8) + 1
+    def create_daf_writer(output_file)
+      writer = DAFWriter.new(output_file)
+      first_summary_record = @daf.record_data.forward_record
+      writer.forward_record = first_summary_record
+      writer.backward_record = first_summary_record
+      writer.free = (first_summary_record + 1) * (RECORD_SIZE / 8) + 1
       writer.endianness = @daf.endianness
       writer.setup_formats(
         @daf.record_data.double_count,
@@ -189,22 +189,28 @@ module Ephem
       ensure_supported_data_type(name, values)
 
       # Read the metadata from the end of the array
-      init, intlen, rsize, n = @daf.read_array(end_pos - 3, end_pos)
-      rsize = rsize.to_i
+      initial_epoch, interval_length, record_length, record_count =
+        @daf.read_array(end_pos - 3, end_pos)
+      record_length = record_length.to_i
 
       if debug
-        puts "  Metadata: init=#{init}, intlen=#{intlen}, " \
-          "rsize=#{rsize}, n=#{n}"
+        puts "  Metadata: init=#{initial_epoch}, " \
+          "intlen=#{interval_length}, rsize=#{record_length}, " \
+          "n=#{record_count}"
       end
 
-      # Calculate which portion of the data to extract based on the date range
-      i = clip(0, n, (start_seconds - init) / intlen).to_i
-      j = clip(0, n, (end_seconds - init) / intlen + 1).to_i
+      first_record = ((start_seconds - initial_epoch) / interval_length)
+        .clamp(0, record_count).to_i
+      end_record = ((end_seconds - initial_epoch) / interval_length + 1)
+        .clamp(0, record_count).to_i
 
-      puts "  Date range: i=#{i}, j=#{j} out of n=#{n}" if debug
+      if debug
+        puts "  Date range: records #{first_record} to #{end_record} " \
+          "out of #{record_count}"
+      end
 
       # Skip if no overlap with requested date range
-      if i == j
+      if first_record == end_record
         if debug
           puts "Segment #{segment_index} (#{name}):"
           puts "No overlap with requested date range"
@@ -213,16 +219,16 @@ module Ephem
         return false
       end
 
-      # Update initial time and number of records
-      init += i * intlen
-      n = j - i
+      initial_epoch += first_record * interval_length
+      record_count = end_record - first_record
 
-      puts "  New metadata: init=#{init}, n=#{n}" if debug
+      if debug
+        puts "  New metadata: init=#{initial_epoch}, n=#{record_count}"
+      end
 
-      # Extract the relevant portion of the data
-      extra = 4  # Enough space for the metadata: [init intlen rsize n]
-      excerpt_start = start_pos + rsize * i
-      excerpt_end = start_pos + rsize * j + extra - 1
+      metadata_size = 4
+      excerpt_start = start_pos + record_length * first_record
+      excerpt_end = start_pos + record_length * end_record + metadata_size - 1
 
       puts "  Reading array from #{excerpt_start} to #{excerpt_end}" if debug
 
@@ -230,14 +236,13 @@ module Ephem
 
       puts "  Read #{excerpt.length} values" if debug
 
-      # Update the metadata in the excerpt
-      excerpt[-4..-1] = [init, intlen, rsize, n]
+      excerpt[-4..-1] =
+        [initial_epoch, interval_length, record_length, record_count]
 
-      new_values = if values.length >= 2
-        [init, init + n * intlen] + values[2...-2]
-      else
-        [init, init + n * intlen]
-      end
+      new_values = [
+        initial_epoch,
+        initial_epoch + record_count * interval_length
+      ] + values[2...-2]
 
       puts "  New values: #{new_values.inspect}" if debug
 
@@ -251,7 +256,8 @@ module Ephem
 
       if debug
         puts "Segment #{segment_index} (#{name}):"
-        puts "Included in excerpt (#{i} to #{j} of #{n})"
+        puts "Included in excerpt " \
+          "(#{first_record} to #{end_record} of #{record_count})"
       end
 
       true
@@ -267,38 +273,19 @@ module Ephem
         "data type #{data_type} is not supported"
     end
 
-    # Clips a value between lower and upper bounds
-    def clip(lower, upper, n)
-      n.clamp(lower, upper)
-    end
-
     # Helper class for writing DAF files
     # This class handles the low-level details of DAF file format
     class DAFWriter
-      attr_reader :file
-      attr_accessor :fward,
-        :bward,
-        :free,
-        :endianness,
-        :double_format,
-        :int_format,
-        :nd,
-        :ni,
-        :summary_format,
-        :summary_control_format,
-        :summary_length,
-        :summary_step,
-        :summaries_per_record
+      attr_reader :summary_format
+      attr_writer :forward_record, :backward_record, :free, :endianness
 
-      def initialize(file, debug = false)
+      def initialize(file)
         @file = file
-        @debug = debug
-        @mutex = Mutex.new
       end
 
-      def setup_formats(nd, ni)
-        @nd = nd
-        @ni = ni
+      def setup_formats(double_count, integer_count)
+        @double_count = double_count
+        @integer_count = integer_count
 
         # Double is always 8 bytes, int is always 4 bytes
         double_size = 8
@@ -316,10 +303,12 @@ module Ephem
         # Create formats for summary structures
         @summary_control_format =
           "#{@double_format}#{@double_format}#{@double_format}"
-        @summary_format = @double_format.to_s * @nd + @int_format.to_s * @ni
+        @summary_format = @double_format.to_s * @double_count +
+          @int_format.to_s * @integer_count
 
         # Calculate segment summary sizes
-        @summary_length = double_size * @nd + int_size * @ni
+        @summary_length =
+          double_size * @double_count + int_size * @integer_count
 
         # Pad to 8 bytes
         @summary_step = @summary_length + (-@summary_length % 8)
@@ -332,47 +321,43 @@ module Ephem
         data = @file.read(RECORD_SIZE)
 
         # Update pointers directly in the data buffer
-        fward_pos = 76
-        bward_pos = 80
-        free_pos = 84
+        forward_position = 76
+        backward_position = 80
+        free_position = 84
 
         int_format = (@endianness == :little) ? "l<" : "l>"
-        data[fward_pos, 4] = [@fward].pack(int_format)
-        data[bward_pos, 4] = [@bward].pack(int_format)
-        data[free_pos, 4] = [@free].pack(int_format)
+        data[forward_position, 4] = [@forward_record].pack(int_format)
+        data[backward_position, 4] = [@backward_record].pack(int_format)
+        data[free_position, 4] = [@free].pack(int_format)
 
         # Write the updated record back to the file
         @file.seek(0)
         @file.write(data)
       end
 
-      def read_record(n)
-        @mutex.synchronize do
-          @file.seek(n * RECORD_SIZE - RECORD_SIZE)
-          @file.read(RECORD_SIZE)
-        end
+      def read_record(record_number)
+        @file.seek((record_number - 1) * RECORD_SIZE)
+        @file.read(RECORD_SIZE)
       end
 
-      def write_record(n, data)
-        @mutex.synchronize do
-          @file.seek(n * RECORD_SIZE - RECORD_SIZE)
-          @file.write(data)
-        end
+      def write_record(record_number, data)
+        @file.seek((record_number - 1) * RECORD_SIZE)
+        @file.write(data)
       end
 
       def add_array(name, values, array)
-        record_number = @bward
+        record_number = @backward_record
         data = read_record(record_number).dup
 
         control_data = data[0, 24].unpack(@summary_control_format)
         next_record = control_data[0].to_i
         previous_record = control_data[1].to_i
-        n_summaries = control_data[2].to_i
+        summary_count = control_data[2].to_i
 
-        if n_summaries < @summaries_per_record
+        if summary_count < @summaries_per_record
           # Add to the existing record
           summary_record = record_number
-          data[0, 24] = [next_record, previous_record, n_summaries + 1]
+          data[0, 24] = [next_record, previous_record, summary_count + 1]
             .pack(@summary_control_format)
           write_record(summary_record, data)
         else
@@ -381,11 +366,11 @@ module Ephem
           name_record = summary_record + 1
           free_record = summary_record + 2
 
-          data[0, 24] = [summary_record, previous_record, n_summaries]
+          data[0, 24] = [summary_record, previous_record, summary_count]
             .pack(@summary_control_format)
           write_record(record_number, data)
 
-          n_summaries = 0
+          summary_count = 0
           summaries = [0, record_number, 1]
             .pack(@summary_control_format)
             .ljust(RECORD_SIZE, "\0")
@@ -393,7 +378,7 @@ module Ephem
           write_record(summary_record, summaries)
           write_record(name_record, names)
 
-          @bward = summary_record
+          @backward_record = summary_record
           @free = (free_record - 1) * RECORD_SIZE / 8 + 1
         end
 
@@ -408,11 +393,11 @@ module Ephem
         @free = end_word + 1
         write_file_record
 
-        # Using values up to nd+ni-2, then adding start_word and end_word
-        new_values = values[0, @nd + @ni - 2] + [start_word, end_word]
+        new_values =
+          values[0, @double_count + @integer_count - 2] + [start_word, end_word]
 
         base = RECORD_SIZE * (summary_record - 1)
-        offset = n_summaries * @summary_step
+        offset = summary_count * @summary_step
         @file.seek(base + 24 + offset)  # 24 is summary_control_struct size
         @file.write(new_values.pack(@summary_format))
         @file.seek(base + RECORD_SIZE + offset)

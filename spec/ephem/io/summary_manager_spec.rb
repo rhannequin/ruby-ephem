@@ -82,7 +82,7 @@ RSpec.describe Ephem::IO::SummaryManager do
 
       allow(record_parser).to receive(:parse_summary_control)
         .with(summary_record[0, 24])
-        .and_return({next_record: 0, previous_record: 0, n_summaries: 2})
+        .and_return({next_record: 0, previous_record: 0, summary_count: 2})
 
       allow(binary_reader).to receive(:read_record)
         .with(5)
@@ -150,7 +150,7 @@ RSpec.describe Ephem::IO::SummaryManager do
 
       allow(record_parser).to receive(:parse_summary_control)
         .with(summary_record[0, 24])
-        .and_return({next_record: 0, previous_record: 0, n_summaries: 2})
+        .and_return({next_record: 0, previous_record: 0, summary_count: 2})
 
       allow(binary_reader).to receive(:read_record)
         .with(5)
@@ -239,11 +239,11 @@ RSpec.describe Ephem::IO::SummaryManager do
 
       allow(record_parser).to receive(:parse_summary_control)
         .with(first_record[0, 24])
-        .and_return({next_record: 7, previous_record: 0, n_summaries: 2})
+        .and_return({next_record: 7, previous_record: 0, summary_count: 2})
 
       allow(record_parser).to receive(:parse_summary_control)
         .with(second_record[0, 24])
-        .and_return({next_record: 0, previous_record: 5, n_summaries: 1})
+        .and_return({next_record: 0, previous_record: 5, summary_count: 1})
 
       allow(binary_reader).to receive(:read_record)
         .with(5)

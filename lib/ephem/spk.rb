@@ -18,10 +18,8 @@ module Ephem
   #   Ephem::SPK.open("de421.bsp") { |spk| spk[0, 10].position_at(2451545.0) }
   #
   class SPK
-    TYPES = [
-      INPOP = "IMCCE INPOP",
-      JPL_DE = "JPL DE"
-    ].freeze
+    INPOP = "IMCCE INPOP"
+    JPL_DE = "JPL DE"
 
     INPOP_REGEXP = /^\s+\d{4}\.\d{5}0+$/
     DE_REGEXP = /^[A-Z]E-(\d{4})LE-\1$/

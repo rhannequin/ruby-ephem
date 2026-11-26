@@ -20,7 +20,7 @@ module Ephem
         {
           next_record: values[0].to_i,
           previous_record: values[1].to_i,
-          n_summaries: values[2].to_i
+          summary_count: values[2].to_i
         }
       end
 

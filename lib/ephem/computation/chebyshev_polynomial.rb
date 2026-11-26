@@ -13,134 +13,106 @@ module Ephem
       ##
       # Evaluates a 3D Chebyshev polynomial at a given normalized time.
       #
-      # @param coeffs [Array<Array<Float>>] Array of coefficients; shape is
-      #   [n_terms][3].
-      # @param t [Float] The normalized independent variable, in [-1, 1].
-      # @return [Array<Float>] The 3-vector result at t: [x, y, z]
-      def self.evaluate(coeffs, t)
-        n = coeffs.size
-        b1x = b1y = b1z = 0.0
-        b2x = b2y = b2z = 0.0
+      # @param coefficients [Array<Array<Float>>] Array of coefficients; shape
+      #   is [n_terms][3].
+      # @param normalized_time [Float] The normalized independent variable, in
+      #   [-1, 1].
+      # @return [Array<Float>] The 3-vector result at normalized_time:
+      #   [x, y, z]
+      def self.evaluate(coefficients, normalized_time)
+        sum_x = sum_y = sum_z = 0.0
+        previous_sum_x = previous_sum_y = previous_sum_z = 0.0
 
-        t2 = 2.0 * t
-        k = n - 1
-        while k > 0
-          c = coeffs[k]
-          c0 = c[0]
-          c1 = c[1]
-          c2 = c[2]
-          tx = t2 * b1x - b2x + c0
-          ty = t2 * b1y - b2y + c1
-          tz = t2 * b1z - b2z + c2
-          b2x = b1x
-          b2y = b1y
-          b2z = b1z
-          b1x = tx
-          b1y = ty
-          b1z = tz
-          k -= 1
+        twice_time = 2.0 * normalized_time
+        degree = coefficients.size - 1
+        while degree > 0
+          term = coefficients[degree]
+          coefficient_x = term[0]
+          coefficient_y = term[1]
+          coefficient_z = term[2]
+          new_sum_x = twice_time * sum_x - previous_sum_x + coefficient_x
+          new_sum_y = twice_time * sum_y - previous_sum_y + coefficient_y
+          new_sum_z = twice_time * sum_z - previous_sum_z + coefficient_z
+          previous_sum_x = sum_x
+          previous_sum_y = sum_y
+          previous_sum_z = sum_z
+          sum_x = new_sum_x
+          sum_y = new_sum_y
+          sum_z = new_sum_z
+          degree -= 1
         end
 
-        c0, c1, c2 = coeffs[0]
-        [t * b1x - b2x + c0, t * b1y - b2y + c1, t * b1z - b2z + c2]
-      end
-
-      ##
-      # Evaluates the time derivative of a 3D Chebyshev polynomial at a given
-      # normalized time.
-      #
-      # @param coeffs [Array<Array<Float>>] Array of coefficients; shape is
-      #   [n_terms][3].
-      # @param t [Float] The normalized independent variable (in [-1, 1]).
-      # @param radius [Float] The half-length of the time interval (seconds).
-      # @return [Array<Float>] The 3-vector derivative (velocity), in units per
-      #   day.
-      def self.evaluate_derivative(coeffs, t, radius)
-        n = coeffs.size
-        return [0.0, 0.0, 0.0] if n < 2
-
-        d1x = d1y = d1z = 0.0
-        d2x = d2y = d2z = 0.0
-
-        t2 = 2.0 * t
-        k = n - 1
-        while k > 0
-          c = coeffs[k]
-          c0 = c[0]
-          c1 = c[1]
-          c2 = c[2]
-          k2 = 2 * k
-          tx = t2 * d1x - d2x + k2 * c0
-          ty = t2 * d1y - d2y + k2 * c1
-          tz = t2 * d1z - d2z + k2 * c2
-          d2x = d1x
-          d2y = d1y
-          d2z = d1z
-          d1x = tx
-          d1y = ty
-          d1z = tz
-          k -= 1
-        end
-
-        scale = Ephem::Core::Constants::Time::SECONDS_PER_DAY / (2.0 * radius)
-        [d1x * scale, d1y * scale, d1z * scale]
+        coefficient_x, coefficient_y, coefficient_z = coefficients[0]
+        [
+          normalized_time * sum_x - previous_sum_x + coefficient_x,
+          normalized_time * sum_y - previous_sum_y + coefficient_y,
+          normalized_time * sum_z - previous_sum_z + coefficient_z
+        ]
       end
 
       ##
       # Evaluates a 3D Chebyshev polynomial and its time derivative in a single
-      # pass. It runs the same value and derivative recurrences as {evaluate}
-      # and {evaluate_derivative}, but fused into one loop so the coefficient
-      # fetch and loop control are shared. Results are bit-for-bit identical to
-      # calling the two methods separately.
+      # pass, sharing the coefficient fetch and loop control. The position is
+      # bit-for-bit identical to {evaluate}.
       #
-      # @param coeffs [Array<Array<Float>>] coefficients; shape [n_terms][3].
-      # @param t [Float] normalized independent variable, in [-1, 1].
+      # @param coefficients [Array<Array<Float>>] coefficients; shape
+      #   [n_terms][3].
+      # @param normalized_time [Float] normalized independent variable, in
+      #   [-1, 1].
       # @param radius [Float] half-length of the time interval (seconds).
       # @return [Array(Array<Float>, Array<Float>)] [position, velocity], with
       #   velocity in units per day.
-      def self.evaluate_with_derivative(coeffs, t, radius)
-        n = coeffs.size
-        b1x = b1y = b1z = 0.0
-        b2x = b2y = b2z = 0.0
-        d1x = d1y = d1z = 0.0
-        d2x = d2y = d2z = 0.0
+      def self.evaluate_with_derivative(coefficients, normalized_time, radius)
+        sum_x = sum_y = sum_z = 0.0
+        previous_sum_x = previous_sum_y = previous_sum_z = 0.0
+        derivative_x = derivative_y = derivative_z = 0.0
+        previous_derivative_x = previous_derivative_y =
+          previous_derivative_z = 0.0
 
-        t2 = 2.0 * t
-        k = n - 1
-        while k > 0
-          c = coeffs[k]
-          c0 = c[0]
-          c1 = c[1]
-          c2 = c[2]
-          k2 = 2 * k
+        twice_time = 2.0 * normalized_time
+        degree = coefficients.size - 1
+        while degree > 0
+          term = coefficients[degree]
+          coefficient_x = term[0]
+          coefficient_y = term[1]
+          coefficient_z = term[2]
+          twice_degree = 2 * degree
 
-          bx = t2 * b1x - b2x + c0
-          by = t2 * b1y - b2y + c1
-          bz = t2 * b1z - b2z + c2
-          dx = t2 * d1x - d2x + k2 * c0
-          dy = t2 * d1y - d2y + k2 * c1
-          dz = t2 * d1z - d2z + k2 * c2
+          new_sum_x = twice_time * sum_x - previous_sum_x + coefficient_x
+          new_sum_y = twice_time * sum_y - previous_sum_y + coefficient_y
+          new_sum_z = twice_time * sum_z - previous_sum_z + coefficient_z
+          new_derivative_x = twice_time * derivative_x -
+            previous_derivative_x + twice_degree * coefficient_x
+          new_derivative_y = twice_time * derivative_y -
+            previous_derivative_y + twice_degree * coefficient_y
+          new_derivative_z = twice_time * derivative_z -
+            previous_derivative_z + twice_degree * coefficient_z
 
-          b2x = b1x
-          b2y = b1y
-          b2z = b1z
-          b1x = bx
-          b1y = by
-          b1z = bz
-          d2x = d1x
-          d2y = d1y
-          d2z = d1z
-          d1x = dx
-          d1y = dy
-          d1z = dz
-          k -= 1
+          previous_sum_x = sum_x
+          previous_sum_y = sum_y
+          previous_sum_z = sum_z
+          sum_x = new_sum_x
+          sum_y = new_sum_y
+          sum_z = new_sum_z
+          previous_derivative_x = derivative_x
+          previous_derivative_y = derivative_y
+          previous_derivative_z = derivative_z
+          derivative_x = new_derivative_x
+          derivative_y = new_derivative_y
+          derivative_z = new_derivative_z
+          degree -= 1
         end
 
-        c0, c1, c2 = coeffs[0]
-        position = [t * b1x - b2x + c0, t * b1y - b2y + c1, t * b1z - b2z + c2]
+        coefficient_x, coefficient_y, coefficient_z = coefficients[0]
+        position = [
+          normalized_time * sum_x - previous_sum_x + coefficient_x,
+          normalized_time * sum_y - previous_sum_y + coefficient_y,
+          normalized_time * sum_z - previous_sum_z + coefficient_z
+        ]
 
         scale = Ephem::Core::Constants::Time::SECONDS_PER_DAY / (2.0 * radius)
-        velocity = [d1x * scale, d1y * scale, d1z * scale]
+        velocity = [derivative_x * scale, derivative_y * scale,
+          derivative_z * scale]
 
         [position, velocity]
       end
