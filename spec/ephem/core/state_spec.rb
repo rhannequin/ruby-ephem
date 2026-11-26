@@ -139,6 +139,14 @@ RSpec.describe Ephem::Core::State do
 
       expect(state).not_to eql(state.to_arrays)
     end
+
+    it "tells integer components from float components" do
+      integer_state = build_state([1, 2, 3], [0, 0, 0])
+      float_state = build_state([1.0, 2.0, 3.0], [0.0, 0.0, 0.0])
+
+      expect(integer_state).to eq(float_state)
+      expect(integer_state).not_to eql(float_state)
+    end
   end
 
   describe "#hash" do
