@@ -271,8 +271,9 @@ puts "with real coefficients extracted from a loaded segment."
 puts
 
 # Extract real coefficient data from the loaded segment
-coefficients = segment_emb.instance_variable_get(:@coefficients)
-radii = segment_emb.instance_variable_get(:@radii)
+records = segment_emb.send(:load_data)
+coefficients = records.coefficients
+radii = records.radii
 
 # Pick the first interval's coefficients
 test_coeffs = coefficients[0]
@@ -389,7 +390,7 @@ delta_kb = (after_mem - before_mem) / 1024.0
 puts "  Segment [0,3] data load:         ~#{delta_kb.round(1)} KB"
 
 # Report coefficient array size
-coeffs = segment_fresh.instance_variable_get(:@coefficients)
+coeffs = segment_fresh.send(:load_data).coefficients
 if coeffs
   puts "  Coefficient records:             #{coeffs.size}"
   puts "  Terms per record:                #{coeffs.first&.size}"

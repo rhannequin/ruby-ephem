@@ -23,19 +23,19 @@ module Ephem
       # @return [Core::Orientation, Array<Core::Orientation>] angles in radians
       # @raise [Ephem::OutOfRangeError] if time is outside segment coverage
       def angles_at(tdb, tdb2 = 0.0)
-        load_data
+        records = load_data
         tdb_seconds = convert_to_seconds(tdb, tdb2)
 
         case tdb_seconds
         when Numeric
-          to_orientation(generate_position(tdb_seconds))
+          to_orientation(generate_position(records, tdb_seconds))
         else
           tdb_seconds.map do |seconds|
-            to_orientation(generate_position(seconds))
+            to_orientation(generate_position(records, seconds))
           end
         end
       rescue OutOfRangeError => error
-        raise request_out_of_range_error(error, tdb, tdb2), cause: nil
+        raise request_out_of_range_error(records, error, tdb, tdb2), cause: nil
       end
 
       # Euler angles and their rates at the given time.
@@ -46,19 +46,19 @@ module Ephem
       #   carrying rates (radians/day)
       # @raise [Ephem::OutOfRangeError] if time is outside segment coverage
       def orientation_at(tdb, tdb2 = 0.0)
-        load_data
+        records = load_data
         tdb_seconds = convert_to_seconds(tdb, tdb2)
 
         case tdb_seconds
         when Numeric
-          to_orientation(*generate_single(tdb_seconds))
+          to_orientation(*generate_single(records, tdb_seconds))
         else
-          generate_multiple(tdb_seconds).map do |angles, rates|
+          generate_multiple(records, tdb_seconds).map do |angles, rates|
             to_orientation(angles, rates)
           end
         end
       rescue OutOfRangeError => error
-        raise request_out_of_range_error(error, tdb, tdb2), cause: nil
+        raise request_out_of_range_error(records, error, tdb, tdb2), cause: nil
       end
 
       # The reference-frame to body-fixed rotation matrix at the given time,

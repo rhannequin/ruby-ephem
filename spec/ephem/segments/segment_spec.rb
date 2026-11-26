@@ -241,6 +241,48 @@ RSpec.describe Ephem::Segments::Segment do
       expect(segment.daf)
         .to have_received(:read_array).with(1, 96).twice
     end
+
+    it "lets a running position query finish with the data it loaded" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+      expected_position = segment.compute(time).to_a
+      clear_data_after_interval_lookup(segment)
+
+      position = segment.compute(time)
+
+      expect(position.to_a).to eq(expected_position)
+    end
+
+    it "lets a running state query finish with the data it loaded" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+      expected_state = segment.compute_and_differentiate(time).to_arrays
+      clear_data_after_interval_lookup(segment)
+
+      state = segment.compute_and_differentiate(time)
+
+      expect(state.to_arrays).to eq(expected_state)
+    end
+
+    it "lets a running type 3 state query finish with the data it loaded" do
+      segment = create_type3_segment
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+      expected_state = segment.state_at(time).to_arrays
+      clear_data_after_interval_lookup(segment)
+
+      state = segment.state_at(time)
+
+      expect(state.to_arrays).to eq(expected_state)
+    end
+  end
+
+  def clear_data_after_interval_lookup(segment)
+    allow(segment).to receive(:find_interval)
+      .and_wrap_original do |original, *arguments|
+        interval = original.call(*arguments)
+        segment.clear_data
+        interval
+      end
   end
 
   def create_mock_daf

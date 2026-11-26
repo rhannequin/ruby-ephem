@@ -36,21 +36,21 @@ module Ephem
       # @return [Ephem::Core::Vector] Position vector in kilometers
       # @raise [Ephem::OutOfRangeError] if time is outside segment coverage
       def compute(tdb, tdb2 = 0.0)
-        load_data
+        records = load_data
         tdb_seconds = convert_to_seconds(tdb, tdb2)
 
         case tdb_seconds
         when Numeric
-          position = generate_position(tdb_seconds)
+          position = generate_position(records, tdb_seconds)
           Core::Vector.new(position[0], position[1], position[2])
         else
           tdb_seconds.map do |t|
-            position = generate_position(t)
+            position = generate_position(records, t)
             Core::Vector.new(position[0], position[1], position[2])
           end
         end
       rescue OutOfRangeError => error
-        raise request_out_of_range_error(error, tdb, tdb2), cause: nil
+        raise request_out_of_range_error(records, error, tdb, tdb2), cause: nil
       end
       alias_method :position_at, :compute
 
@@ -63,18 +63,18 @@ module Ephem
       #   array if the input is an array.
       # @raise [Ephem::OutOfRangeError] if time is outside segment coverage
       def compute_and_differentiate(tdb, tdb2 = 0.0)
-        load_data
+        records = load_data
         tdb_seconds = convert_to_seconds(tdb, tdb2)
 
         case tdb_seconds
         when Numeric
-          pos_array, vel_array = generate_single(tdb_seconds)
+          pos_array, vel_array = generate_single(records, tdb_seconds)
           Core::State.new(
             Core::Vector.new(pos_array[0], pos_array[1], pos_array[2]),
             Core::Vector.new(vel_array[0], vel_array[1], vel_array[2])
           )
         else
-          generate_multiple(tdb_seconds).map do |pos_array, vel_array|
+          generate_multiple(records, tdb_seconds).map do |pos_array, vel_array|
             Core::State.new(
               Core::Vector.new(pos_array[0], pos_array[1], pos_array[2]),
               Core::Vector.new(vel_array[0], vel_array[1], vel_array[2])
@@ -82,28 +82,17 @@ module Ephem
           end
         end
       rescue OutOfRangeError => error
-        raise request_out_of_range_error(error, tdb, tdb2), cause: nil
+        raise request_out_of_range_error(records, error, tdb, tdb2), cause: nil
       end
       alias_method :state_at, :compute_and_differentiate
-
-      # @return [void]
-      def clear_data
-        @data_lock.synchronize do
-          @data_loaded = false
-          @midpoints = nil
-          @radii = nil
-          @coefficients = nil
-          @velocity_coefficients = nil
-        end
-      end
 
       private
 
       def process_coefficient_data(data)
-        super
-        return unless @data_type == 3
+        records = super
+        return records unless @data_type == 3
 
-        @velocity_coefficients = @coefficients.map do |terms|
+        velocity_coefficients = records.coefficients.map do |terms|
           terms.map do |term|
             [
               term[3] * Time::SECONDS_PER_DAY,
@@ -112,21 +101,29 @@ module Ephem
             ]
           end
         end
-        @coefficients = @coefficients.map do |terms|
+        position_coefficients = records.coefficients.map do |terms|
           terms.map { |term| term.first(3) }
         end
+
+        Records.new(
+          midpoints: records.midpoints,
+          radii: records.radii,
+          coefficients: position_coefficients.freeze,
+          velocity_coefficients: velocity_coefficients.freeze
+        ).freeze
       end
 
-      def generate_single(tdb_seconds)
+      def generate_single(records, tdb_seconds)
         return super unless @data_type == 3
 
-        interval = find_interval(tdb_seconds)
-        normalized_time = compute_normalized_time(tdb_seconds, interval)
+        interval = find_interval(records, tdb_seconds)
+        normalized_time =
+          compute_normalized_time(records, tdb_seconds, interval)
         [
           Computation::ChebyshevPolynomial
-            .evaluate(@coefficients[interval], normalized_time),
+            .evaluate(records.coefficients[interval], normalized_time),
           Computation::ChebyshevPolynomial
-            .evaluate(@velocity_coefficients[interval], normalized_time)
+            .evaluate(records.velocity_coefficients[interval], normalized_time)
         ]
       end
 

@@ -76,6 +76,8 @@
 - `ruby-ephem` writes errors to stderr and exits with status 1 when a command
   fails, rejects invalid `--targets` values instead of reading them as `0`, and
   converts dates to the Julian Date at midnight instead of noon ([#95], [#114])
+- Fix a race where clearing a segment's data, or closing its kernel, while
+  another thread queries it raised `NoMethodError` ([#132])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#94]: https://github.com/rhannequin/ruby-ephem/issues/94
@@ -113,6 +115,7 @@
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
+[#132]: https://github.com/rhannequin/ruby-ephem/issues/132
 
 ## [0.5.2] - 2026-11-24
 

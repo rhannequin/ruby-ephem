@@ -129,6 +129,39 @@ RSpec.describe Ephem::Segments::OrientationSegment do
     end
   end
 
+  describe "#clear_data" do
+    it "lets a running angles query finish with the data it loaded" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+      expected_angles = segment.angles_at(time).to_a
+      clear_data_after_interval_lookup(segment)
+
+      angles = segment.angles_at(time)
+
+      expect(angles.to_a).to eq(expected_angles)
+    end
+
+    it "lets a running orientation query finish with the data it loaded" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+      expected_rates = segment.orientation_at(time).rates
+      clear_data_after_interval_lookup(segment)
+
+      orientation = segment.orientation_at(time)
+
+      expect(orientation.rates).to eq(expected_rates)
+    end
+  end
+
+  def clear_data_after_interval_lookup(segment)
+    allow(segment).to receive(:find_interval)
+      .and_wrap_original do |original, *arguments|
+        interval = original.call(*arguments)
+        segment.clear_data
+        interval
+      end
+  end
+
   def create_mock_daf
     daf = instance_double(Ephem::IO::DAF)
 
