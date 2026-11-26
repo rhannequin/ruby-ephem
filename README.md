@@ -12,7 +12,7 @@ These files are a collection of numerical integrations of the equations of
 motion of the Solar System, used to calculate the positions of the planets,
 the Moon, and other celestial bodies with high precision.
 
-Ephem supports planetary ephemerides like DE421, DE430, INPOP19A, etc. (SPK),
+Ephem supports planetary ephemerides like DE421, DE430, INPOP21A, etc. (SPK),
 as well as binary PCK orientation kernels such as the lunar orientation kernel
 `moon_pa_de440_200625.bpc`.
 
@@ -43,7 +43,7 @@ begin with:
 
 * `de421.bsp`: from 1900 to 2050, 17 MB
 * `de440s.bsp`: from 1849 to 2150, 32 MB
-* `inpop19a.bsp`: from 1900 to 2100, 22 MB
+* `inpop21a.bsp`: from 1900 to 2100, 22 MB
 
 ## Usage
 
