@@ -175,6 +175,32 @@ angles = frame.angles_at(2451545.0)
 pck.close
 ```
 
+### INPOP companion kernels
+
+IMCCE ships two more kernels next to each INPOP planetary kernel, and Ephem
+can download them under the same name with another suffix:
+
+* `inpop21a.bpc`: the lunar orientation of INPOP21a, frame `1900301`
+* `inpop21a_time.bsp`: the TT-TDB time ephemeris, from INPOP13c onwards
+
+The time ephemeris stores TT-TDB in seconds as the `x` component of the pair
+`TIME_CENTER` (`1000000000`) -> `TT_MINUS_TDB` (`1000000001`). Its derivative
+is in seconds per day.
+
+```rb
+Ephem::Download.call(name: "inpop21a_time.bsp", target: "tmp/time.bsp")
+
+Ephem::SPK.open("tmp/time.bsp") do |spk|
+  bodies = Ephem::Core::Constants::Bodies
+  spk.position_at(
+    target: bodies::TT_MINUS_TDB,
+    center: bodies::TIME_CENTER,
+    tdb: 2451545.0
+  ).x
+end
+# => 9.928893069898121e-05
+```
+
 ### Building the body-fixed frame
 
 The orientation maps the reference frame into the body-fixed frame through the
