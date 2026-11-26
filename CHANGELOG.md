@@ -17,10 +17,17 @@
 - Document how to enable YJIT, which makes computations about 2 to 2.5 times
   faster ([#104], [#110])
 
+### Bug fixes
+
+- Show body names as written, so segment descriptions say "Earth-Moon
+  Barycenter" instead of "Earth-moon Barycenter" ([#101], [#126])
+
+[#101]: https://github.com/rhannequin/ruby-ephem/issues/101
 [#104]: https://github.com/rhannequin/ruby-ephem/issues/104
 [#106]: https://github.com/rhannequin/ruby-ephem/issues/106
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
+[#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 
 ## [0.5.2] - 2026-11-24
 
