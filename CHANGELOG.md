@@ -32,10 +32,14 @@
   failing later with an unrelated `NoMethodError` ([#103], [#122])
 - Fix a race in the cached interval lookup that could return a wrong position
   when the same segment is queried from several threads ([#97], [#125])
+- Raise `Ephem::FileFormatError` instead of looping forever when the summary
+  record chain of a malformed kernel points back to an earlier record ([#102],
+  [#118])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#97]: https://github.com/rhannequin/ruby-ephem/issues/97
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
+[#102]: https://github.com/rhannequin/ruby-ephem/issues/102
 [#103]: https://github.com/rhannequin/ruby-ephem/issues/103
 [#104]: https://github.com/rhannequin/ruby-ephem/issues/104
 [#105]: https://github.com/rhannequin/ruby-ephem/issues/105
@@ -44,6 +48,7 @@
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
 [#117]: https://github.com/rhannequin/ruby-ephem/pull/117
+[#118]: https://github.com/rhannequin/ruby-ephem/pull/118
 [#119]: https://github.com/rhannequin/ruby-ephem/pull/119
 [#122]: https://github.com/rhannequin/ruby-ephem/pull/122
 [#124]: https://github.com/rhannequin/ruby-ephem/pull/124
