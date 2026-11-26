@@ -6,6 +6,7 @@ module Ephem
       RECORD_SIZE = 1024
       ENDIANNESS_DOUBLE_FORMATS = {little: "E", big: "G"}.freeze
       ENDIANNESS_UINT32_FORMATS = {little: "V", big: "N"}.freeze
+      ENDIANNESS_INT32_FORMATS = {little: "l<", big: "l>"}.freeze
 
       def initialize(file_object)
         validate_file_object(file_object)

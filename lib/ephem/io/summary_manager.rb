@@ -104,7 +104,7 @@ module Ephem
 
       def build_summary_format
         doubles_format = "#{endian_double}#{@record_data.double_count}"
-        integers_format = "#{endian_uint32}#{@record_data.integer_count}"
+        integers_format = "#{endian_int32}#{@record_data.integer_count}"
         doubles_format + integers_format
       end
 
@@ -185,8 +185,8 @@ module Ephem
         BinaryReader::ENDIANNESS_DOUBLE_FORMATS[@endianness]
       end
 
-      def endian_uint32
-        BinaryReader::ENDIANNESS_UINT32_FORMATS[@endianness]
+      def endian_int32
+        BinaryReader::ENDIANNESS_INT32_FORMATS[@endianness]
       end
     end
   end

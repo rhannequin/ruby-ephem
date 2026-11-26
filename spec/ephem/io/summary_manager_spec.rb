@@ -277,5 +277,46 @@ RSpec.describe Ephem::IO::SummaryManager do
         ["name3", [7.0, 8.0, 9]]
       ])
     end
+
+    it "unpacks summary integers as signed for little endian" do
+      expect(single_summary_values(endianness: :little, integer: -82))
+        .to eq [1.0, 2.0, -82]
+    end
+
+    it "unpacks summary integers as signed for big endian" do
+      expect(single_summary_values(endianness: :big, integer: -82))
+        .to eq [1.0, 2.0, -82]
+    end
+  end
+
+  def single_summary_values(endianness:, integer:)
+    double_format, integer_format =
+      (endianness == :little) ? ["E", "l<"] : ["G", "l>"]
+    record_data = instance_double(
+      Ephem::IO::RecordData,
+      double_count: 2,
+      integer_count: 1,
+      forward_record: 5
+    )
+    binary_reader = instance_double(Ephem::IO::BinaryReader)
+    summary_record = [
+      [0.0, 0.0, 1.0].pack("#{double_format}3"),
+      [1.0, 2.0].pack("#{double_format}2"),
+      [integer].pack(integer_format)
+    ].join.ljust(1024, "\0")
+    names_record = "name".ljust(1024, "\0")
+    allow(binary_reader).to receive(:read_record)
+      .with(5)
+      .and_return(summary_record)
+    allow(binary_reader).to receive(:read_record)
+      .with(6)
+      .and_return(names_record)
+    summary_manager = Ephem::IO::SummaryManager.new(
+      record_data: record_data,
+      binary_reader: binary_reader,
+      endianness: endianness
+    )
+
+    summary_manager.each_summary.map { |_name, values| values }.first
   end
 end

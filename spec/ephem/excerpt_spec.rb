@@ -275,5 +275,25 @@ RSpec.describe Ephem::Excerpt do
       original_spk.close
       excerpt_spk.close
     end
+
+    it "keeps segments with a negative target ID" do
+      Dir.mktmpdir("ephem_test_") do |temp_dir|
+        original_spk = Ephem::SPK.open(
+          de421_2000_excerpt_with_first_target(-82, directory: temp_dir)
+        )
+        excerpt_spk = original_spk.excerpt(
+          output_path: File.join(temp_dir, "excerpt.bsp"),
+          start_jd: 2451545.0,
+          end_jd: 2451555.0,
+          target_ids: [-82]
+        )
+
+        expect(excerpt_spk.segments.map(&:target)).to eq [-82]
+        expect(excerpt_spk.segments.map(&:center)).to eq [0]
+
+        original_spk.close
+        excerpt_spk.close
+      end
+    end
   end
 end
