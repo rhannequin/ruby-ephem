@@ -28,9 +28,12 @@
   Barycenter" instead of "Earth-moon Barycenter" ([#101], [#126])
 - Read DAF summary integers as signed, so segments with a negative NAIF ID
   (spacecraft, some small bodies) can be looked up and excerpted ([#93], [#117])
+- Raise `Ephem::FileFormatError` when a kernel file is truncated, instead of
+  failing later with an unrelated `NoMethodError` ([#103], [#122])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
+[#103]: https://github.com/rhannequin/ruby-ephem/issues/103
 [#104]: https://github.com/rhannequin/ruby-ephem/issues/104
 [#105]: https://github.com/rhannequin/ruby-ephem/issues/105
 [#106]: https://github.com/rhannequin/ruby-ephem/issues/106
@@ -39,6 +42,7 @@
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
 [#117]: https://github.com/rhannequin/ruby-ephem/pull/117
 [#119]: https://github.com/rhannequin/ruby-ephem/pull/119
+[#122]: https://github.com/rhannequin/ruby-ephem/pull/122
 [#124]: https://github.com/rhannequin/ruby-ephem/pull/124
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 
