@@ -94,6 +94,73 @@ RSpec.describe Ephem::Segments::Segment do
     end
   end
 
+  describe "type 3 segments" do
+    it "evaluates the position from the position coefficients" do
+      segment = create_type3_segment
+      quarter_day_later = Ephem::Core::Constants::Time::J2000_EPOCH + 0.25
+
+      position = segment.position_at(quarter_day_later)
+
+      expect(position.x).to be_within(1e-12).of(1.0 + 0.05 * 0.5)
+      expect(position.y).to be_within(1e-12).of(2.0 + 0.1 * 0.5)
+      expect(position.z).to be_within(1e-12).of(3.0 + 0.15 * 0.5)
+    end
+
+    it "evaluates the velocity from the stored velocity coefficients" do
+      segment = create_type3_segment
+      quarter_day_later = Ephem::Core::Constants::Time::J2000_EPOCH + 0.25
+      seconds_per_day = Ephem::Core::Constants::Time::SECONDS_PER_DAY
+
+      state = segment.state_at(quarter_day_later)
+
+      expect(state.velocity.x)
+        .to be_within(1e-9).of((2.0e-5 + 1.0e-6 * 0.5) * seconds_per_day)
+      expect(state.velocity.y)
+        .to be_within(1e-9).of((3.0e-5 + 2.0e-6 * 0.5) * seconds_per_day)
+      expect(state.velocity.z)
+        .to be_within(1e-9).of((4.0e-5 + 3.0e-6 * 0.5) * seconds_per_day)
+    end
+
+    it "reads each record's own velocity coefficients" do
+      segment = create_type3_segment
+      one_day_later = Ephem::Core::Constants::Time::J2000_EPOCH + 1.0
+      seconds_per_day = Ephem::Core::Constants::Time::SECONDS_PER_DAY
+
+      state = segment.state_at(one_day_later)
+
+      expect(state.position.to_a).to eq([10.0, 20.0, 30.0])
+      expect(state.velocity.x).to be_within(1e-9).of(5.0e-5 * seconds_per_day)
+      expect(state.velocity.y).to be_within(1e-9).of(6.0e-5 * seconds_per_day)
+      expect(state.velocity.z).to be_within(1e-9).of(7.0e-5 * seconds_per_day)
+    end
+
+    it "returns the same states for array and scalar times" do
+      segment = create_type3_segment
+      first_time = Ephem::Core::Constants::Time::J2000_EPOCH
+      second_time = first_time + 0.25
+
+      array_states = segment.state_at([first_time, second_time])
+
+      expect(array_states.map(&:to_arrays)).to eq(
+        [
+          segment.state_at(first_time).to_arrays,
+          segment.state_at(second_time).to_arrays
+        ]
+      )
+    end
+
+    it "reloads the velocity coefficients after clearing data" do
+      segment = create_type3_segment
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+      state_before = segment.state_at(time).to_arrays
+
+      segment.clear_data
+      state_after = segment.state_at(time).to_arrays
+
+      expect(state_after).to eq(state_before)
+    end
+  end
+
   describe "#describe" do
     it "returns a human-readable description of the segment" do
       segment = create_segment_with_data
@@ -180,6 +247,40 @@ RSpec.describe Ephem::Segments::Segment do
     end
 
     daf
+  end
+
+  def type3_words
+    first_record = [
+      0.0, 43200.0,
+      1.0, 0.05,
+      2.0, 0.1,
+      3.0, 0.15,
+      2.0e-5, 1.0e-6,
+      3.0e-5, 2.0e-6,
+      4.0e-5, 3.0e-6
+    ]
+    second_record = [
+      86400.0, 43200.0,
+      10.0, 0.5,
+      20.0, 1.0,
+      30.0, 1.5,
+      5.0e-5, 4.0e-6,
+      6.0e-5, 5.0e-6,
+      7.0e-5, 6.0e-6
+    ]
+    metadata = [-43200.0, 86400.0, first_record.size.to_f, 2.0]
+    first_record + second_record + metadata
+  end
+
+  def create_type3_segment
+    words = type3_words
+    daf = instance_double(Ephem::IO::DAF)
+    allow(daf).to receive(:read_array) do |start_word, end_word|
+      words[(start_word - 1)..(end_word - 1)]
+    end
+    descriptor = [-43200.0, 129600.0, 3, 0, 1, 3, 1, words.size]
+
+    described_class.new(daf: daf, source: "type3.bsp", descriptor: descriptor)
   end
 
   def create_segment_with_data(data_type: 2)

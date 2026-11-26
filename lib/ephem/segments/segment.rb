@@ -82,7 +82,49 @@ module Ephem
       end
       alias_method :state_at, :compute_and_differentiate
 
+      # @return [void]
+      def clear_data
+        @data_lock.synchronize do
+          @data_loaded = false
+          @midpoints = nil
+          @radii = nil
+          @coefficients = nil
+          @velocity_coefficients = nil
+        end
+      end
+
       private
+
+      def process_coefficient_data(data)
+        super
+        return unless @data_type == 3
+
+        @velocity_coefficients = @coefficients.map do |terms|
+          terms.map do |term|
+            [
+              term[3] * Time::SECONDS_PER_DAY,
+              term[4] * Time::SECONDS_PER_DAY,
+              term[5] * Time::SECONDS_PER_DAY
+            ]
+          end
+        end
+        @coefficients = @coefficients.map do |terms|
+          terms.map { |term| term.first(3) }
+        end
+      end
+
+      def generate_single(tdb_seconds)
+        return super unless @data_type == 3
+
+        interval = find_interval(tdb_seconds)
+        normalized_time = compute_normalized_time(tdb_seconds, interval)
+        [
+          Computation::ChebyshevPolynomial
+            .evaluate(@coefficients[interval], normalized_time),
+          Computation::ChebyshevPolynomial
+            .evaluate(@velocity_coefficients[interval], normalized_time)
+        ]
+      end
 
       def component_count
         COMPONENT_COUNTS.fetch(@data_type) do
