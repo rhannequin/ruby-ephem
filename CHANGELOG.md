@@ -31,6 +31,10 @@
 - Add `SPK#position_at` and `SPK#state_at` to get the position or state of any
   target relative to any center, chaining the stored pairs that link them
   ([#107], [#112])
+- `Download` fetches the lunar orientation kernel (`inpop21a.bpc`) and the
+  TT-TDB time ephemeris (`inpop21a_time.bsp`) that IMCCE ships with each INPOP
+  kernel. Segments of the time ephemeris are described as "Time Center" ->
+  "TT-TDB" ([#134])
 
 ### Improvements
 
@@ -119,6 +123,7 @@
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
 [#133]: https://github.com/rhannequin/ruby-ephem/issues/133
+[#134]: https://github.com/rhannequin/ruby-ephem/pull/134
 [#137]: https://github.com/rhannequin/ruby-ephem/pull/137
 
 ## [0.5.2] - 2026-11-24
