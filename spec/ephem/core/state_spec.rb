@@ -25,6 +25,12 @@ RSpec.describe Ephem::Core::State do
       expect(state.velocity.y).to eq(0.2)
       expect(state.velocity.z).to eq(0.3)
     end
+
+    it "freezes the object" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+
+      expect(state).to be_frozen
+    end
   end
 
   describe ".from_arrays" do
@@ -81,5 +87,88 @@ RSpec.describe Ephem::Core::State do
       expect(state.position).to eq(position)
       expect(state.velocity).to eq(velocity)
     end
+  end
+
+  describe "#==" do
+    it "returns true for states with equal position and velocity" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+      same_state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+
+      expect(state == same_state).to be(true)
+    end
+
+    it "returns false when positions differ" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+      other_state = build_state([1.0, 2.0, 4.0], [0.1, 0.2, 0.3])
+
+      expect(state == other_state).to be(false)
+    end
+
+    it "returns false when velocities differ" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+      other_state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.4])
+
+      expect(state == other_state).to be(false)
+    end
+
+    it "returns false for a non-State object" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+
+      expect(state == state.to_arrays).to be(false)
+      expect(state == :state).to be(false)
+    end
+  end
+
+  describe "#eql?" do
+    it "returns true for states with equal position and velocity" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+      same_state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+
+      expect(state).to eql(same_state)
+    end
+
+    it "returns false for states with different vectors" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+      other_state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.4])
+
+      expect(state).not_to eql(other_state)
+    end
+
+    it "returns false for a non-State object" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+
+      expect(state).not_to eql(state.to_arrays)
+    end
+
+    it "tells integer components from float components" do
+      integer_state = build_state([1, 2, 3], [0, 0, 0])
+      float_state = build_state([1.0, 2.0, 3.0], [0.0, 0.0, 0.0])
+
+      expect(integer_state).to eq(float_state)
+      expect(integer_state).not_to eql(float_state)
+    end
+  end
+
+  describe "#hash" do
+    it "is equal for equal states" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+      same_state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+
+      expect(state.hash).to eq(same_state.hash)
+    end
+
+    it "lets equal states be used as the same hash key" do
+      state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+      same_state = build_state([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+
+      lookup = {state => :earth}
+
+      expect(lookup[same_state]).to eq(:earth)
+      expect([state, same_state].uniq.size).to eq(1)
+    end
+  end
+
+  def build_state(position, velocity)
+    described_class.from_arrays(position, velocity)
   end
 end

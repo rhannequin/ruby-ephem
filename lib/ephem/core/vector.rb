@@ -82,6 +82,60 @@ module Ephem
         self.class.new(x - other.x, y - other.y, z - other.z)
       end
 
+      # Multiplies the vector by a scalar.
+      #
+      # @param other [Numeric] The factor to multiply each component by
+      #
+      # @return [Ephem::Core::Vector] A new vector scaled by the given factor
+      #
+      # @raise [Ephem::InvalidInputError] if other is not numeric
+      #
+      # @example Convert a velocity from km/s to km/day
+      #   velocity_per_day = velocity_per_second * 86_400
+      def *(other)
+        unless other.is_a?(Numeric)
+          raise InvalidInputError, "Can only multiply a Vector by a Numeric"
+        end
+
+        self.class.new(x * other, y * other, z * other)
+      end
+
+      # Divides the vector by a scalar.
+      #
+      # Division follows Ruby's semantics for the component and divisor types:
+      # dividing a vector of Integer components by an Integer truncates, so
+      # use a Float divisor when a fractional result is expected.
+      #
+      # @param other [Numeric] The divisor applied to each component
+      #
+      # @return [Ephem::Core::Vector] A new vector divided by the given scalar
+      #
+      # @raise [Ephem::InvalidInputError] if other is not numeric
+      # @raise [ZeroDivisionError] if the divisor is zero and the component
+      #   types raise on division by zero (Integer, Rational); with Float
+      #   operands, a zero divisor yields Infinity or NaN components instead
+      #
+      # @example Convert a velocity from km/day to km/s
+      #   velocity_per_second = velocity_per_day / 86_400.0
+      def /(other)
+        unless other.is_a?(Numeric)
+          raise InvalidInputError, "Can only divide a Vector by a Numeric"
+        end
+
+        self.class.new(x / other, y / other, z / other)
+      end
+
+      # Negates the vector.
+      #
+      # @return [Ephem::Core::Vector] A new vector pointing in the opposite
+      #   direction
+      #
+      # @example Reverse a center-to-target vector
+      #   target_to_center = -center_to_target
+      def -@
+        self.class.new(-x, -y, -z)
+      end
+
       # Calculates the dot product with another vector.
       #
       # @param other [Ephem::Core::Vector] The vector to dot with

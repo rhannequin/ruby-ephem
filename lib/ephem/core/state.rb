@@ -29,6 +29,7 @@ module Ephem
       def initialize(position, velocity)
         @position = position
         @velocity = velocity
+        freeze
       end
 
       # Creates a State instance from arrays of position and velocity
@@ -65,6 +66,40 @@ module Ephem
       #   pos_arr, vel_arr = state.to_arrays
       def to_arrays
         [position.to_a, velocity.to_a]
+      end
+
+      # Generates a hash value for the state.
+      #
+      # @return [Integer] Hash value based on position, velocity and class
+      def hash
+        [position, velocity, self.class].hash
+      end
+
+      # Checks equality with another state.
+      #
+      # @param other [Object] The object to compare with
+      #
+      # @return [Boolean] true if other is a State with equal position and
+      #   velocity vectors, false otherwise
+      #
+      # @example Check if two states are equal
+      #   state1 == state2
+      def ==(other)
+        other.instance_of?(self.class) &&
+          position == other.position &&
+          velocity == other.velocity
+      end
+
+      # Checks strict equality with another state, as used by Hash keys.
+      #
+      # @param other [Object] The object to compare with
+      #
+      # @return [Boolean] true if other is a State whose position and velocity
+      #   vectors are eql?, false otherwise
+      def eql?(other)
+        other.instance_of?(self.class) &&
+          position.eql?(other.position) &&
+          velocity.eql?(other.velocity)
       end
     end
   end
