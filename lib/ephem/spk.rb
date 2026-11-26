@@ -42,6 +42,8 @@ module Ephem
       @daf = daf
       @segments = load_segments
       @pairs = build_pairs
+      @neighbor_links = build_neighbor_links
+      @chains = {}
     end
 
     # Opens an SPK file at the specified path.
@@ -114,6 +116,45 @@ module Ephem
       end
     end
 
+    # Position of a target body relative to a center body, at the given time.
+    #
+    # Unlike {#[]}, the pair does not have to be stored in the kernel: the
+    # position is chained through the stored pairs that link the two bodies.
+    # Earth relative to the Solar System Barycenter is (0 -> 3) + (3 -> 399)
+    # in a JPL DE kernel, and the Moon relative to the Earth is
+    # (3 -> 301) - (3 -> 399). A pair that is stored is read directly. A
+    # body relative to itself is a zero vector, whatever the time.
+    #
+    # @example Moon relative to the Earth
+    #   spk.position_at(target: 301, center: 399, tdb: 2460676.5)
+    #
+    # @param target [Integer] NAIF ID of the target body
+    # @param center [Integer] NAIF ID of the center body
+    # @param tdb [Numeric, Array<Numeric>] Time(s) in TDB Julian Date
+    # @param tdb2 [Numeric] Optional fractional part of TDB date
+    # @return [Core::Vector, Array<Core::Vector>] Position(s) in km
+    # @raise [KeyError] If no chain of stored pairs links the two bodies
+    # @raise [Ephem::OutOfRangeError] If a pair on the chain does not cover
+    #   the time
+    def position_at(target:, center:, tdb:, tdb2: 0.0)
+      chain(target, center).compute(tdb, tdb2)
+    end
+
+    # Position and velocity of a target body relative to a center body, at
+    # the given time. See {#position_at} for how the two bodies are linked.
+    #
+    # @param target [Integer] NAIF ID of the target body
+    # @param center [Integer] NAIF ID of the center body
+    # @param tdb [Numeric, Array<Numeric>] Time(s) in TDB Julian Date
+    # @param tdb2 [Numeric] Optional fractional part of TDB date
+    # @return [Core::State, Array<Core::State>] State(s) in km and km/day
+    # @raise [KeyError] If no chain of stored pairs links the two bodies
+    # @raise [Ephem::OutOfRangeError] If a pair on the chain does not cover
+    #   the time
+    def state_at(target:, center:, tdb:, tdb2: 0.0)
+      chain(target, center).compute_and_differentiate(tdb, tdb2)
+    end
+
     # Type of SPK file to make the difference between JPL DE and IMCCE INPOP
     #
     # @return [String, nil] The type of the SPK file
@@ -169,6 +210,64 @@ module Ephem
       @segments
         .group_by { |segment| [segment.center, segment.target] }
         .transform_values { |segments| Segments::PositionGroup.wrap(segments) }
+    end
+
+    def chain(target, center)
+      @chains[[target, center]] ||= begin
+        links = path_links(target, center)
+        if links.one? && links.first.forward
+          links.first.source
+        else
+          Segments::PositionChain.new(links)
+        end
+      end
+    end
+
+    def path_links(target, center)
+      unless @neighbor_links.key?(center) && @neighbor_links.key?(target)
+        raise_no_chain(target, center)
+      end
+
+      previous_links = {center => nil}
+      queue = [center]
+      until queue.empty? || previous_links.key?(target)
+        body = queue.shift
+        @neighbor_links.fetch(body).each do |neighbor, link|
+          next if previous_links.key?(neighbor)
+
+          previous_links[neighbor] = [body, link]
+          queue << neighbor
+        end
+      end
+
+      raise_no_chain(target, center) unless previous_links.key?(target)
+
+      links = []
+      body = target
+      until body == center
+        body, link = previous_links.fetch(body)
+        links.unshift(link)
+      end
+      links
+    end
+
+    def raise_no_chain(target, center)
+      raise KeyError,
+        "No chain of segments links center: #{center}, target: #{target}"
+    end
+
+    def build_neighbor_links
+      neighbors = Hash.new { |hash, body| hash[body] = [] }
+      @pairs.each do |(center, target), source|
+        neighbors[center] << [
+          target, Segments::PositionChain::Link.new(source, true)
+        ]
+        neighbors[target] << [
+          center, Segments::PositionChain::Link.new(source, false)
+        ]
+      end
+      neighbors.default_proc = nil
+      neighbors
     end
 
     def build_segment(source:, descriptor:)

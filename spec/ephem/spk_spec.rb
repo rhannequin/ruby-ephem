@@ -367,4 +367,213 @@ RSpec.describe Ephem::SPK do
     end
     opened_files
   end
+
+  describe "#position_at" do
+    it "reads a stored pair directly" do
+      with_test_spk do |spk|
+        position = spk.position_at(target: 3, center: 0, tdb: test_time)
+
+        expect(position).to eq(spk[0, 3].compute(test_time))
+      end
+    end
+
+    it "adds pairs chained from the center down to the target" do
+      with_test_spk do |spk|
+        position = spk.position_at(target: 399, center: 0, tdb: test_time)
+
+        expected = spk[0, 3].compute(test_time) +
+          spk[3, 399].compute(test_time)
+        expect(position).to eq(expected)
+      end
+    end
+
+    it "subtracts pairs walked from their target up to their center" do
+      with_test_spk do |spk|
+        position = spk.position_at(target: 301, center: 399, tdb: test_time)
+
+        expected = spk[3, 301].compute(test_time) -
+          spk[3, 399].compute(test_time)
+        expect(position).to eq(expected)
+      end
+    end
+
+    it "negates the chain when every pair is walked backward" do
+      with_test_spk do |spk|
+        position = spk.position_at(target: 0, center: 399, tdb: test_time)
+
+        expected = spk[0, 3].compute(test_time) +
+          spk[3, 399].compute(test_time)
+        expect_close_vectors(position, negated(expected))
+      end
+    end
+
+    it "chains through a common ancestor of both bodies" do
+      with_test_spk do |spk|
+        position = spk.position_at(target: 199, center: 299, tdb: test_time)
+
+        expected = spk[0, 1].compute(test_time) +
+          spk[1, 199].compute(test_time) -
+          spk[0, 2].compute(test_time) -
+          spk[2, 299].compute(test_time)
+        expect_close_vectors(position, expected)
+      end
+    end
+
+    it "returns a zero vector for a body relative to itself" do
+      with_test_spk do |spk|
+        position = spk.position_at(target: 399, center: 399, tdb: test_time)
+
+        expect(position).to eq(Ephem::Core::Vector.new(0.0, 0.0, 0.0))
+      end
+    end
+
+    it "returns one position per time for an array of times" do
+      with_test_spk do |spk|
+        times = [test_time, test_time + 1.5]
+
+        positions = spk.position_at(target: 301, center: 399, tdb: times)
+
+        expected = times.map do |time|
+          spk[3, 301].compute(time) - spk[3, 399].compute(time)
+        end
+        expect(positions).to eq(expected)
+      end
+    end
+
+    it "passes the fractional part of the date to every pair" do
+      with_test_spk do |spk|
+        position = spk.position_at(
+          target: 301, center: 399, tdb: test_time, tdb2: 0.25
+        )
+
+        expected = spk[3, 301].compute(test_time, 0.25) -
+          spk[3, 399].compute(test_time, 0.25)
+        expect(position).to eq(expected)
+      end
+    end
+
+    it "raises KeyError when no chain links the two bodies" do
+      with_test_spk do |spk|
+        expect { spk.position_at(target: 999, center: 0, tdb: test_time) }
+          .to raise_error(
+            KeyError,
+            "No chain of segments links center: 0, target: 999"
+          )
+      end
+    end
+
+    it "raises KeyError for an unknown body relative to itself" do
+      with_test_spk do |spk|
+        expect { spk.position_at(target: 999, center: 999, tdb: test_time) }
+          .to raise_error(KeyError)
+      end
+    end
+
+    it "raises OutOfRangeError when a pair does not cover the time" do
+      with_test_spk do |spk|
+        expect { spk.position_at(target: 301, center: 399, tdb: 0.0) }
+          .to raise_error(Ephem::OutOfRangeError)
+      end
+    end
+  end
+
+  describe "#state_at" do
+    it "reads a stored pair directly" do
+      with_test_spk do |spk|
+        state = spk.state_at(target: 399, center: 3, tdb: test_time)
+
+        expected = spk[3, 399].compute_and_differentiate(test_time)
+        expect(state.to_arrays).to eq(expected.to_arrays)
+      end
+    end
+
+    it "combines positions and velocities along the chain" do
+      with_test_spk do |spk|
+        state = spk.state_at(target: 301, center: 399, tdb: test_time)
+
+        moon = spk[3, 301].compute_and_differentiate(test_time)
+        earth = spk[3, 399].compute_and_differentiate(test_time)
+        expect(state.position).to eq(moon.position - earth.position)
+        expect(state.velocity).to eq(moon.velocity - earth.velocity)
+      end
+    end
+
+    it "negates positions and velocities walked backward" do
+      with_test_spk do |spk|
+        state = spk.state_at(target: 3, center: 399, tdb: test_time)
+
+        earth = spk[3, 399].compute_and_differentiate(test_time)
+        expect_close_vectors(state.position, negated(earth.position))
+        expect_close_vectors(state.velocity, negated(earth.velocity))
+      end
+    end
+
+    it "returns a zero state for a body relative to itself" do
+      with_test_spk do |spk|
+        state = spk.state_at(target: 3, center: 3, tdb: test_time)
+
+        zero = Ephem::Core::Vector.new(0.0, 0.0, 0.0)
+        expect(state.position).to eq(zero)
+        expect(state.velocity).to eq(zero)
+      end
+    end
+
+    it "returns one zero state per time for a body relative to itself" do
+      with_test_spk do |spk|
+        states = spk.state_at(
+          target: 3, center: 3, tdb: [test_time, test_time + 1]
+        )
+
+        expect(states.size).to eq(2)
+        expect(states).to all(be_a(Ephem::Core::State))
+      end
+    end
+
+    it "returns one state per time for an array of times" do
+      with_test_spk do |spk|
+        times = [test_time, test_time + 1.5]
+
+        states = spk.state_at(target: 399, center: 0, tdb: times, tdb2: 0.5)
+
+        expected = times.map do |time|
+          barycenter = spk[0, 3].compute_and_differentiate(time, 0.5)
+          earth = spk[3, 399].compute_and_differentiate(time, 0.5)
+          [
+            barycenter.position + earth.position,
+            barycenter.velocity + earth.velocity
+          ]
+        end
+        actual = states.map { |state| [state.position, state.velocity] }
+        expect(actual).to eq(expected)
+      end
+    end
+
+    it "raises KeyError when no chain links the two bodies" do
+      with_test_spk do |spk|
+        expect { spk.state_at(target: 0, center: 999, tdb: test_time) }
+          .to raise_error(KeyError, /center: 999, target: 0/)
+      end
+    end
+  end
+
+  def with_test_spk
+    spk = described_class.open(test_spk)
+    yield spk
+  ensure
+    spk&.close
+  end
+
+  def test_time
+    2460676.5
+  end
+
+  def negated(vector)
+    Ephem::Core::Vector.new(-vector.x, -vector.y, -vector.z)
+  end
+
+  def expect_close_vectors(actual, expected)
+    actual.to_a.zip(expected.to_a).each do |actual_value, expected_value|
+      expect(actual_value).to be_within(1e-6).of(expected_value)
+    end
+  end
 end

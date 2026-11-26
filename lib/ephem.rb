@@ -25,6 +25,7 @@ require_relative "ephem/segments/segment"
 require_relative "ephem/segments/orientation_segment"
 require_relative "ephem/segments/segment_group"
 require_relative "ephem/segments/position_group"
+require_relative "ephem/segments/position_chain"
 require_relative "ephem/segments/orientation_group"
 require_relative "ephem/version"
 
