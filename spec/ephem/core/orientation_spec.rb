@@ -107,9 +107,67 @@ RSpec.describe Ephem::Core::Orientation do
       expect(with_rates).not_to eq(without_rates)
     end
 
-    it "raises when compared with a non-Orientation" do
-      expect { described_class.new(1.0, 2.0, 3.0) == 5 }
-        .to raise_error(Ephem::InvalidInputError)
+    it "returns false for objects of another class" do
+      orientation = described_class.new(1.0, 2.0, 3.0)
+
+      expect(orientation == 5).to be(false)
+      expect(orientation == [1.0, 2.0, 3.0]).to be(false)
+    end
+
+    it "returns false for nil" do
+      orientation = described_class.new(1.0, 2.0, 3.0)
+
+      # standard:disable Style/NilComparison
+      expect(orientation == nil).to be(false)
+      # standard:enable Style/NilComparison
+    end
+
+    it "supports Array#include? with mixed types" do
+      orientation = described_class.new(1.0, 2.0, 3.0)
+      mixed = [nil, 5, described_class.new(1.0, 2.0, 3.0)]
+
+      expect(mixed.include?(orientation)).to be(true)
+      expect([nil, 5].include?(orientation)).to be(false)
+    end
+  end
+
+  describe "#eql?" do
+    it "returns true for identical angles and rates" do
+      orientation = described_class.new(1.0, 2.0, 3.0, rates: [0.1, 0.2, 0.3])
+      same = described_class.new(1.0, 2.0, 3.0, rates: [0.1, 0.2, 0.3])
+
+      expect(orientation.eql?(same)).to be(true)
+    end
+
+    it "returns false for numerically equal angles of another type" do
+      integer_angles = described_class.new(1, 2, 3)
+      float_angles = described_class.new(1.0, 2.0, 3.0)
+
+      expect(integer_angles == float_angles).to be(true)
+      expect(integer_angles.eql?(float_angles)).to be(false)
+    end
+
+    it "returns false for objects of another class" do
+      orientation = described_class.new(1.0, 2.0, 3.0)
+
+      expect(orientation.eql?(nil)).to be(false)
+    end
+  end
+
+  describe "as a hash key" do
+    it "looks up values by equal orientations" do
+      lookup = {
+        nil => :nothing,
+        5 => :number,
+        described_class.new(1.0, 2.0, 3.0, rates: [0.1, 0.2, 0.3]) => :rated,
+        described_class.new(1.0, 2.0, 3.0) => :unrated
+      }
+      rated = described_class.new(1.0, 2.0, 3.0, rates: [0.1, 0.2, 0.3])
+      unrated = described_class.new(1.0, 2.0, 3.0)
+
+      expect(lookup[rated]).to eq(:rated)
+      expect(lookup[unrated]).to eq(:unrated)
+      expect(lookup[described_class.new(4.0, 5.0, 6.0)]).to be_nil
     end
   end
 

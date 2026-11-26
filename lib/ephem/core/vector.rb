@@ -7,11 +7,11 @@ module Ephem
     # mechanics and astronomical coordinate transformations.
     #
     # @example Create a vector representing a position in space
-    #   position = Ephem::Core::Vector.new(1.0, 2.0, 3.0)
+    #   position = Ephem::Vector.new(1.0, 2.0, 3.0)
     #
     # @example Calculate the cross product of two vectors
-    #   pos = Ephem::Core::Vector.new(1.0, 0.0, 0.0)
-    #   vel = Ephem::Core::Vector.new(0.0, 1.0, 0.0)
+    #   pos = Ephem::Vector.new(1.0, 0.0, 0.0)
+    #   vel = Ephem::Vector.new(0.0, 1.0, 0.0)
     #   angular_momentum = pos.cross(vel)
     class Vector
       # @return [Numeric] x component of the vector
@@ -32,7 +32,7 @@ module Ephem
       # @raise [Ephem::InvalidInputError] if any component is not numeric
       #
       # @example Create a vector at the origin
-      #   vector = Ephem::Core::Vector.new(0, 0, 0)
+      #   vector = Ephem::Vector.new(0, 0, 0)
       def initialize(x, y, z)
         unless x.is_a?(Numeric) && y.is_a?(Numeric) && z.is_a?(Numeric)
           raise InvalidInputError, "Vector components must be numeric"
@@ -50,19 +50,19 @@ module Ephem
       # @param y [Numeric] The y component of the vector
       # @param z [Numeric] The z component of the vector
       #
-      # @return [Ephem::Core::Vector] A new vector instance
+      # @return [Ephem::Vector] A new vector instance
       #
       # @example Create a vector using square bracket notation
-      #   vector = Ephem::Core::Vector[1, 2, 3]
+      #   vector = Ephem::Vector[1, 2, 3]
       def self.[](x, y, z)
         new(x, y, z)
       end
 
       # Adds two vectors.
       #
-      # @param other [Ephem::Core::Vector] The vector to add
+      # @param other [Ephem::Vector] The vector to add
       #
-      # @return [Ephem::Core::Vector] A new vector representing the sum
+      # @return [Ephem::Vector] A new vector representing the sum
       #
       # @example Add two position vectors
       #   sum = vector1 + vector2
@@ -72,9 +72,9 @@ module Ephem
 
       # Subtracts two vectors.
       #
-      # @param other [Ephem::Core::Vector] The vector to subtract
+      # @param other [Ephem::Vector] The vector to subtract
       #
-      # @return [Ephem::Core::Vector] A new vector representing the difference
+      # @return [Ephem::Vector] A new vector representing the difference
       #
       # @example Calculate relative position
       #   relative_position = position1 - position2
@@ -84,7 +84,7 @@ module Ephem
 
       # Calculates the dot product with another vector.
       #
-      # @param other [Ephem::Core::Vector] The vector to dot with
+      # @param other [Ephem::Vector] The vector to calculate dot product with
       #
       # @return [Numeric] The dot product of the two vectors
       #
@@ -96,9 +96,9 @@ module Ephem
 
       # Calculates the cross product with another vector.
       #
-      # @param other [Ephem::Core::Vector] The vector to cross with
+      # @param other [Ephem::Vector] The vector to calculate cross product with
       #
-      # @return [Ephem::Core::Vector] The cross product
+      # @return [Ephem::Vector] A new vector representing the cross product
       #
       # @example Calculate angular momentum (position × velocity)
       #   angular_momentum = position.cross(velocity)
@@ -167,24 +167,36 @@ module Ephem
         [x, y, z, self.class].hash
       end
 
-      # Checks equality with another vector.
+      # Checks equality with another object. Components are compared with
+      # +==+, so +Vector[1, 2, 3] == Vector[1.0, 2.0, 3.0]+.
       #
-      # @param other [Ephem::Core::Vector] The vector to compare with
+      # @param other [Object] The object to compare with
       #
-      # @return [Boolean] true if vectors are equal, false otherwise
-      #
-      # @raise [InvalidInputError] if comparing with non-Vector object
+      # @return [Boolean] true if +other+ is a vector with equal components,
+      #   false otherwise (including for objects of another class)
       #
       # @example Check if two vectors are equal
       #   vector1 == vector2
       def ==(other)
-        unless other.is_a?(self.class)
-          raise InvalidInputError, "Can only compare with another Vector"
-        end
+        return true if equal?(other)
 
-        [x, y, z] == [other.x, other.y, other.z]
+        other.instance_of?(self.class) &&
+          x == other.x && y == other.y && z == other.z
       end
-      alias_method :eql?, :==
+
+      # Checks strict equality, as used by Hash keys. Components are compared
+      # with +eql?+, consistently with {#hash}, so
+      # +Vector[1, 2, 3].eql?(Vector[1.0, 2.0, 3.0])+ is false.
+      #
+      # @param other [Object] The object to compare with
+      #
+      # @return [Boolean] true if +other+ is a vector with eql? components
+      def eql?(other)
+        return true if equal?(other)
+
+        other.instance_of?(self.class) &&
+          x.eql?(other.x) && y.eql?(other.y) && z.eql?(other.z)
+      end
     end
   end
 end
