@@ -18,6 +18,9 @@
   faster ([#104], [#110])
 - Ship only runtime files in the gem and require MFA to publish it. The
   `validate_accuracy` rake task moves to `rakelib/` ([#109], [#124])
+- Load `Ephem::CLI`, `Ephem::Download` and `Ephem::Excerpt` on first use, so
+  `require "ephem"` no longer loads `net/http`, `optparse`, `date`, `tempfile`
+  or `zlib` ([#105], [#119])
 
 ### Bug fixes
 
@@ -26,10 +29,12 @@
 
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
 [#104]: https://github.com/rhannequin/ruby-ephem/issues/104
+[#105]: https://github.com/rhannequin/ruby-ephem/issues/105
 [#106]: https://github.com/rhannequin/ruby-ephem/issues/106
 [#109]: https://github.com/rhannequin/ruby-ephem/issues/109
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
+[#119]: https://github.com/rhannequin/ruby-ephem/pull/119
 [#124]: https://github.com/rhannequin/ruby-ephem/pull/124
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 

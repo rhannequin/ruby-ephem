@@ -11,7 +11,6 @@ require_relative "ephem/core/rotation"
 require_relative "ephem/error"
 require_relative "ephem/io/binary_reader"
 require_relative "ephem/io/daf"
-require_relative "ephem/download"
 require_relative "ephem/io/endianness_manager"
 require_relative "ephem/io/record_data"
 require_relative "ephem/io/record_parser"
@@ -27,9 +26,10 @@ require_relative "ephem/segments/orientation_segment"
 require_relative "ephem/segments/segment_group"
 require_relative "ephem/segments/position_group"
 require_relative "ephem/segments/orientation_group"
-require_relative "ephem/excerpt"
-require_relative "ephem/cli"
 require_relative "ephem/version"
 
 module Ephem
+  autoload :CLI, File.expand_path("ephem/cli", __dir__)
+  autoload :Download, File.expand_path("ephem/download", __dir__)
+  autoload :Excerpt, File.expand_path("ephem/excerpt", __dir__)
 end
