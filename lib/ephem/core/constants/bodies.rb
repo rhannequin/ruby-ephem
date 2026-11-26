@@ -25,6 +25,8 @@ module Ephem
         URANUS = 799
         NEPTUNE = 899
         PLUTO = 999
+        TIME_CENTER = 1_000_000_000
+        TT_MINUS_TDB = 1_000_000_001
       end
     end
   end

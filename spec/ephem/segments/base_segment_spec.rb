@@ -68,6 +68,21 @@ RSpec.describe Ephem::Segments::BaseSegment do
 
       expect(segment.describe).to end_with("-> Unknown Target (2000001)")
     end
+
+    it "names the time ephemeris pair of INPOP time kernels" do
+      time_center = Ephem::Core::Constants::Bodies::TIME_CENTER
+      tt_minus_tdb = Ephem::Core::Constants::Bodies::TT_MINUS_TDB
+      descriptor = [100.0, 200.0, tt_minus_tdb, time_center, 1, 2, 0, 100]
+      segment = described_class.new(
+        daf: double("daf"),
+        source: "INPOP21A",
+        descriptor: descriptor
+      )
+
+      expect(segment.describe).to end_with(
+        "Time Center (1000000000) -> TT-TDB (1000000001)"
+      )
+    end
   end
 
   describe "#compute" do
