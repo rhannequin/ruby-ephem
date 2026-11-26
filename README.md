@@ -181,10 +181,17 @@ a single `rescue Ephem::Error` catches them. The most common ones are:
   kind (an SPK passed to `Ephem::PCK.open`, or the other way round).
 - `Ephem::UnsupportedError`: the kernel uses a segment or data type the gem
   does not implement.
+- `Ephem::InvalidInputError`: a `Vector` or `Orientation` was given
+  non-numeric values.
 
-Errors from the file system, such as `Errno::ENOENT` or `Errno::EACCES`, are
-not wrapped, and invalid arguments raise Ruby's own errors (`ArgumentError`,
-or `IndexError` for an out-of-range `Vector#[]` or `Orientation#[]`).
+Some errors are Ruby's own and are not `Ephem::Error`:
+
+- `KeyError`: `SPK#[]` or `PCK#[]` was asked for a pair or body the kernel
+  does not contain.
+- `IndexError`: `Vector#[]` or `Orientation#[]` was given an index other
+  than 0, 1 or 2.
+- `Errno::ENOENT`, `Errno::EACCES` and other file system errors, which are
+  not wrapped.
 
 ## CLI
 
