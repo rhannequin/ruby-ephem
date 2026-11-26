@@ -19,6 +19,13 @@
 - `Ephem::OutOfRangeError#out_of_range_times` is always an Array of every
   uncovered time, as Julian Dates. It used to be a single number, in seconds
   since J2000 or in Julian Date depending on the source ([#127], [#128])
+- More errors inherit from `Ephem::Error` ([#129], [#138]):
+  - `position_at` and `state_at` on PCK segments and groups raise
+    `Ephem::UnsupportedError` instead of `NoMethodError`
+  - Reading from a kernel or one of its segments after `close` raises the new
+    `Ephem::ClosedKernelError` instead of `IOError`
+  - `Ephem::Download` wraps network, TLS and archive errors in
+    `Ephem::DownloadError`, keeping the original error as `cause`
 - `Ephem::Download` no longer accepts `de431.bsp`, which JPL has removed and
   now answers with a 404. Use `de431t.bsp` instead ([#131], [#135])
 
@@ -132,6 +139,7 @@
 [#126]: https://github.com/rhannequin/ruby-ephem/pull/126
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
+[#129]: https://github.com/rhannequin/ruby-ephem/issues/129
 [#130]: https://github.com/rhannequin/ruby-ephem/issues/130
 [#131]: https://github.com/rhannequin/ruby-ephem/issues/131
 [#132]: https://github.com/rhannequin/ruby-ephem/issues/132
@@ -140,6 +148,7 @@
 [#135]: https://github.com/rhannequin/ruby-ephem/pull/135
 [#136]: https://github.com/rhannequin/ruby-ephem/pull/136
 [#137]: https://github.com/rhannequin/ruby-ephem/pull/137
+[#138]: https://github.com/rhannequin/ruby-ephem/pull/138
 [#139]: https://github.com/rhannequin/ruby-ephem/pull/139
 
 ## [0.5.2] - 2026-11-24

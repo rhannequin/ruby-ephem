@@ -226,22 +226,31 @@ module Ephem
 
     def extract_imcce_kernel(archive_path, file)
       kernel_path = IMCCE_KERNELS[@name]
-      kernel_found = false
-      Zlib::GzipReader.open(archive_path) do |gz|
-        Gem::Package::TarReader.new(gz) do |tar|
-          tar.each_entry do |entry|
-            next unless entry.full_name == kernel_path
-
-            copy_entry(entry, file)
-            kernel_found = true
-            break
-          end
-        end
+      kernel_found = Zlib::GzipReader.open(archive_path) do |gz|
+        copy_tar_entry(gz, kernel_path, file)
       end
       return if kernel_found
 
       raise DownloadError,
         "#{IMCCE_KERNELS_MATCHING[@name]} does not contain #{kernel_path}"
+    rescue Zlib::Error, Gem::Package::Error => error
+      raise DownloadError,
+        "#{IMCCE_KERNELS_MATCHING[@name]} is not a valid archive: " \
+        "#{error.message}"
+    end
+
+    def copy_tar_entry(gz, kernel_path, file)
+      Gem::Package::TarReader.new(gz) do |tar|
+        tar.each_entry do |entry|
+          next unless entry.full_name == kernel_path
+
+          copy_entry(entry, file)
+          return true
+        end
+      end
+      false
+    rescue ArgumentError => error
+      raise Gem::Package::TarInvalidError, error.message
     end
 
     def copy_entry(entry, file)
@@ -267,6 +276,13 @@ module Ephem
           response.read_body { |chunk| file.write(chunk) }
         end
       end
+    rescue SocketError, Net::OpenTimeout, Net::ReadTimeout,
+      Net::WriteTimeout, Net::HTTPBadResponse, Net::ProtocolError,
+      OpenSSL::SSL::SSLError, EOFError, Errno::ECONNRESET,
+      Errno::ECONNREFUSED, Errno::ECONNABORTED, Errno::EHOSTUNREACH,
+      Errno::EHOSTDOWN, Errno::ENETUNREACH, Errno::ENETDOWN,
+      Errno::ETIMEDOUT, Errno::EPIPE => error
+      raise DownloadError, "Failed to download #{uri}: #{error.message}"
     end
   end
 end

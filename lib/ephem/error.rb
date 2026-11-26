@@ -15,6 +15,8 @@ module Ephem
 
   class DownloadError < Error; end
 
+  class ClosedKernelError < Error; end
+
   class OutOfRangeError < Error
     attr_reader :out_of_range_times
 

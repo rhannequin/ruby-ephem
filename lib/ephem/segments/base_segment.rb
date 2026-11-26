@@ -118,8 +118,20 @@ module Ephem
 
       # @raise [Ephem::UnsupportedError] the segment's data type has no
       #   implementation
+      def position_at(_tdb, _tdb2 = 0.0)
+        raise UnsupportedError, unsupported_message("position_at")
+      end
+
+      # @raise [Ephem::UnsupportedError] the segment's data type has no
+      #   implementation
       def compute_and_differentiate(_tdb, _tdb2 = 0.0)
         raise UnsupportedError, unsupported_message("compute_and_differentiate")
+      end
+
+      # @raise [Ephem::UnsupportedError] the segment's data type has no
+      #   implementation
+      def state_at(_tdb, _tdb2 = 0.0)
+        raise UnsupportedError, unsupported_message("state_at")
       end
 
       def clear_data

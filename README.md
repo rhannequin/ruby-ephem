@@ -254,6 +254,13 @@ a single `rescue Ephem::Error` catches them. The most common ones are:
 - `Ephem::InvalidInputError`: a `Vector` or `Orientation` was given
   non-numeric values, or a `Vector` was multiplied or divided by a
   non-number.
+- `Ephem::ClosedKernelError`: a kernel, or a segment taken from it, was
+  queried after the kernel was closed, including after the block given to
+  `SPK.open` or `PCK.open` returned.
+- `Ephem::DownloadError`: `Ephem::Download` could not fetch a kernel. The
+  server answered with an error, the connection failed or timed out, or the
+  IMCCE archive is invalid or lacks the kernel. `#cause` holds the original
+  error when there is one.
 
 Some errors are Ruby's own and are not `Ephem::Error`:
 

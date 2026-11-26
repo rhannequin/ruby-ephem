@@ -129,6 +129,19 @@ RSpec.describe Ephem::Segments::OrientationSegment do
     end
   end
 
+  describe "#position_at and #state_at" do
+    it "directs callers to the orientation methods" do
+      segment = create_segment_with_data
+
+      expect { segment.position_at(0.0) }.to raise_error(
+        Ephem::UnsupportedError, /angles_at or #orientation_at/
+      )
+      expect { segment.state_at(0.0) }.to raise_error(
+        Ephem::UnsupportedError, /orientation_at/
+      )
+    end
+  end
+
   describe "#clear_data" do
     it "lets a running angles query finish with the data it loaded" do
       segment = create_segment_with_data
