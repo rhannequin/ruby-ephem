@@ -179,17 +179,8 @@ module Ephem
 
     def extract_imcce_kernel(archive_path, file)
       kernel_path = IMCCE_KERNELS[@name]
-      kernel_found = false
-      Zlib::GzipReader.open(archive_path) do |gz|
-        Gem::Package::TarReader.new(gz) do |tar|
-          tar.each_entry do |entry|
-            next unless entry.full_name == kernel_path
-
-            copy_entry(entry, file)
-            kernel_found = true
-            break
-          end
-        end
+      kernel_found = Zlib::GzipReader.open(archive_path) do |gz|
+        copy_tar_entry(gz, kernel_path, file)
       end
       return if kernel_found
 
@@ -199,6 +190,20 @@ module Ephem
       raise DownloadError,
         "#{IMCCE_KERNELS_MATCHING[@name]} is not a valid archive: " \
         "#{error.message}"
+    end
+
+    def copy_tar_entry(gz, kernel_path, file)
+      Gem::Package::TarReader.new(gz) do |tar|
+        tar.each_entry do |entry|
+          next unless entry.full_name == kernel_path
+
+          copy_entry(entry, file)
+          return true
+        end
+      end
+      false
+    rescue ArgumentError => error
+      raise Gem::Package::TarInvalidError, error.message
     end
 
     def copy_entry(entry, file)

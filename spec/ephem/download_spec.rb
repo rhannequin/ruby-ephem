@@ -255,8 +255,23 @@ RSpec.describe Ephem::Download do
           expect {
             described_class.call(name: "inpop19a.bsp", target: target_path)
           }.to raise_error(Ephem::DownloadError) { |error|
-            expect(error.cause).to be_a(Gem::Package::TarInvalidError)
+            expect(error.cause).to be_a(Gem::Package::Error)
           }
+          expect(Dir.children(directory)).to be_empty
+        end
+      end
+
+      it "wraps a tar header parsing error in a DownloadError" do
+        stub_http_response(successful_response(gzip("not a tar" * 200)))
+        allow(Gem::Package::TarReader).to receive(:new)
+          .and_raise(ArgumentError, '"ot a tar" is not an octal string')
+
+        Dir.mktmpdir do |directory|
+          target_path = File.join(directory, "inpop19a.bsp")
+
+          expect {
+            described_class.call(name: "inpop19a.bsp", target: target_path)
+          }.to raise_error(Ephem::DownloadError, /is not an octal string/)
           expect(Dir.children(directory)).to be_empty
         end
       end
