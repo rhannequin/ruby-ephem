@@ -14,8 +14,12 @@
 - Fix documentation errors: broken README links, an undefined variable in the
   rotation example, wrong constant names in YARD examples, and the J2000 epoch
   and accuracy wording ([#106], [#115])
+- Document how to enable YJIT, which makes computations about 2 to 2.5 times
+  faster ([#104], [#110])
 
+[#104]: https://github.com/rhannequin/ruby-ephem/issues/104
 [#106]: https://github.com/rhannequin/ruby-ephem/issues/106
+[#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
 
 ## [0.5.2] - 2026-11-24

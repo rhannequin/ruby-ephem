@@ -238,12 +238,35 @@ usage time.
 
 [jplephem]: https://pypi.org/project/jplephem/
 
+## YJIT
+
+Run Ephem with [YJIT] enabled: computations are about 2 to 2.5 times faster.
+
+| Benchmark                           | Interpreter | YJIT    |
+|-------------------------------------|-------------|---------|
+| `compute` (Earth-Moon barycenter)   | 2.7 µs      | 1.1 µs  |
+| `compute_and_differentiate` (EMB)   | 4.8 µs      | 2.2 µs  |
+| `angles_at` (Moon PCK)              | 2.3 µs      | 0.96 µs |
+
+Measured with `benchmarks/run.rb` on Ruby 4.0.5.
+
+Enable it with `ruby --yjit`, `RUBY_YJIT_ENABLE=1`, or `RubyVM::YJIT.enable`
+(for example in a Rails initializer).
+
+[YJIT]: https://docs.ruby-lang.org/en/3.4/yjit/yjit_md.html
+
 ## Benchmarks
 
 Run the benchmark suite to measure performance across the computation pipeline:
 
 ```bash
 bundle exec ruby benchmarks/run.rb
+```
+
+Add `--yjit` to compare with [YJIT](#yjit) enabled:
+
+```bash
+bundle exec ruby --yjit benchmarks/run.rb
 ```
 
 ## Development
