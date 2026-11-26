@@ -80,7 +80,7 @@
   empty or ends inside one of its file, comment, summary or name records,
   instead of an `IOError` or a record silently padded with null bytes.
   `SPK.open`, `PCK.open` and the `ruby-ephem` command also close the file when
-  the kernel cannot be read ([#133])
+  the kernel cannot be read ([#133], [#137])
 
 [#93]: https://github.com/rhannequin/ruby-ephem/issues/93
 [#94]: https://github.com/rhannequin/ruby-ephem/issues/94
@@ -119,6 +119,7 @@
 [#127]: https://github.com/rhannequin/ruby-ephem/issues/127
 [#128]: https://github.com/rhannequin/ruby-ephem/pull/128
 [#133]: https://github.com/rhannequin/ruby-ephem/issues/133
+[#137]: https://github.com/rhannequin/ruby-ephem/pull/137
 
 ## [0.5.2] - 2026-11-24
 
