@@ -1,5 +1,23 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking changes
+
+- Remove `Ephem::IO::DAF#map_array`, an alias of `#read_array` kept from
+  jplephem. Call `#read_array` instead ([#106], [#115])
+
+### Improvements
+
+- Raise `Ephem::UnsupportedError` instead of a `RuntimeError` for an unsupported
+  SPK data type in `Segment` ([#106], [#115])
+- Fix documentation errors: broken README links, an undefined variable in the
+  rotation example, wrong constant names in YARD examples, and the J2000 epoch
+  and accuracy wording ([#106], [#115])
+
+[#106]: https://github.com/rhannequin/ruby-ephem/issues/106
+[#115]: https://github.com/rhannequin/ruby-ephem/pull/115
+
 ## [0.5.2] - 2026-11-24
 
 ### Bug fixes

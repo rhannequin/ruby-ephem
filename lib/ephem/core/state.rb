@@ -7,25 +7,25 @@ module Ephem
     # orbital motion and performing astronomical calculations.
     #
     # @example Create a state for a celestial object
-    #   position = Ephem::Vector.new(1.0, 2.0, 3.0)
-    #   velocity = Ephem::Vector.new(0.1, 0.2, 0.3)
-    #   state = Ephem::State.new(position, velocity)
+    #   position = Ephem::Core::Vector.new(1.0, 2.0, 3.0)
+    #   velocity = Ephem::Core::Vector.new(0.1, 0.2, 0.3)
+    #   state = Ephem::Core::State.new(position, velocity)
     class State
-      # @return [Ephem::Vector] The position vector of the object
+      # @return [Ephem::Core::Vector] The position vector of the object
       attr_reader :position
 
-      # @return [Ephem::Vector] The velocity vector of the object
+      # @return [Ephem::Core::Vector] The velocity vector of the object
       attr_reader :velocity
 
       # Creates a new State instance.
       #
-      # @param position [Ephem::Vector] The position vector
-      # @param velocity [Ephem::Vector] The velocity vector
+      # @param position [Ephem::Core::Vector] The position vector
+      # @param velocity [Ephem::Core::Vector] The velocity vector
       #
-      # @example Create a state at the solar system barycenter with zero velocity
-      #   position = Ephem::Vector.new(0.0, 0.0, 0.0)
-      #   velocity = Ephem::Vector.new(0.0, 0.0, 0.0)
-      #   state = Ephem::State.new(position, velocity)
+      # @example A state at the solar system barycenter with zero velocity
+      #   position = Ephem::Core::Vector.new(0.0, 0.0, 0.0)
+      #   velocity = Ephem::Core::Vector.new(0.0, 0.0, 0.0)
+      #   state = Ephem::Core::State.new(position, velocity)
       def initialize(position, velocity)
         @position = position
         @velocity = velocity
@@ -38,12 +38,12 @@ module Ephem
       # @param velocity [Array<Numeric>] Array of [vx, vy, vz] velocity
       #   components
       #
-      # @return [Ephem::State] A new State instance
+      # @return [Ephem::Core::State] A new State instance
       #
       # @example Create a state from arrays
       #   position = [1.0, 2.0, 3.0]
       #   velocity = [0.1, 0.2, 0.3]
-      #   state = Ephem::State.from_arrays(position, velocity)
+      #   state = Ephem::Core::State.from_arrays(position, velocity)
       def self.from_arrays(position, velocity)
         new(
           Vector.new(position[0], position[1], position[2]),

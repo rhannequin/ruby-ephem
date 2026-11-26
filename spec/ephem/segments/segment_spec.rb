@@ -116,36 +116,28 @@ RSpec.describe Ephem::Segments::Segment do
     end
   end
 
+  describe "unsupported data types" do
+    it "raises UnsupportedError when computing" do
+      segment = create_segment_with_data(data_type: 5)
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+
+      expect { segment.compute(time) }
+        .to raise_error(Ephem::UnsupportedError, /SPK data type: 5/)
+    end
+  end
+
   describe "#clear_data" do
     it "clears cached data" do
       segment = create_segment_with_data
       time = Ephem::Core::Constants::Time::J2000_EPOCH
 
-      # Track map_array calls
-      load_count = 0
-      allow(segment.daf).to receive(:map_array) do |start_word, end_word|
-        load_count += 1
-        # Return original test data
-        [
-          0.0, 43200.0,
-          1.0, 0.05, 0.0,
-          2.0, 0.1, 0.0,
-          3.0, 0.15, 0.0
-        ][(start_word - 1)..(end_word - 1)]
-      end
-
-      # First computation loads data
       segment.compute(time)
-      initial_loads = load_count
-
-      # Second computation should use cache
       segment.compute(time)
-      expect(load_count).to eq(initial_loads)
-
-      # After clearing, computation should load data again
       segment.clear_data
       segment.compute(time)
-      expect(load_count).to be > initial_loads
+
+      expect(segment.daf)
+        .to have_received(:read_array).with(1, 96).twice
     end
   end
 
@@ -153,7 +145,7 @@ RSpec.describe Ephem::Segments::Segment do
     # Create a double for DAF that handles both coefficient data and metadata
     daf = instance_double(Ephem::IO::DAF)
 
-    # Allow read_array and map_array to handle different ranges of the data
+    # Allow read_array to handle different ranges of the data
     allow(daf).to receive(:read_array) do |start_word, end_word|
       if end_word >= 97  # Reading metadata from end of segment
         # Metadata must match our actual data structure:
@@ -187,15 +179,10 @@ RSpec.describe Ephem::Segments::Segment do
       end
     end
 
-    # map_array is an alias for read_array
-    allow(daf).to receive(:map_array) do |start_word, end_word|
-      daf.read_array(start_word, end_word)
-    end
-
     daf
   end
 
-  def create_segment_with_data
+  def create_segment_with_data(data_type: 2)
     daf = create_mock_daf
     descriptor = [
       0.0,     # start_second
@@ -203,7 +190,7 @@ RSpec.describe Ephem::Segments::Segment do
       3,       # target (Earth-moon Barycenter)
       0,       # center (Solar System Barycenter)
       1,       # frame
-      2,       # data_type (position only)
+      data_type,
       1,       # start_i
       100      # end_i
     ]

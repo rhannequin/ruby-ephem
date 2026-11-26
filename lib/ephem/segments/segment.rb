@@ -28,12 +28,6 @@ module Ephem
         3 => 6   # Type 3: position (x, y, z) and velocity (vx, vy, vz)
       }.freeze
 
-      def initialize(daf:, source:, descriptor:)
-        super
-        @data_loaded = false
-        @data_lock = Mutex.new
-      end
-
       # Computes the position of the target body relative to the center body at
       # the specified time.
       #
@@ -92,7 +86,7 @@ module Ephem
 
       def component_count
         COMPONENT_COUNTS.fetch(@data_type) do
-          raise "Unsupported data type: #{@data_type}"
+          raise UnsupportedError, "Unsupported SPK data type: #{@data_type}"
         end
       end
 

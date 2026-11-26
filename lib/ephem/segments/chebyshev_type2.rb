@@ -6,6 +6,12 @@ module Ephem
     module ChebyshevType2
       include Core::Constants
 
+      def initialize(...)
+        super
+        @data_loaded = false
+        @data_lock = Mutex.new
+      end
+
       # @return [void]
       def clear_data
         @data_lock.synchronize do
@@ -33,7 +39,7 @@ module Ephem
         _start_index, _end_index, record_size, segment_count = metadata
 
         coefficient_count = ((record_size - 2) / component_count).to_i
-        coefficients_raw = @daf.map_array(@start_i, @end_i - 4)
+        coefficients_raw = @daf.read_array(@start_i, @end_i - 4)
 
         [
           coefficients_raw,

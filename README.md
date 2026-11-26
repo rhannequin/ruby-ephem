@@ -152,8 +152,17 @@ matrix = frame.matrix_at(2451545.0)
 # ...or from an Orientation you already have
 matrix = orientation.to_matrix
 
-# Project a geocentric Earth->Moon vector into the body-fixed frame
+# Geocentric Earth->Moon vector (km) from the SPK kernel used above, in the
+# same inertial frame (J2000) as the orientation
+spk = Ephem::SPK.open("tmp/de421.bsp")
+moon = spk[3, 301].position_at(2451545.0)
+earth = spk[3, 399].position_at(2451545.0)
+earth_to_moon = moon - earth
+
+# Project it into the body-fixed frame
 body_fixed = Ephem::Core::Rotation.apply(matrix, earth_to_moon)
+
+spk.close
 ```
 
 `Ephem::Core::Rotation` also exposes the lower-level, kernel-agnostic building
@@ -201,12 +210,13 @@ The following kernels have been used:
 * DE430t
 * DE440s
 
-The times tested are noon UTC for every day between 2000-01-01 and
-2050-01-01. Vectors tested are always with `center` 0 (Solar System Barycenter),
-and `target` from `1` (Mercury Barycenter) to `10` (Sun).
+The times tested are integer Julian Dates in TDB (noon TDB) for every day
+between 2000-01-01 and 2050-01-01. Vectors tested are always with `center` 0
+(Solar System Barycenter), and `target` from `1` (Mercury Barycenter) to `10`
+(Sun).
 
 Rake tasks ensure data from this library match with `jplephem`. Positions match
-exactly and velocities are within 0.002 mm/s.
+exactly and velocities are within 2e-9 km/day (about 2e-11 m/s).
 
 You can run them by following this pattern:
 
@@ -326,7 +336,7 @@ to the [code of conduct].
 
 The gem is available as open source under the terms of the [MIT License].
 
-[MIT License]: (https://opensource.org/licenses/MIT)
+[MIT License]: https://opensource.org/licenses/MIT
 
 ## Code of Conduct
 
@@ -334,4 +344,4 @@ Everyone interacting in the Ephem project's codebases, issue trackers, chat
 rooms and mailing lists is expected to follow
 the [code of conduct].
 
-[code of conduct]: (https://github.com/rhannequin/ephem/blob/main/CODE_OF_CONDUCT.md)
+[code of conduct]: https://github.com/rhannequin/ruby-ephem/blob/main/CODE_OF_CONDUCT.md
