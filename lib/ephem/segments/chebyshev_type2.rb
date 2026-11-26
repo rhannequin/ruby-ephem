@@ -133,10 +133,35 @@ module Ephem
           end
         end
 
-        raise OutOfRangeError.new(
-          "Time #{tdb_seconds} is outside the coverage of this segment",
-          tdb_seconds
+        raise out_of_range_error(
+          [Time::J2000_EPOCH + tdb_seconds / Time::SECONDS_PER_DAY]
         )
+      end
+
+      def out_of_range_error(times)
+        Coverage.out_of_range_error(
+          times: times,
+          label: label,
+          ranges: [[@start_jd, @end_jd]]
+        )
+      end
+
+      def request_out_of_range_error(error, tdb, tdb2)
+        times = uncovered_times(tdb, tdb2)
+        times.empty? ? error : out_of_range_error(times)
+      end
+
+      def uncovered_times(tdb, tdb2)
+        Array(tdb).filter_map do |time|
+          time + tdb2 unless covered_by_records?(time_to_seconds(time, tdb2))
+        end
+      end
+
+      def covered_by_records?(tdb_seconds)
+        interval = (0...@midpoints.size).bsearch do |index|
+          @midpoints[index] + @radii[index] >= tdb_seconds
+        end
+        interval && time_in_interval?(tdb_seconds, interval)
       end
 
       def time_in_interval?(time, interval)

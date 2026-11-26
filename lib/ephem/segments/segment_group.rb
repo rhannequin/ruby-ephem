@@ -53,7 +53,10 @@ module Ephem
         if tdb.is_a?(Array)
           query_many(tdb, tdb2) { |segment, times| yield segment, times, tdb2 }
         else
-          yield segment_for(tdb, tdb2), tdb, tdb2
+          segment = segment_for(tdb, tdb2)
+          raise out_of_range_error([tdb + tdb2]) unless segment
+
+          yield segment, tdb, tdb2
         end
       end
 
@@ -61,6 +64,12 @@ module Ephem
         results = Array.new(times.size)
         indices_by_segment = times.each_index.group_by do |index|
           segment_for(times[index], tdb2)
+        end
+
+        if (uncovered_indices = indices_by_segment[nil])
+          raise out_of_range_error(
+            uncovered_indices.map { |index| times[index] + tdb2 }
+          )
         end
 
         indices_by_segment.each do |segment, indices|
@@ -74,10 +83,15 @@ module Ephem
       end
 
       def segment_for(tdb, tdb2)
-        @segments.reverse_each.find { |segment| segment.covers?(tdb, tdb2) } ||
-          raise(OutOfRangeError.new(
-            "Time #{tdb} is outside the coverage of this group", tdb
-          ))
+        @segments.reverse_each.find { |segment| segment.covers?(tdb, tdb2) }
+      end
+
+      def out_of_range_error(times)
+        Coverage.out_of_range_error(
+          times: times,
+          label: @segments.first.label,
+          ranges: @segments.map { |segment| [segment.start_jd, segment.end_jd] }
+        )
       end
     end
   end

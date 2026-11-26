@@ -31,12 +31,16 @@ RSpec.describe Ephem::Segments::OrientationSegment do
       expect(orientations).to all(be_a(Ephem::Core::Orientation))
     end
 
-    it "raises OutOfRangeError outside the coverage" do
+    it "raises OutOfRangeError naming the time, frames and coverage" do
       segment = create_segment_with_data
       early = Ephem::Core::Constants::Time::J2000_EPOCH - 1.0
 
-      expect { segment.angles_at(early) }
-        .to raise_error(Ephem::OutOfRangeError)
+      expect { segment.angles_at(early) }.to raise_error(
+        Ephem::OutOfRangeError,
+        "JD 2451544.0 (1999-12-31) is outside the coverage of " \
+        "frame 31008 relative to frame 1, " \
+        "which covers JD 2451545.0..2451546.0 (2000-01-01..2000-01-02)"
+      )
     end
   end
 
@@ -50,9 +54,30 @@ RSpec.describe Ephem::Segments::OrientationSegment do
       expect(orientation.rates?).to be(true)
       expect(orientation.rates.length).to eq(3)
     end
+
+    it "reports every uncovered time of an array" do
+      segment = create_segment_with_data
+      time = Ephem::Core::Constants::Time::J2000_EPOCH
+      early_time = time - 1.0
+
+      expect { segment.orientation_at([early_time, time]) }
+        .to raise_error(Ephem::OutOfRangeError) do |error|
+          expect(error.out_of_range_times).to eq([early_time])
+        end
+    end
   end
 
   describe "#matrix_at" do
+    it "reports the uncovered times" do
+      segment = create_segment_with_data
+      late_time = Ephem::Core::Constants::Time::J2000_EPOCH + 2.0
+
+      expect { segment.matrix_at(late_time) }
+        .to raise_error(Ephem::OutOfRangeError) do |error|
+          expect(error.out_of_range_times).to eq([late_time])
+        end
+    end
+
     it "returns the rotation matrix from the angles" do
       segment = create_segment_with_data
       time = Ephem::Core::Constants::Time::J2000_EPOCH

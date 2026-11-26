@@ -14,6 +14,12 @@ class ChebyshevType2TestHost
     @midpoints = midpoints
     @radii = radii
     @coefficients = coefficients
+    @start_jd = 2451545.0
+    @end_jd = 2451546.0
+  end
+
+  def label
+    "test segment"
   end
 
   private
@@ -110,6 +116,63 @@ RSpec.describe Ephem::Segments::ChebyshevType2 do
 
       expect { host.send(:find_interval, 350.0) }
         .to raise_error(Ephem::OutOfRangeError)
+    end
+
+    it "reports the uncovered time as a Julian Date" do
+      host = build_search_host
+
+      expect { host.send(:find_interval, 43200.0) }.to raise_error(
+        Ephem::OutOfRangeError,
+        /\AJD 2451545.5 \(2000-01-02\) is outside the coverage of test/
+      ) { |error| expect(error.out_of_range_times).to eq([2451545.5]) }
+    end
+  end
+
+  describe "#request_out_of_range_error" do
+    it "lists the uncovered times of the request" do
+      host = build_search_host
+      original_error = Ephem::OutOfRangeError.new("original", [])
+
+      error = host.send(
+        :request_out_of_range_error, original_error, 2451546.0, 0.0
+      )
+
+      expect(error.out_of_range_times).to eq([2451546.0])
+    end
+
+    it "keeps the original error when every time is covered" do
+      host = build_search_host
+      original_error = Ephem::OutOfRangeError.new("original", [])
+      covered = 2451545.0 + 100.0 / 86400.0
+
+      error = host.send(
+        :request_out_of_range_error, original_error, covered, 0.0
+      )
+
+      expect(error).to be(original_error)
+    end
+  end
+
+  describe "#uncovered_times" do
+    it "keeps the times no interval covers, with their tdb2 fraction" do
+      host = build_search_host
+      seconds_per_day = Ephem::Core::Constants::Time::SECONDS_PER_DAY
+      in_gap = 2451545.0 + 200.0 / seconds_per_day
+      covered = 2451545.0 + 100.0 / seconds_per_day
+      after_last = 2451545.0 + 400.0 / seconds_per_day
+
+      times = [in_gap, covered, after_last]
+
+      uncovered = host.send(:uncovered_times, times, 0.0)
+
+      expect(uncovered).to eq([in_gap, after_last])
+    end
+
+    it "accepts a single time" do
+      host = build_search_host
+
+      expect(host.send(:uncovered_times, 2451545.0, 0.25))
+        .to eq([2451545.25])
     end
   end
 

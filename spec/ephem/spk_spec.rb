@@ -299,6 +299,35 @@ RSpec.describe Ephem::SPK do
     end
   end
 
+  describe "querying a time outside a kernel" do
+    it "explains which pair does not cover which time" do
+      spk = described_class.open(de421_2000_excerpt)
+      segment = spk[0, 3]
+
+      expect { segment.position_at(2400000.5) }.to raise_error(
+        Ephem::OutOfRangeError,
+        "JD 2400000.5 (1858-11-17) is outside the coverage of " \
+        "Solar System Barycenter (0) -> Earth-Moon Barycenter (3), " \
+        "which covers JD 2451536.5..2451920.5 (1999-12-24..2001-01-11)"
+      )
+
+      spk.close
+    end
+
+    it "reports times just past the end of the coverage" do
+      spk = described_class.open(de421_2000_excerpt)
+      segment = spk[0, 3]
+      past_end = segment.end_jd + 1e-6
+
+      expect { segment.state_at([segment.end_jd, past_end]) }
+        .to raise_error(Ephem::OutOfRangeError) do |error|
+          expect(error.out_of_range_times).to eq([past_end])
+        end
+
+      spk.close
+    end
+  end
+
   describe "#comments" do
     it "delegates to the DAF comments" do
       daf = instance_double(Ephem::IO::DAF)

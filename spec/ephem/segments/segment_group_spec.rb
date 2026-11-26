@@ -21,12 +21,50 @@ RSpec.describe Ephem::Segments::PositionGroup do
       expect(group.compute([10.0, 150.0])).to eq([:a, :b])
     end
 
-    it "raises OutOfRangeError when no segment covers the time" do
-      segment = build_position_segment(covers: 0.0..1.0)
-      group = described_class.new([segment])
+    it "raises OutOfRangeError naming the time, pair and coverage" do
+      early = build_position_segment(covers: 2451545.0..2451546.0)
+      late = build_position_segment(covers: 2451546.0..2451547.0)
+      group = described_class.new([early, late])
 
-      expect { group.compute(150.0) }
-        .to raise_error(Ephem::OutOfRangeError)
+      expect { group.compute(2451550.0) }.to raise_error(
+        Ephem::OutOfRangeError,
+        "JD 2451550.0 (2000-01-06) is outside the coverage of " \
+        "Earth-Moon Barycenter (3) -> Moon (301), " \
+        "which covers JD 2451545.0..2451547.0 (2000-01-01..2000-01-03)"
+      )
+    end
+
+    it "lists disjoint coverage ranges separately" do
+      early = build_position_segment(covers: 2451545.0..2451546.0)
+      late = build_position_segment(covers: 2451550.0..2451551.0)
+      group = described_class.new([early, late])
+
+      expect { group.compute(2451548.0) }.to raise_error(
+        Ephem::OutOfRangeError, /2451546.0 \(.*\), JD 2451550.0/
+      )
+    end
+
+    it "reports the time with its tdb2 fraction" do
+      segment = build_position_segment(covers: 2451545.0..2451546.0)
+      group = described_class.new([segment, segment])
+
+      expect { group.compute(2451546.0, 0.5) }
+        .to raise_error(Ephem::OutOfRangeError) do |error|
+          expect(error.out_of_range_times).to eq([2451546.5])
+        end
+    end
+
+    it "reports every uncovered time of an array" do
+      segment = build_position_segment(covers: 2451545.0..2451546.0)
+      group = described_class.new([segment, segment])
+
+      expect { group.compute([2451540.0, 2451545.5, 2451550.0]) }
+        .to raise_error(
+          Ephem::OutOfRangeError,
+          /\AJD 2451540.0 \(1999-12-27\) and 1 other time are outside/
+        ) do |error|
+          expect(error.out_of_range_times).to eq([2451540.0, 2451550.0])
+        end
     end
   end
 
@@ -57,9 +95,14 @@ RSpec.describe Ephem::Segments::PositionGroup do
     segment = instance_double(
       Ephem::Segments::Segment,
       center: 0,
-      target: 301
+      target: 301,
+      label: "Earth-Moon Barycenter (3) -> Moon (301)",
+      start_jd: covers.begin,
+      end_jd: covers.end
     )
-    allow(segment).to receive(:covers?) { |time| covers.cover?(time) }
+    allow(segment).to receive(:covers?) do |time, fraction = 0.0|
+      covers.cover?(time + fraction)
+    end
     allow(segment).to receive(:clear_data)
     segment
   end
@@ -77,6 +120,18 @@ RSpec.describe Ephem::Segments::OrientationGroup do
     end
   end
 
+  describe "#orientation_at" do
+    it "raises OutOfRangeError naming the frames" do
+      segment = build_orientation_segment(covers: 2451545.0..2451546.0)
+      group = described_class.new([segment, segment])
+
+      expect { group.orientation_at(2451550.0) }.to raise_error(
+        Ephem::OutOfRangeError,
+        /outside the coverage of frame 31008 relative to frame 1,/
+      )
+    end
+  end
+
   describe "#body and #reference_frame" do
     it "delegate to the first segment" do
       segment = build_orientation_segment(covers: 0.0..1.0)
@@ -91,7 +146,10 @@ RSpec.describe Ephem::Segments::OrientationGroup do
     segment = instance_double(
       Ephem::Segments::OrientationSegment,
       body: 31008,
-      reference_frame: 1
+      reference_frame: 1,
+      label: "frame 31008 relative to frame 1",
+      start_jd: covers.begin,
+      end_jd: covers.end
     )
     allow(segment).to receive(:covers?) { |time| covers.cover?(time) }
     segment

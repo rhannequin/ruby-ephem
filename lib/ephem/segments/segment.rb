@@ -49,6 +49,8 @@ module Ephem
             Core::Vector.new(position[0], position[1], position[2])
           end
         end
+      rescue OutOfRangeError => error
+        raise request_out_of_range_error(error, tdb, tdb2), cause: nil
       end
       alias_method :position_at, :compute
 
@@ -79,6 +81,8 @@ module Ephem
             )
           end
         end
+      rescue OutOfRangeError => error
+        raise request_out_of_range_error(error, tdb, tdb2), cause: nil
       end
       alias_method :state_at, :compute_and_differentiate
 
