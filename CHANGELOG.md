@@ -22,6 +22,9 @@
 - Add `Vector#*` and `Vector#/` with a scalar and unary `Vector#-@`, and give
   `State` `==`, `eql?` and `hash`. `State` instances are now frozen ([#108],
   [#121])
+- `SPK.open` and `PCK.open` take a block, like `File.open`: the kernel is closed
+  when the block returns or raises, and the block's value is returned ([#100],
+  [#116])
 
 ### Improvements
 
@@ -63,6 +66,7 @@
 [#96]: https://github.com/rhannequin/ruby-ephem/issues/96
 [#97]: https://github.com/rhannequin/ruby-ephem/issues/97
 [#99]: https://github.com/rhannequin/ruby-ephem/issues/99
+[#100]: https://github.com/rhannequin/ruby-ephem/issues/100
 [#101]: https://github.com/rhannequin/ruby-ephem/issues/101
 [#102]: https://github.com/rhannequin/ruby-ephem/issues/102
 [#103]: https://github.com/rhannequin/ruby-ephem/issues/103
@@ -74,6 +78,7 @@
 [#110]: https://github.com/rhannequin/ruby-ephem/pull/110
 [#111]: https://github.com/rhannequin/ruby-ephem/pull/111
 [#115]: https://github.com/rhannequin/ruby-ephem/pull/115
+[#116]: https://github.com/rhannequin/ruby-ephem/pull/116
 [#117]: https://github.com/rhannequin/ruby-ephem/pull/117
 [#118]: https://github.com/rhannequin/ruby-ephem/pull/118
 [#119]: https://github.com/rhannequin/ruby-ephem/pull/119
